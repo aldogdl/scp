@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:scp/src/entity/contacts_entity.dart';
 import 'package:scp/src/services/get_paths.dart';
 import 'package:scp/src/services/my_http.dart';
@@ -12,9 +15,18 @@ class ContactsRepository {
   }
 
   ///
-  Future<void> getAllContacts() async {
+  Future<void> backupContact(Map<String, dynamic> data) async {
+    
+    Directory? uri = GetPaths.getPathsFolderTo('udel');
+    if(uri != null) {
+      File contact = File('${uri.path}${GetPaths.getSep()}${data['curc']}.json');
+      contact.writeAsStringSync( json.encode(data) );
+    }
+  }
 
-    const tipo = 'noAdmin';
+  ///
+  Future<void> getAllContacts({String tipo = 'noAdmin'}) async {
+    
     String uri = await GetPaths.getUri('get_all_contactos_by');
     await MyHttp.get('$uri$tipo');
     result = MyHttp.result;
@@ -26,14 +38,6 @@ class ContactsRepository {
     String uri = await GetPaths.getUri('delete_contacto', isLocal: isLocal);
     await MyHttp.get('$uri$idContac');
     result = MyHttp.result;
-  }
-
-  ///
-  Future<List<ContacsEntity>> getAllAdmins() async {
-
-    String uri = await GetPaths.getUri('get_all_contactos_by');
-    print(uri);
-    return [];
   }
 
   ///

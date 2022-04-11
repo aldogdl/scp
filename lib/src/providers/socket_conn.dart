@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 import 'package:scp/src/config/sng_manager.dart';
 import 'package:scp/src/services/get_paths.dart';
@@ -268,23 +270,17 @@ class SocketConn extends ChangeNotifier {
   ///
   Future<bool> getIpConnectionToHarbi() async {
 
-    String domi = await GetPaths.getDominio(isLocal: false);
-    const uri = 'centinela/get-ip-address-harbi/';
-
-    await MyHttp.get('$domi$uri');
-    if(!MyHttp.result['abort']) {
-      final data = utf8.decode( base64Decode( MyHttp.result['body'] ) );
-      if(data.isNotEmpty) {
-        if(data.contains(':')) {
-          final partes = data.split(':');
-          ipHarbi = partes.first;
-          globals.ipHarbi = partes.first;
-          globals.portHarbi = partes.last;
-        }
+    String pathCon = await GetPaths.getFileByPath('harbi_connx');
+    final file = File(pathCon);
+    if(file.existsSync()) {
+      final contenido = Map<String, dynamic>.from(json.decode( file.readAsStringSync() ));
+      if(contenido.isNotEmpty) {
+        ipHarbi = contenido['ipHarbi'];
+        globals.ipHarbi = contenido['ipHarbi'];
+        globals.portHarbi = '${contenido['ptoHarbi']}';
       }
-      return (ipHarbi!.contains('.')) ? true : false;
     }
-    return false;
+    return (ipHarbi!.contains('.')) ? true : false;
   }
 
 

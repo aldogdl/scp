@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/pages/content/config_sections/widgets/decoration_field.dart';
 
+import 'widgets/lst_contactos.dart';
+import '../../widgets/texto.dart';
 import '../../../entity/contacto_entity.dart';
 import '../../../entity/empres_entity.dart';
 import '../../../providers/socket_conn.dart';
-import '../../../providers/window_cnf_provider.dart';
 import '../../../repository/contacts_repository.dart';
 import '../../../services/get_content_files.dart';
-import '../../widgets/texto.dart';
 
 class Empresas extends StatefulWidget {
 
@@ -28,7 +29,6 @@ class _EmpresasState extends State<Empresas> {
   final TextEditingController _nomCtrl = TextEditingController();
   final TextEditingController _celCtrl = TextEditingController();
   final TextEditingController _passCtrl = TextEditingController(text: '1234567');
-  final TextEditingController _searchCtrl = TextEditingController();
 
   final FocusNode _nomEmpFcs = FocusNode();
   final FocusNode _domicilioFcs = FocusNode();
@@ -39,27 +39,24 @@ class _EmpresasState extends State<Empresas> {
   final FocusNode _celFcs = FocusNode();
   final FocusNode _passFcs = FocusNode();
 
-  final ValueNotifier<List<ContactoEntity>> _contacts = ValueNotifier<List<ContactoEntity>>([]);
-  List<ContactoEntity> _contactsBack = [];
+
   late Future<void> _recuperarDatosMeta;
+  ContactoEntity? _contact;
+  final ValueNotifier<bool> _refreshList = ValueNotifier<bool>(false);
+
   List<String> cargos = [];
   List<Map<String, dynamic>> roles = [];
   bool _isLocal = true;
   bool _isCot = true;
   bool _showPass = true;
   String _cargoSelect = '';
-  String _showTypeContacts = 'cnet';
   bool _isAbsorbing = false;
-  bool _makeBackUp = true;
   int _idEmp = 0;
   int _idContac = 0;
-  int _cantCots = 0;
-  int _cantSols = 0;
 
   @override
   void initState() {
     _recuperarDatosMeta = _getDatosMeta();
-    _getAllContacts();
     super.initState();
   }
 
@@ -81,7 +78,7 @@ class _EmpresasState extends State<Empresas> {
     _celFcs.dispose();
     _passFcs.dispose();
     _cargosFcs.dispose();
-    _searchCtrl.dispose();
+    _refreshList.dispose();
     super.dispose();
   }
 
@@ -163,7 +160,14 @@ class _EmpresasState extends State<Empresas> {
                     ),
                     Expanded(
                       child: SizedBox.expand(
-                        child: Texto(txt: context.watch<SocketConn>().msgErr),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Divider(),
+                            Texto(txt: context.watch<SocketConn>().msgErr),
+                            const Divider(),
+                          ],
+                        ),
                       ),
                     )
                   ],
@@ -172,74 +176,33 @@ class _EmpresasState extends State<Empresas> {
             ),
           )
         ),
-        Container(
-          width: context.read<WindowCnfProvider>().tamMiddle,
-          height: MediaQuery.of(context).size.height,
-          color: Colors.black.withOpacity(0.5),
-          padding: const EdgeInsets.only(top: 10, right: 8, bottom: 5, left: 8),
-          child: Column(
-            children: [
-              const Texto(txt: 'LISTA DE CONTACTOS', txtC: Colors.white, isBold: true),
-              const SizedBox(height: 8),
-              _txtBusk(),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => setState(() {
-                      _showTypeContacts = 'cnet';
-                    }),
-                    child: Texto(
-                      txt: 'COTIZADORES [$_cantCots]',
-                      txtC: (_showTypeContacts == 'cnet') ? Colors.green : Colors.grey.withOpacity(0.5),
-                      isBold: true
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => setState(() {
-                      _showTypeContacts = 'snet';
-                    }),
-                    child: Texto(
-                      txt: 'SOLICITANTES [$_cantSols]',
-                      txtC: (_showTypeContacts == 'snet') ? Colors.green : Colors.grey.withOpacity(0.5),
-                      isBold: true
-                    ),
-                  )
-                ],
-              ),
-              const Divider(color: Colors.grey),
-              const SizedBox(height: 21),
-              Expanded(
-                child: ValueListenableBuilder<List<ContactoEntity>>(
-                  valueListenable: _contacts,
-                  builder: (_, lst, __) {
+        ValueListenableBuilder<bool>(
+          valueListenable: _refreshList,
+          builder: (_, refresh, __) {
 
-                    if(lst.isNotEmpty) {
-                      return ListView.builder(
-                        itemCount: lst.length,
-                        padding: const EdgeInsets.all(0),
-                        itemBuilder: (_, index) {
-                          return (lst[index].curc.startsWith(_showTypeContacts))
-                          ? _tileContacts(index) : const SizedBox();
-                        }
-                      );
-                    }else{
-                      return Column(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.people_alt_outlined, size: 100, color: Colors.white.withOpacity(0.1)),
-                          const Texto(txt: 'No hay Contactos')
-                        ],
-                      );
-                    }
-                  }
-                ),
-              )
-            ],
-          ),
+            return LstContactos(
+              refresh: refresh,
+              onTap: (contac, acc) {
+                switch (acc) {
+                  case 'hidratarScreen':
+                    _contact = contac;
+                    _hidratarScreenByIdContact();
+                    break;
+                  case 'clear':
+                    _resetScreen();
+                    break;
+                  case 'add':
+                    _resetScreen();
+                    _nomEmpFcs.requestFocus();
+                    break;
+                  default:
+                    _contact = contac;
+                    _hidratarScreenByIdContact();
+                    break;
+                }
+              },
+            );
+          }
         )
       ],
     );
@@ -456,45 +419,6 @@ class _EmpresasState extends State<Empresas> {
   }
 
   ///
-  Widget _tileContacts(int index) {
-
-    return ListTile(
-      onTap: () => _hidratarScreenByIdContact(_contacts.value[index].id),
-      visualDensity: VisualDensity.compact,
-      dense: true,
-      contentPadding: const EdgeInsets.all(0),
-      leading: IconButton(
-        padding: const EdgeInsets.all(0),
-        visualDensity: VisualDensity.compact,
-        icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-        onPressed: () => _deleteContact(_contacts.value[index].id),
-      ),
-      minLeadingWidth: 25,
-      title: Row(
-        children: [
-          Texto(txt: _contacts.value[index].nombre, isBold: true),
-          const Spacer(),
-          _chipId(id: '${_contacts.value[index].id}')
-        ],
-      ),
-      subtitle: Row(
-        children: [
-          Texto(txt: _contacts.value[index].emp!.nombre, sz: 12, txtC: Colors.blue),
-          const Spacer(),
-          Texto(txt: _contacts.value[index].curc, sz: 12, txtC: Colors.white),
-          const SizedBox(width: 8),
-          _chipId(id: '${_contacts.value[index].emp!.id}')
-        ]
-      ),
-    );
-  }
-
-  ///
-  Widget _chipId({
-    required String id
-  }) => Texto(txt: 'id: $id', sz: 12, isBold: true, txtC: Colors.orange);
-
-  ///
   Widget _fieldBy({
     required TextEditingController ctr,
     required FocusNode fco,
@@ -513,7 +437,15 @@ class _EmpresasState extends State<Empresas> {
         textInputAction: TextInputAction.next,
         obscureText: (!isPass) ? false : _showPass,
         validator: (val) => validate(val),
-        decoration: decoration(help: help, isPass: isPass, iconoPre: iconoPre),
+        decoration: DecorationField.get(
+          help: help, isPass: isPass, iconoPre: iconoPre,
+          showHidden: (isPass)
+          ? IconButton(
+            onPressed: () => setState((){ _showPass = !_showPass; }),
+            icon: Icon((_showPass) ? Icons.visibility : Icons.visibility_off)
+          )
+          : null
+        ),
       ),
     );
   }
@@ -538,237 +470,31 @@ class _EmpresasState extends State<Empresas> {
           value: cargo,
           child: Texto(txt: cargo),
         )).toList(),
-        decoration: decoration(help: help, iconoPre:iconoPre),
+        decoration: DecorationField.get(help: help, iconoPre:iconoPre),
       ),
     );
   }
 
   ///
-  Widget _txtBusk() {
+  void _hidratarScreenByIdContact() {
 
-    return TextField(
-      controller: _searchCtrl,
-      onChanged: (String? val) async => await _buscarContacto(val),
-      onEditingComplete: (){
-        if(_searchCtrl.text.contains(':')) {
-          List<String> partes = _searchCtrl.text.split(':');
-          int? idContact = int.tryParse(partes.last) ?? 0;
-          if(idContact == 0) {
-            _commands(partes.last);
-            return;
-          }
-          _hidratarScreenByIdContact(idContact);
-        }
-      },
-      decoration: decoration(help: 'Buscar Contacto', iconoPre: Icons.search),
-    );
-  }
-
-  ///
-  InputDecoration decoration({
-    required String help,
-    required IconData iconoPre,
-    bool isPass = false,
-  }) {
-
-    return InputDecoration(
-      suffixIcon: (!isPass)
-      ? null
-      : Focus(
-        canRequestFocus: false,
-        descendantsAreFocusable: false,
-        child: IconButton(
-          onPressed: () => setState((){ _showPass = !_showPass; }),
-          icon: Icon((_showPass) ? Icons.visibility : Icons.visibility_off)
-        ),
-      ),
-      hintText: help,
-      hintStyle: const TextStyle(
-        color: Color.fromARGB(255, 88, 88, 88)
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Colors.grey,
-          width: 1
-        ),
-      ),
-      prefixIcon: Icon(iconoPre, size: 15, color: Colors.white.withOpacity(0.2)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Colors.grey,
-          width: 1
-        ),
-      ),
-      errorStyle: const TextStyle(
-        color: Color.fromARGB(255, 255, 244, 149)
-      ),
-      helperText: help
-    );
-  }
-
-  ///
-  void _hidratarScreenByIdContact(int idContact) {
-
-    List<ContactoEntity> res = _contacts.value.where((element) => element.id == idContact).toList();
-    
-    if(res.isNotEmpty) {
-      _nomEmpCtrl.text = res.first.emp!.nombre;
-      _domicilioCtrl.text = res.first.emp!.domicilio;
-      _cpCtrl.text = '${res.first.emp!.cp}';
-      _telFCtrl.text = res.first.emp!.telFijo;
-      _nomCtrl.text = res.first.nombre;
-      _celCtrl.text = res.first.celular;
-      _passCtrl.text = 'same-password';
-      _searchCtrl.text = '';
-      _idContac = res.first.id;
-      _idEmp = res.first.emp!.id;
-      _isLocal = res.first.emp!.isLocal;
-      _isCot = res.first.isCot;
-      _cargoSelect = res.first.cargo;
-      _contacts.value = List<ContactoEntity>.from(_contactsBack);
-      setState(() {});
-    }
-  }
-
-  ///
-  void _commands(String command) {
-
-    switch (command) {
-      case 'clean':
+    if(_contact != null) {
+      if(_contact!.id == 0){
         _resetScreen();
-        break;
-      case 'add':
-        _resetScreen();
-        _nomEmpFcs.requestFocus();
-        break;
-      default:
-    }
-    _searchCtrl.text = '';
-  }
-
-  ///
-  Future<void> _deleteContact(int idContac) async {
-
-    String msg = 'Estás a punto de eliminar permanentemente los datos del contacto '
-    'seleccionado, esta acción borrará dicha imformación de nuestras base de datos '
-    'permanentemente sin poder recuperala permanentemente.';
-
-    bool acc = await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        content: StatefulBuilder(
-          builder: (BuildContext context, setState) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Texto(txt: 'BORRAR CONTACTO', sz: 19, txtC: Colors.red, isBold: true,),
-                const Divider(),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.5,
-                  child: Texto(txt: msg),
-                ),
-                const SizedBox(height: 15),
-                const Texto(txt: '¿Estás segur@ de continuar con la operación?', txtC: Colors.white),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Texto(txt: 'Realizar una copia de Seguridad.', txtC: Colors.white),
-                    const SizedBox(width: 8),
-                    Switch(
-                      value: _makeBackUp,
-                      onChanged: (val) {
-                        setState(() {
-                          _makeBackUp = val;
-                        });
-                      }
-                    )
-                  ],
-                )
-              ],
-            );
-          },
-        ),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actionsPadding: const EdgeInsets.only(bottom: 15),
-        actions: [
-          ElevatedButton(
-            style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(Colors.red)
-            ),
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Texto(txt: 'NO, CANCELAR', txtC: Colors.white),
-          ),
-          ElevatedButton(
-            style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(Colors.blue)
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Texto(txt: 'SÍ, BORRAR', txtC: Colors.white),
-          ),
-        ],
-      )
-    );
-
-    if(acc) {
-      late ContactoEntity contactDel;
-      final ctD = _contacts.value.where((element) => element.id == idContac);
-      if(ctD.isNotEmpty) {
-        contactDel = ctD.first;
-        if(_makeBackUp) {
-          print(contactDel.toJson());
-        }
-        final provi = context.read<SocketConn>();
-        provi.msgErr = 'ELIMINANDO CONTACTO REMOTO';
-
-        await _contacEm.deleteContact(idContac, isLocal: false);
-        if(_contacEm.result['abort']) {
-          provi.msgErr = _contacEm.result['body'];
-          debugPrint(_contacEm.result['msg']);
-          return;
-        }
-
-        provi.msgErr = 'ELIMINANDO CONTACTO LOCAL';
-        await _contacEm.deleteContact(idContac, isLocal: true);
-        if(_contacEm.result['abort']) {
-          provi.msgErr = _contacEm.result['body'];
-          debugPrint(_contacEm.result['msg']);
-          return;
-        }
-
-        provi.msgErr = 'EL CONTACTO FUÉ ELIMINADO CON ÉXITO';
-        Future.delayed(const Duration(milliseconds: 2000), (){
-          provi.msgErr = '';
-        });
-        _contacts.value.remove(contactDel);
-        _contactsBack.remove(contactDel);
-        if(contactDel.curc.startsWith('cnet')) {
-          _cantCots--;
-        }
-        if(contactDel.curc.startsWith('snet')) {
-          _cantSols--;
-        }
       }
-    }
-  }
-
-  ///
-  Future<void> _buscarContacto(String? criterio) async {
-
-    if(_contactsBack.isEmpty) {
-      _contactsBack = List<ContactoEntity>.from(_contacts.value);
-    }
-    if(criterio == null) {
-      _contacts.value = List<ContactoEntity>.from(_contactsBack);
-      return;
-    }
-    if(criterio.contains(':')) {
-      return;
-    }
-    _contacts.value = _contactsBack.where((element) => element.nombre.toLowerCase().contains(criterio.toLowerCase())).toList();
-    if(_contacts.value.isEmpty) {
-      _contacts.value = _contactsBack.where((element) => element.emp!.nombre.toLowerCase().contains(criterio.toLowerCase())).toList();
+      _nomEmpCtrl.text = _contact!.emp!.nombre;
+      _domicilioCtrl.text = _contact!.emp!.domicilio;
+      _cpCtrl.text = '${_contact!.emp!.cp}';
+      _telFCtrl.text = _contact!.emp!.telFijo;
+      _nomCtrl.text = _contact!.nombre;
+      _celCtrl.text = _contact!.celular;
+      _passCtrl.text = 'same-password';
+      _idContac = _contact!.id;
+      _idEmp = _contact!.emp!.id;
+      _isLocal = _contact!.emp!.isLocal;
+      _isCot = _contact!.isCot;
+      _cargoSelect = _contact!.cargo;
+      setState(() {});
     }
   }
 
@@ -794,10 +520,12 @@ class _EmpresasState extends State<Empresas> {
 
       final data = {'empresa' : emp.toJson(), 'contacto': cont.toJson()};
       setState(() { _isAbsorbing = true; });
+
       await _contacEm.safeDataContact(data, isLocal: false);
 
       if(_contacEm.result['abort']) {
         provi.msgErr = _contacEm.result['body'];
+        debugPrint(_contacEm.result['msg']);
         setState(() { _isAbsorbing = false; });
       }else{
         provi.msgErr = 'Actualizando Servidor Local';
@@ -830,8 +558,7 @@ class _EmpresasState extends State<Empresas> {
       });
       final ct = ContactoEntity();
       ct.fromFrmToList(data);
-      _contacts.value.insert(0, ct);
-      _contactsBack.insert(0, ct);
+      _refreshList.value = !_refreshList.value;
       _resetScreen();
     }
     
@@ -844,6 +571,7 @@ class _EmpresasState extends State<Empresas> {
 
   ///
   void _resetScreen() {
+
     _idEmp   = 0;
     _idContac= 0;
     _nomEmpCtrl.text = '';
@@ -856,41 +584,6 @@ class _EmpresasState extends State<Empresas> {
     _cargoSelect = cargos.first;
     _isCot = true;
     _isLocal = true;
-  }
-
-  ///
-  Future<void> _getAllContacts() async {
-
-    List<ContactoEntity> losCon = [];
-    await _contacEm.getAllContacts();
-    _showTypeContacts = '';
-    if(!_contacEm.result['abort']) {
-      if(_contacEm.result['body'].isNotEmpty) {
-        for (var i = 0; i < _contacEm.result['body'].length; i++) {
-          final ct = ContactoEntity();
-          ct.fromServerWidtEmpresa(_contacEm.result['body'][i]);
-          if(_showTypeContacts.isEmpty) {
-            if(ct.curc.startsWith('cnet')) {
-              _showTypeContacts = 'cnet';
-            }
-          }
-          if(ct.curc.startsWith('cnet')) {
-            _cantCots++;
-          }
-          if(ct.curc.startsWith('snet')) {
-            _cantSols++;
-          }
-          losCon.add(ct);
-        }
-      }
-    }
-    if(losCon.isNotEmpty && _showTypeContacts.isEmpty) {
-      _showTypeContacts = 'snet';
-    }
-    _contacts.value = losCon;
-    _contactsBack = losCon;
-    losCon = [];
-    setState(() {});
   }
 
   ///
