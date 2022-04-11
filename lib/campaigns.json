@@ -1,0 +1,14 @@
+{
+  "1":{
+    "title":"Scratch",
+    "priori":"3",
+    "msg_file":"scratch.txt",
+    "reason":"Escarbamos entre todo los cotizadores para la busqueda inicial de Refacciones"
+  },
+  "2":{
+    "title":"Reject",
+    "priori":"2",
+    "msg_file":"scratch.txt",
+    "reason":"Aviso al solicitante acerca del rechazo de la Orden de Cotización"
+  }
+}
