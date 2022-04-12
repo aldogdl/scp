@@ -1,6 +1,71 @@
 import 'package:flutter/material.dart';
 
+import '../../../widgets/texto.dart';
+
 class DecorationField {
+
+  static Widget fieldBy({
+    required TextEditingController ctr,
+    required FocusNode fco,
+    required String help,
+    required Function validate,
+    required IconData iconoPre,
+    required double orden,
+    bool isPass = false,
+    bool showPass = true,
+    ValueChanged<bool>? onPressed
+  }) {
+
+    return FocusTraversalOrder(
+      order: NumericFocusOrder(orden),
+      child: TextFormField(
+        controller: ctr,
+        focusNode: fco,
+        textInputAction: TextInputAction.next,
+        obscureText: (!isPass) ? false : showPass,
+        validator: (val) => validate(val),
+        decoration: DecorationField.get(
+          help: help, isPass: isPass, iconoPre: iconoPre,
+          showHidden: (isPass)
+          ? IconButton(
+            onPressed: () => onPressed!(!showPass),
+            icon: Icon((showPass) ? Icons.visibility : Icons.visibility_off)
+          )
+          : null
+        ),
+      ),
+    );
+  }
+
+  ///
+  static Widget dropBy({
+    required FocusNode fco,
+    required String help,
+    required IconData iconoPre,
+    required double orden,
+    required List<String> cargos,
+    required ValueChanged<String?> onChange,
+    String defaultValue = ''
+  }) {
+
+    defaultValue = (defaultValue.isNotEmpty) ? defaultValue : cargos.first;
+    if(!cargos.contains(defaultValue)) {
+      defaultValue = cargos.first;
+    }
+    return FocusTraversalOrder(
+      order: NumericFocusOrder(orden),
+      child: DropdownButtonFormField<String>(
+        focusNode: fco,
+        onChanged: (valSel) => onChange(valSel!),
+        value: defaultValue,
+        items: cargos.map((cargo) => DropdownMenuItem(
+          value: cargo,
+          child: Texto(txt: cargo),
+        )).toList(),
+        decoration: DecorationField.get(help: help, iconoPre:iconoPre),
+      ),
+    );
+  }
 
   ///
   static InputDecoration get({

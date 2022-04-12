@@ -31,9 +31,31 @@ class ContactoEntity {
   }
 
   ///
+  Map<String, dynamic> toJsonForAdmin(List<Map<String, dynamic>> cargos) {
+    
+    String role = 'ROLE_AVO';
+    final strR = cargos.where((element) => element['tit'] == cargo);
+    if(strR.isNotEmpty) {
+      role = strR.first['role'];
+    }
+    return {
+      'id': id,
+      'empresaId': 1,
+      'curc': curc,
+      'roles': [role],
+      'password': (password.isEmpty) ? '1234567' : password,
+      'nombre': nombre,
+      'isCot': false,
+      'cargo': cargo,
+      'celular': celular,
+    };
+  }
+
+  ///
   void fromFrmToList(Map<String, dynamic> dataFrm) {
 
-    Map<String, dynamic> data = dataFrm['contacto'];
+    Map<String, dynamic> data = (dataFrm.containsKey('contacto'))
+      ? dataFrm['contacto'] : dataFrm;
 
     id = data['id'];
     curc = data['curc'];
@@ -43,10 +65,15 @@ class ContactoEntity {
     isCot = data['isCot'];
     cargo = data['cargo'];
     celular = data['celular'];
-    final empObj = EmpresaEntity();
-    empObj.fromFrmToList(dataFrm['empresa']);
-    emp = empObj;
-    empresaId = emp!.id;
+    if(dataFrm.containsKey('empresa')) {
+
+      final empObj = EmpresaEntity();
+      empObj.fromFrmToList(dataFrm['empresa']);
+      emp = empObj;
+      empresaId = emp!.id;
+    }else{
+      empresaId = dataFrm['empresaId'];
+    }
     data = {}; dataFrm = {};
   }
 

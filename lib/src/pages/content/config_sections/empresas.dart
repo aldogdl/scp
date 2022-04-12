@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/pages/content/config_sections/widgets/decoration_field.dart';
 
+import 'widgets/decoration_field.dart';
 import 'widgets/lst_contactos.dart';
 import '../../widgets/texto.dart';
 import '../../../entity/contacto_entity.dart';
@@ -222,12 +222,15 @@ class _EmpresasState extends State<Empresas> {
               flex: 1,
               child: Column(
                 children: [
-                  _fieldBy(
+                  DecorationField.fieldBy(
                     orden: 1,
                     ctr: _nomEmpCtrl,
                     fco: _nomEmpFcs,
                     iconoPre: Icons.business,
                     help: 'Nombre de la Empresa:',
+                    isPass: false,
+                    onPressed: (val){},
+                    showPass: true,
                     validate: (String? val){
                       if(val != null) {
                         if(val.isNotEmpty) {
@@ -241,12 +244,15 @@ class _EmpresasState extends State<Empresas> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  _fieldBy(
+                  DecorationField.fieldBy(
                     orden: 2,
                     ctr: _domicilioCtrl,
                     fco: _domicilioFcs,
                     iconoPre: Icons.location_on,
                     help: 'Domicilio de la Empresa:',
+                    isPass: false,
+                    onPressed: (val){},
+                    showPass: true,
                     validate: (String? val) {
                       if(val != null) {
                         if(val.isNotEmpty) {
@@ -270,10 +276,13 @@ class _EmpresasState extends State<Empresas> {
                   Row(
                     children: [
                       Expanded(
-                        child: _fieldBy(
+                        child: DecorationField.fieldBy(
                           orden: 3,
                           ctr: _cpCtrl,
                           fco: _cpFcs,
+                          isPass: false,
+                          onPressed: (val){},
+                          showPass: true,
                           iconoPre: Icons.location_searching,
                           help: 'C.P.:',
                           validate: (val) {
@@ -286,12 +295,15 @@ class _EmpresasState extends State<Empresas> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _fieldBy(
+                  DecorationField.fieldBy(
                     orden: 4,
                     ctr: _telFCtrl,
                     fco: _telFFcs,
                     iconoPre: Icons.phone,
                     help: 'Teléfono de la Empresa:',
+                    isPass: false,
+                    onPressed: (val){},
+                    showPass: true,
                     validate: (val){
                       return null;
                     },
@@ -311,12 +323,15 @@ class _EmpresasState extends State<Empresas> {
               flex: 1,
               child: Column(
                 children: [
-                  _fieldBy(
+                  DecorationField.fieldBy(
                     orden: 5,
                     ctr: _nomCtrl,
                     fco: _nomFcs,
                     iconoPre: Icons.location_history,
                     help: 'Nombre del Contácto:',
+                    isPass: false,
+                    onPressed: (val){},
+                    showPass: true,
                     validate: (String? val) {
                       if(val != null) {
                         if(val.isNotEmpty) {
@@ -336,11 +351,15 @@ class _EmpresasState extends State<Empresas> {
 
                       if(snap.connectionState == ConnectionState.done) {
                         if(cargos.isNotEmpty) {
-                          return _dropBy(
+                          return DecorationField.dropBy(
                             orden: 6,
                             fco: _cargosFcs,
                             iconoPre: Icons.location_history_rounded,
                             help: 'Cargo del Contácto:',
+                            cargos: cargos,
+                            onChange: (String? val) => setState(() {
+                              _cargoSelect = val ?? '';
+                            })
                           );
                         }else{
                           return const Texto(txt: 'No se recueraron los CARGOS', sz: 12, txtC: Colors.amber);
@@ -366,12 +385,15 @@ class _EmpresasState extends State<Empresas> {
                   Row(
                     children: [
                       Expanded(
-                        child: _fieldBy(
+                        child: DecorationField.fieldBy(
                           orden: 7,
                           ctr: _celCtrl,
                           fco: _celFcs,
                           iconoPre: Icons.smartphone_rounded,
                           help: 'Celular:',
+                          isPass: false,
+                          onPressed: (val){},
+                          showPass: true,
                           validate: (String? val) {
                             if(val != null) {
                               if(val.isNotEmpty) {
@@ -390,13 +412,17 @@ class _EmpresasState extends State<Empresas> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _fieldBy(
+                  DecorationField.fieldBy(
                     orden: 8,
                     ctr: _passCtrl,
                     fco: _passFcs,
                     iconoPre: Icons.password,
                     help: 'Contaseña:',
                     isPass: true,
+                    showPass: _showPass,
+                    onPressed: (val) => setState(() {
+                      _showPass = val;
+                    }),
                     validate: (String? val) {
                       if(val != null) {
                         if(val.isNotEmpty) {
@@ -415,63 +441,6 @@ class _EmpresasState extends State<Empresas> {
           ],
         ),
       ],
-    );
-  }
-
-  ///
-  Widget _fieldBy({
-    required TextEditingController ctr,
-    required FocusNode fco,
-    required String help,
-    required Function validate,
-    required IconData iconoPre,
-    required double orden,
-    bool isPass = false
-  }) {
-
-    return FocusTraversalOrder(
-      order: NumericFocusOrder(orden),
-      child: TextFormField(
-        controller: ctr,
-        focusNode: fco,
-        textInputAction: TextInputAction.next,
-        obscureText: (!isPass) ? false : _showPass,
-        validator: (val) => validate(val),
-        decoration: DecorationField.get(
-          help: help, isPass: isPass, iconoPre: iconoPre,
-          showHidden: (isPass)
-          ? IconButton(
-            onPressed: () => setState((){ _showPass = !_showPass; }),
-            icon: Icon((_showPass) ? Icons.visibility : Icons.visibility_off)
-          )
-          : null
-        ),
-      ),
-    );
-  }
-
-  ///
-  Widget _dropBy({
-    required FocusNode fco,
-    required String help,
-    required IconData iconoPre,
-    required double orden,
-  }) {
-
-    return FocusTraversalOrder(
-      order: NumericFocusOrder(orden),
-      child: DropdownButtonFormField<String>(
-        focusNode: fco,
-        onChanged: (valSel){
-          _cargoSelect = valSel!;
-        },
-        value: cargos.first,
-        items: cargos.map((cargo) => DropdownMenuItem(
-          value: cargo,
-          child: Texto(txt: cargo),
-        )).toList(),
-        decoration: DecorationField.get(help: help, iconoPre:iconoPre),
-      ),
     );
   }
 

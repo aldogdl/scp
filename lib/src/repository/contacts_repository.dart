@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:convert';
 
-import 'package:scp/src/entity/contacts_entity.dart';
 import 'package:scp/src/services/get_paths.dart';
 import 'package:scp/src/services/my_http.dart';
 
