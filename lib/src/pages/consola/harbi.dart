@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:scp/src/pages/content/config_sections/widgets/decoration_field.dart';
 
 import '../../config/sng_manager.dart';
 import '../../vars/globals.dart';
 import '../../entity/request_event.dart';
 import '../../providers/socket_conn.dart';
-import '../../providers/window_cnf_provider.dart';
 
 import '../widgets/texto.dart';
 
@@ -21,8 +21,11 @@ class HarbiConsola extends StatefulWidget {
 class _HarbiConsolaState extends State<HarbiConsola> {
 
   final TextEditingController _pass = TextEditingController();
+  final FocusNode _passFc = FocusNode();
   final info = NetworkInfo();
   final Globals globals = getSngOf<Globals>();
+
+  bool _hiddePass = true;
 
   @override
   void initState() {
@@ -33,6 +36,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
   @override
   void dispose() {
     _pass.dispose();
+    _passFc.dispose();
     super.dispose();
   }
 
@@ -40,6 +44,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
   Widget build(BuildContext context) {
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           flex: 3,
@@ -56,9 +61,11 @@ class _HarbiConsolaState extends State<HarbiConsola> {
   ///
   Widget _coneccion() {
 
-    return ListView(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         Text(
           'Actualmente ${ (context.watch<SocketConn>().isConnectedSocked) ? 'CONECTADO' : 'DESCONECTADO' }',
           textScaleFactor: 1,
@@ -70,39 +77,13 @@ class _HarbiConsolaState extends State<HarbiConsola> {
           ),
         ),
         const Divider(color: Colors.grey),
-        Row(
-          children: [
-            _txtCon(
-              label: 'IP: ${globals.myIp}', color: Colors.green
-            ),
-            const Spacer(),
-            if(context.watch<WindowCnfProvider>().contentSize.width > 665)
-              _txtCon(
-                label: 'Nombre: ${globals.wifiName}', color: Colors.green
-              ),
-          ],
-        ),
         SizedBox(
-          height: 45,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              right: 10, top: 5, bottom: 5
-            ),
-            child: _txtPass()
-          )
+          height: 65,
+          child: _txtPass()
         ),
         Selector<SocketConn, String>(
           selector: (_, psock) => psock.msgErr,
-          builder: (_, val, __) => Text(
-            val,
-            textScaleFactor: 1,
-            textAlign: TextAlign.left,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.normal,
-              color: Colors.grey
-            ),
-          ),
+          builder: (_, val, __) => Texto(txt: val, sz: 13, txtC: Colors.grey,)
         )
       ],
     );
@@ -111,40 +92,45 @@ class _HarbiConsolaState extends State<HarbiConsola> {
   ///
   Widget _txtPass() {
 
+    final wath = context.watch<SocketConn>();
+    
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: TextField(
-            controller: _pass,
-            onSubmitted: (v) async => await _conectar(),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(5),
-                borderSide: const BorderSide(
-                  color: Colors.green,
-                  width: 1
-                )
-              )
+          child: SizedBox(
+            height: 40,
+            child: DecorationField.fieldBy(
+              ctr: _pass, fco: _passFc, help: '', orden: 1,
+              isPass: true, iconoPre: Icons.security,
+              showPass: _hiddePass,
+              onPressed: (val) => setState(() {
+                _hiddePass = val;
+              }),
+              validate: (String? val) {
+                if(val != null) {
+                  return null;
+                }
+                return 'Tu Contraseña por favor';
+              }
             ),
-          ),
+          )
         ),
         const SizedBox(width: 10),
         ElevatedButton(
           style: ButtonStyle(
+            padding: MaterialStateProperty.all(
+              const EdgeInsets.symmetric(vertical: 18, horizontal: 15)
+            ),
             backgroundColor: MaterialStateProperty.all(
-              (context.watch<SocketConn>().isConnectedSocked)
+              (wath.isConnectedSocked)
               ? Colors.white.withOpacity(0.2) : Colors.red
             )
           ),
           onPressed: () async => await _conectar(),
-          child: Text(
-            (context.watch<SocketConn>().isConnectedSocked) ? 'Desconectar' : 'Conectar',
-            textScaleFactor: 1,
-            style: TextStyle(
-              color: (context.watch<SocketConn>().isConnectedSocked)
-              ? Colors.red : Colors.white
-            ),
+          child: Texto(
+            txt: (wath.isConnectedSocked) ? 'Desconectar' : 'Conectar',
+            txtC: (wath.isConnectedSocked)? const Color.fromARGB(255, 255, 141, 133) : Colors.white,
           )
         )
       ],
@@ -164,7 +150,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
             flex: 1,
             child: ListView(
               children: [
-                _txtCon(label: 'IP Harbi: ${socketConn.ipHarbi ?? '...'}'),
+                _txtCon(label: 'IP Harbi: ${globals.ipHarbi}'),
                 _txtCon(label: 'Puerto: ${globals.portHarbi}'),
                 _txtCon(label: 'ID Harbi: ${socketConn.idConn}'),
                 _txtCon(label: 'Conección: ${socketConn.username}'),
@@ -225,7 +211,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
 
     final socketPr = context.read<SocketConn>();
 
-    if(socketPr.ipHarbi != null) {
+    if(globals.ipHarbi.isNotEmpty) {
       socketPr.msgErr = 'Coloca tu contraseña...';
     }else{
       socketPr.msgErr = 'ERROR!! no se encontró la IP de Harbi';

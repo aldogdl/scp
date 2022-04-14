@@ -43,14 +43,14 @@ class DecorationField {
     required String help,
     required IconData iconoPre,
     required double orden,
-    required List<String> cargos,
+    required List<String> items,
     required ValueChanged<String?> onChange,
     String defaultValue = ''
   }) {
 
-    defaultValue = (defaultValue.isNotEmpty) ? defaultValue : cargos.first;
-    if(!cargos.contains(defaultValue)) {
-      defaultValue = cargos.first;
+    defaultValue = (defaultValue.isNotEmpty) ? defaultValue : items.first;
+    if(!items.contains(defaultValue)) {
+      defaultValue = items.first;
     }
     return FocusTraversalOrder(
       order: NumericFocusOrder(orden),
@@ -58,7 +58,7 @@ class DecorationField {
         focusNode: fco,
         onChanged: (valSel) => onChange(valSel!),
         value: defaultValue,
-        items: cargos.map((cargo) => DropdownMenuItem(
+        items: items.map((cargo) => DropdownMenuItem(
           value: cargo,
           child: Texto(txt: cargo),
         )).toList(),
@@ -105,7 +105,7 @@ class DecorationField {
       errorStyle: const TextStyle(
         color: Color.fromARGB(255, 255, 244, 149)
       ),
-      helperText: help
+      helperText: (help.isNotEmpty) ? help : null
     );
   }
 }

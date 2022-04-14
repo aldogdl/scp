@@ -22,6 +22,10 @@ class PageProvider extends ChangeNotifier {
     _page = p;
     notifyListeners();
   }
+  void resetPage() {
+    _page = Paginas.solicitudes;
+    _confSecction = 'home';
+  }
 
   Consola _consola = Consola.harbi;
   Consola get consola => _consola;

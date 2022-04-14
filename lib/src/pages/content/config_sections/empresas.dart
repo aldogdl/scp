@@ -356,7 +356,7 @@ class _EmpresasState extends State<Empresas> {
                             fco: _cargosFcs,
                             iconoPre: Icons.location_history_rounded,
                             help: 'Cargo del Contácto:',
-                            cargos: cargos,
+                            items: cargos,
                             onChange: (String? val) => setState(() {
                               _cargoSelect = val ?? '';
                             })

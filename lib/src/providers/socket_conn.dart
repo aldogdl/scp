@@ -1,19 +1,15 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show ChangeNotifier;
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/services/get_paths.dart';
-import 'package:scp/src/vars/globals.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
-
-import 'dart:convert';
 import 'package:network_info_plus/network_info_plus.dart';
 
 import '../config/sng_manager.dart';
-import '../entity/request_event.dart';
-import '../services/my_http.dart';
+import '../services/get_paths.dart';
 import '../vars/globals.dart';
+import '../entity/request_event.dart';
 
 class SocketConn extends ChangeNotifier {
 
@@ -23,11 +19,7 @@ class SocketConn extends ChangeNotifier {
   final String _app = 'SCP';
 
   String pin = '';
-  String? myIp;
-  String? ipHarbi;
-  String? wifiName;
-  String password = '';
-
+  bool _isPing = false;
   IOWebSocketChannel? _socket;
   IOWebSocketChannel get socket => _socket!;
 
@@ -83,11 +75,9 @@ class SocketConn extends ChangeNotifier {
   void cerrarConection() {
 
     isConnectedSocked = false;
-    ipHarbi = null;
     globals.ipHarbi = '';
-    password = '';
+    globals.password = '';
     username = 'Anónimo';
-    msgErr = 'Coloca tu Contraseña';
     idConn = 0;
     close();
   }
@@ -97,8 +87,6 @@ class SocketConn extends ChangeNotifier {
     if(_socket != null) {
       _socket!.sink.close(status.normalClosure);
     }
-    msgErr = 'HARBI sin conección';
-    pin = '';
     isConnectedSocked = false;
     _socket == null;
   }
@@ -106,25 +94,94 @@ class SocketConn extends ChangeNotifier {
   ///
   Future<void> getNameRed() async {
 
-    if(myIp == null) {
-      wifiName ??= await info.getWifiName();
-      myIp ??= await info.getWifiIP();
-      wifiName ??= 'Oculta';
-      globals.myIp = myIp;
-      globals.wifiName = wifiName;
+    if(globals.myIp.isEmpty) {
+      globals.wifiName = await info.getWifiName() ?? '';
+      globals.myIp = await info.getWifiIP() ?? '';
+      globals.wifiName = 'Oculta';
       notifyListeners();
     }
   }
 
   ///
-  void ping() {
+  Future<bool> ping() async {
 
-    RequestEvent event = RequestEvent(event: 'ping', fnc: 'make');
-    send(event);
+    _isPing = true;
+    int intentos = 1;
+    bool abort = false;
+    bool isCon = checkConeccion();
+
+    if(!isCon) {
+      if(globals.ipHarbi.isEmpty) {
+        await getIpConnectionToHarbi();
+      }
+      _socket = null;
+      pin = '';
+      
+      await Future.doWhile(() async {
+        
+        await _conectar();
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if(pin == 'ok') {
+          return false;
+        }
+        if(intentos >= 5) {
+          abort = true;
+          msgErr = 'No se alcanzó una conección con HARBI';
+          return false;
+        }
+        intentos++;
+        return true;
+      });
+    }
+    
+    abort = false;
+    intentos = 1;
+    final event = RequestEvent(event: 'ping', fnc: 'make', data: {});
+    await Future.doWhile(() async {
+      send(event);
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if(msgErr.startsWith('ping')) {
+        if(msgErr == 'ping-ok') {
+          return false;
+        }else{
+          abort = true;
+          return false;
+        }
+      }
+      
+      if(intentos >= 3){
+        abort = true;
+        return false;
+      }
+      intentos++;
+      return true;
+    });
+
+    _isPing = false;
+    return !abort;
+  }
+
+  /// Retorna true si la las variables de coneccion estan correctas.
+  bool checkConeccion() {
+
+    bool isCon = isConnectedSocked;
+    
+    if(_socket == null) {
+      isCon = false;
+    }else{
+      if(_socket!.innerWebSocket != null) {
+        if(_socket!.innerWebSocket!.readyState == 3) {
+          isCon = false;
+        }
+      }else{
+        isCon = false;
+      }
+    }
+    return isCon;
   }
 
   ///
-  void send(RequestEvent event) async {
+  void xRevisarConectarAHarbi(RequestEvent event) {
 
     if(event.event == 'initConnection' && !isConnectedSocked) {
       if(event.data.containsKey('password')) {
@@ -132,7 +189,10 @@ class SocketConn extends ChangeNotifier {
           msgErr = 'Necesitas Password';
           return;
         }else{
-          password = event.data['password'];
+          globals.password = event.data['password'];
+          if(event.data.containsKey('username')) {
+            globals.curc = event.data['username'];
+          }
         }
       }
       _socket = null;
@@ -142,67 +202,90 @@ class SocketConn extends ChangeNotifier {
       close();
       return;
     }
+  }
 
-    msgErr = 'Conectando...';
-    pin = '';
-    if(_socket == null) {
-      await _conectar();
+  ///
+  void send(RequestEvent event) async {
+
+    event = await _fillMetaData(event);
+    try {
+      _socket!.sink.add( event.toSend() );
+    } catch (e) {
+      msgErr = 'Se desconecto HARBI';
+      return;
+    }
+  }
+
+  ///
+  Future<RequestEvent> _fillMetaData(RequestEvent event) async {
+
+    var data = Map<String, dynamic>.from(event.data);
+    data['id']  = idConn;
+    data['app'] = _app;
+    data['user']= username;
+    data['ip']  = globals.myIp;
+
+    if(data.containsKey('username')) {
+      if(data['username'].isEmpty) {
+        data['username']= globals.curc;
+      }
     }else{
-      if(_socket!.innerWebSocket != null) {
-        if(_socket!.innerWebSocket!.readyState == 3) {
-          await _conectar();
-        }
-      }
+      data['username']= globals.curc;
     }
 
-    if(event.event != 'initConnection') {
-      
-      var data = Map<String, dynamic>.from(event.data);
-      data['id']  = idConn;
-      data['app'] = _app;
-      data['user']= username;
-      data['password']= password;
-      event.data = data;
-      try {
-        _socket!.sink.add( event.toSend() );
-      } catch (e) {
-        cerrarConection();
-        msgErr = 'HARBI DESCONECTADO';
-        return;
+    if(data.containsKey('password')) {
+      if(data['password'].isEmpty) {
+        data['password']= globals.curc;
       }
+    }else{
+      data['password']= globals.password;
     }
+    event.data = data;
+    return event;
+  }
 
-    // Esperamos hasta dos segundos si el pin es bacio, estamos desconectados
-    await Future.delayed(const Duration(seconds: 2));
-    if(pin.isEmpty) {
-      isConnectedSocked = false;
-    }
+  ///
+  Future<bool> awaitResponseSocket({
+    required RequestEvent event,
+    required String msgInit,
+    required String msgExito
+  }) async {
+
+    bool abort = true;
+    int intentos = 1;
+    msgErr = msgInit;
+    send(event);
+    await Future.doWhile(() async {
+      if(msgErr == msgExito){ abort = false; return false; }
+      if(msgErr.contains('Error')){ return false; }
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if(intentos >= 5){ return false; }
+      intentos++;
+      return true;
+    });
+
+    return abort;
   }
 
   ///
   Future<void> _conectar() async {
 
     msgErr = 'Contactando a HARBI';
-
-    if(ipHarbi != null) {
-      if(_socket == null) {
-        try {
-          _socket = IOWebSocketChannel.connect(Uri.parse('ws://$ipHarbi:${globals.portHarbi}/socket'));
-        } catch (e) {
-          return;
-        }
-
-        _socket!.stream.listen((event) {
-          pin = 'ok';
-          msgErr = '';
-          isConnectedSocked = true;
-          _determinarEvento(Map<String, dynamic>.from(json.decode(event)));
-        });
-      }
-    }else{
-      msgErr = 'HARBI no está Funcionando';
-      await getIpConnectionToHarbi();
+    await Future.delayed(const Duration(milliseconds: 1000));
+    try {
+      _socket = IOWebSocketChannel.connect(Uri.parse('ws://${globals.ipHarbi}:${globals.portHarbi}/socket'));
+    } catch (e) {
+      msgErr = 'Error al Intentar conectar a HARBI';
+      return;
     }
+
+    msgErr = 'Esperando Respuesta de Conección';
+    await Future.delayed(const Duration(milliseconds: 1000));
+    _socket!.stream.listen((event) {
+      pin = 'ok';
+      isConnectedSocked = true;
+      _determinarEvento(Map<String, dynamic>.from(json.decode(event)));
+    });
   }
 
   ///
@@ -210,21 +293,6 @@ class SocketConn extends ChangeNotifier {
 
     if(response.containsKey('connId')) {
       idConn = response['connId'];
-      msgErr = 'HARBI';
-
-      final e = RequestEvent(
-        event: 'initConnection', fnc: 'conectar',
-        data: {
-          'ip'  : myIp,
-          'id'  : idConn,
-          'app' : _app,
-          'user': username,
-          'password':password,
-          'token': globals.tkServ
-        }
-      );
-      _socket!.sink.add( e.toSend() );
-      isLoged = true;
       return;
     }
 
@@ -233,7 +301,6 @@ class SocketConn extends ChangeNotifier {
         _msgErr = (response['fnc'] == 'ok') ? 'ping-ok' : 'ping-er';
         return;
       }
-      msgErr = 'HARBI';
       await _determinarFunction(response['fnc'], Map<String, dynamic>.from(response['data']));
       return;
     }
@@ -246,12 +313,15 @@ class SocketConn extends ChangeNotifier {
 
     switch (fnc) {
       case 'set_data_connx':
-        if(params.containsKey('name')) {
-          username = params['name'];
-        }else{
-          cerrarConection();
-          _msgErr = 'No Autorizado';
-        }
+        _registrarVariablesDeUsuario(params);
+        _msgErr = (params.containsKey('err')) ? params['err'] : 'No Autorizado';
+        break;
+      case 'make_login':
+        _registrarVariablesDeUsuario(params);
+        msgErr = (params.containsKey('err')) ? params['err'] : 'Login Autorizado';
+        break;
+      case 'update_colaborador':
+        msgErr = params['msg'];
         break;
       case 'set_orden':
         print(params);
@@ -268,6 +338,17 @@ class SocketConn extends ChangeNotifier {
   }
 
   ///
+  void _registrarVariablesDeUsuario(Map<String, dynamic> params) {
+
+    if(params.containsKey('nombre')) {
+      username = params['nombre'];
+      globals.curc  = params['curc'];
+      globals.idUser= params['id'];
+      globals.roles = List<String>.from(params['roles']);
+    }
+  }
+
+  ///
   Future<bool> getIpConnectionToHarbi() async {
 
     String pathCon = await GetPaths.getFileByPath('harbi_connx');
@@ -275,12 +356,11 @@ class SocketConn extends ChangeNotifier {
     if(file.existsSync()) {
       final contenido = Map<String, dynamic>.from(json.decode( file.readAsStringSync() ));
       if(contenido.isNotEmpty) {
-        ipHarbi = contenido['ipHarbi'];
         globals.ipHarbi = contenido['ipHarbi'];
         globals.portHarbi = '${contenido['ptoHarbi']}';
       }
     }
-    return (ipHarbi!.contains('.')) ? true : false;
+    return (globals.ipHarbi.contains('.')) ? true : false;
   }
 
 

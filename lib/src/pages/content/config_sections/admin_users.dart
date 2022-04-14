@@ -4,10 +4,13 @@ import 'package:provider/provider.dart';
 import 'widgets/decoration_field.dart';
 import 'widgets/lst_contactos.dart';
 import '../../widgets/texto.dart';
+import '../../../config/sng_manager.dart';
+import '../../../entity/request_event.dart';
 import '../../../entity/contacto_entity.dart';
-import '../../../providers/socket_conn.dart';
 import '../../../repository/contacts_repository.dart';
+import '../../../providers/socket_conn.dart';
 import '../../../services/get_content_files.dart';
+import '../../../vars/globals.dart';
 
 class AdminUsers extends StatefulWidget {
 
@@ -20,10 +23,11 @@ class AdminUsers extends StatefulWidget {
 class _AdminUsersState extends State<AdminUsers> {
 
   final ContactsRepository _contacEm = ContactsRepository();
-  
+  final Globals globals = getSngOf<Globals>();
+
   final GlobalKey<FormState> _frmKey = GlobalKey<FormState>();
   final TextEditingController _usernameCtrl = TextEditingController();
-  final TextEditingController _passwordCtrl = TextEditingController(text: '1234567');
+  final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _cargoCtrl = TextEditingController();
   final TextEditingController _celCtrl = TextEditingController();
   final FocusNode _cargoFcs = FocusNode();
@@ -37,6 +41,7 @@ class _AdminUsersState extends State<AdminUsers> {
   List<Map<String, dynamic>> cargos = [];
   bool _isAbsorbing = false;
   bool _showPass = true;
+  bool _isAdmin = false;
   int _idContac = 0;
   late Future<void> _getMetas;
 
@@ -84,8 +89,19 @@ class _AdminUsersState extends State<AdminUsers> {
                     const SizedBox(height: 21),
                     _frm(),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
+                        const Texto(txt: 'Puede fungir como Administradora?', txtC: Colors.white),
+                        Checkbox(
+                          value: _isAdmin,
+                          checkColor: Colors.black,
+                          onChanged: (val) {
+                            setState(() {
+                              _isAdmin = val ?? false;
+                            });
+                          }
+                        ),
+                        const Spacer(),
                         FocusTraversalOrder(
                           order: const NumericFocusOrder(11),
                           child: AbsorbPointer(
@@ -195,12 +211,21 @@ class _AdminUsersState extends State<AdminUsers> {
               DecorationField.fieldBy(
                 orden: 3,
                 ctr: _passwordCtrl,
-                fco: _passFcs, help: 'Contraseña',
+                fco: _passFcs, help: 'Contraseña [Sólo Números]',
                 validate: (String? val) {
                   if(val != null) {
                     if(val.isNotEmpty) {
                       if(val.length > 5) {
-                        return null;
+                        if(val != 'same-password') {
+                          int ? soloDig = int.tryParse(val);
+                          if(soloDig != null) {
+                            return null;
+                          }else{
+                            return 'Coloca sólo números.';
+                          }
+                        }else{
+                          return null;
+                        }
                       }
                       return 'Mínimo 6 caracteres';
                     }
@@ -249,7 +274,7 @@ class _AdminUsersState extends State<AdminUsers> {
                   if(cargos.isNotEmpty) {
                     return DecorationField.dropBy(
                       orden: 4,
-                      cargos: cargos.map<String>((e) => e['tit']).toList(),
+                      items: cargos.map<String>((e) => e['tit']).toList(),
                       fco: _cargoFcs,
                       help: 'Cargo',
                       iconoPre: Icons.category,
@@ -262,7 +287,7 @@ class _AdminUsersState extends State<AdminUsers> {
                     );
                   }
                   return DecorationField.dropBy(
-                    cargos: ['CARGANDO...'],
+                    items: ['CARGANDO...'],
                     fco: _cargoFcs,
                     help: 'Cargo',
                     iconoPre: Icons.category,
@@ -308,7 +333,8 @@ class _AdminUsersState extends State<AdminUsers> {
       _passwordCtrl.text = 'same-password';
       _idContac = _contact!.id;
       _cargoSelect = _contact!.cargo;
-      
+      _isAdmin = (_contact!.roles.contains('ROLE_ADMIN')) ? true : false;
+
       setState(() {});
     }
   }
@@ -318,11 +344,16 @@ class _AdminUsersState extends State<AdminUsers> {
 
     if(_frmKey.currentState!.validate()) {
 
-      final provi = context.read<SocketConn>();
-      
+      final provi = context.read<SocketConn>();      
+      bool isconected = await provi.ping();
+      if(!isconected) {
+        provi.cerrarConection();
+        return;
+      }
+
       provi.msgErr = 'Actualizando datos directamente en el Servidor'; 
       ContactoEntity cont = _hidratarContactoFromScreen();
-      final data = cont.toJsonForAdmin(cargos);
+      final data = cont.toJsonForAdmin(cargos, isAdmin: _isAdmin);
       
       setState(() { _isAbsorbing = true; });
 
@@ -337,7 +368,7 @@ class _AdminUsersState extends State<AdminUsers> {
         cont.id  = _contacEm.result['body']['c'];
         cont.curc= _contacEm.result['body']['curc'];
         _idContac= cont.id;
-        await _updateDataBaseLocal(cont.toJsonForAdmin(cargos));
+        await _updateDataBaseLocal(cont.toJsonForAdmin(cargos, isAdmin: _isAdmin));
       }
     }
   }
@@ -354,12 +385,20 @@ class _AdminUsersState extends State<AdminUsers> {
       provi.msgErr = _contacEm.result['body'];
       debugPrint(_contacEm.result['msg']);
     }else{
+
       provi.msgErr = 'Datos guardados con éxito';
       Future.delayed(const Duration(milliseconds: 2000), (){
         provi.msgErr = '';
       });
+
       final ct = ContactoEntity();
       ct.fromFrmToList(data);
+
+      var dataUpdate = ct.toJsonForUpdateHarbi();
+      provi.msgErr = 'Espera..., estamos terminando de actualiza los datos';
+      provi.send(
+        RequestEvent(event: 'connection', fnc: 'edit_user', data: dataUpdate)
+      );
       _refreshList.value = !_refreshList.value;
       _resetScreen();
     }
@@ -377,6 +416,7 @@ class _AdminUsersState extends State<AdminUsers> {
     _idContac= 0;
     _usernameCtrl.text = '';
     _celCtrl.text = '';
+    _isAdmin = false;
     _passwordCtrl.text = '1234567';
     _cargoSelect = cargos.first['tit'];
   }

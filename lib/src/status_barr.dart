@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/providers/socket_conn.dart';
-import 'package:scp/src/providers/window_cnf_provider.dart';
 
+import 'config/sng_manager.dart';
+import 'providers/pages_provider.dart';
+import 'providers/socket_conn.dart';
+import 'providers/window_cnf_provider.dart';
+import 'vars/globals.dart';
 import 'pages/widgets/texto.dart';
 
 class StatusBarr extends StatelessWidget {
-  const StatusBarr({Key? key}) : super(key: key);
+
+  StatusBarr({Key? key}) : super(key: key);
+
+  final Globals globals = getSngOf<Globals>();
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +30,12 @@ class StatusBarr extends StatelessWidget {
           _btnIcon(tip: 'Cerrar Sesión', icono: Icons.logout, fnc: () {
             context.read<SocketConn>().cerrarConection();
             context.read<SocketConn>().isLoged = false;
+            context.read<PageProvider>().resetPage();
           }),
-          _btnTxt(label: '<C:>', fnc: () => context.read<WindowCnfProvider>().closeConsole = false),
           const SizedBox(width: 10),
+          Texto(txt: 'SWP de: ${context.watch<SocketConn>().username} [${globals.curc}]', sz: 12, txtC: const Color(0xFFFFFFFF)),
+          _btnTxt(label: '<C:>', fnc: () => context.read<WindowCnfProvider>().closeConsole = false),
+          const SizedBox(width: 5),
           _btnIconAndTxt(txt: '0', tip: 'Errores', icono: Icons.close, fnc: (){}),
           const SizedBox(width: 5),
           _btnIconAndTxt(txt: '0', tip: 'Alertas', icono: Icons.warning_amber_outlined, fnc: (){}),

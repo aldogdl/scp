@@ -1,17 +1,17 @@
+import 'dart:io';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/pages/widgets/texto.dart';
-import 'package:scp/src/providers/socket_conn.dart';
-import 'package:scp/src/services/get_paths.dart';
-import 'package:scp/src/vars/globals.dart';
 
-import '../../entity/request_event.dart';
+import '../content/config_sections/widgets/decoration_field.dart';
+import '../widgets/texto.dart';
 import '../widgets/windows_buttons.dart';
+import '../../config/sng_manager.dart';
+import '../../entity/request_event.dart';
+import '../../providers/socket_conn.dart';
+import '../../services/get_paths.dart';
+import '../../vars/globals.dart';
 
 class LoginPage extends StatefulWidget {
 
@@ -31,9 +31,13 @@ class _LoginPageState extends State<LoginPage> {
   final FocusNode _fcurc = FocusNode();
   final FocusNode _fpass = FocusNode();
 
-  bool _showPass = true;
-  bool _isInit = false;
   late final SocketConn _sock;
+  bool _showPass = true;
+  bool _otroUser = false;
+  bool _isInit = false;
+  String _defaultUser = 'Cargando';
+  List<String> items = ['Cargando'];
+  final ValueNotifier<Map<String, dynamic>> _users = ValueNotifier<Map<String, dynamic>>({});
 
   @override
   void dispose() {
@@ -41,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
     _pass.dispose();
     _fcurc.dispose();
     _fpass.dispose();
+    _users.dispose();
     super.dispose();
   }
 
@@ -82,6 +87,8 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              const Spacer(),
+              const Expanded(child: SizedBox()),
               const Texto(
                 txt: 'Sistema Central de Procesamiento',
                 txtC: Color.fromARGB(255, 218, 218, 218),
@@ -103,22 +110,80 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _fieldBy(ctr: _curc, fco: _fcurc, help: 'Ingresa tu CURC',
-                        validate: (String? val) {
-                          if(val != null) {
-                            if(val.contains('-')) {
-                              return null;
-                            }else{
+                      ValueListenableBuilder<Map<String, dynamic>>(
+                        valueListenable: _users,
+                        builder: (_, users, __) {
 
-                              return 'El CURC es invalido';
-                            }
+                          if(users.isNotEmpty && items.length == 1) {
+                            items.clear();
+                            users.forEach((key, val) => items.add(val['nombre']));
+                            items.add('Usar Otro Usuario');
+                            _curc.text = users.values.first['curc'];
+                            _defaultUser = users.values.first['nombre'];
                           }
-                          return 'Este campo es Requerido';
+
+                          return DecorationField.dropBy(
+                            items: items,
+                            fco: _fcurc,
+                            help: 'Selecciona quien éres',
+                            iconoPre: Icons.account_circle_rounded,
+                            onChange: (val) {
+                              if(val != null) {
+                                if(val.contains('Otro')) {
+                                  _curc.text = '';
+                                  setState(() {
+                                    _otroUser = true;
+                                  });
+                                }else{
+                                  final us = _users.value.values.where((element) {
+                                    return element['nombre'] == val;
+                                  }).toList();
+                                  if(us.isNotEmpty) {
+                                    _curc.text = us.first['curc'];
+                                  }
+                                  if(_otroUser) {
+                                    setState(() {
+                                      _otroUser = false;
+                                    });
+                                  }
+                                }
+                              }
+                            },
+                            orden: 1,
+                            defaultValue: _defaultUser,
+                          );
                         }
                       ),
                       const SizedBox(height: 20),
-                      _fieldBy(ctr: _pass, fco: _fpass, help: 'Ingresa tu Contraseña',
+                      if(_otroUser)
+                        ...[
+                          DecorationField.fieldBy(
+                            ctr: _curc, fco: _fcurc, help: 'Ingresa tu CURC',
+                            iconoPre: Icons.account_circle_rounded,
+                            orden: 2,
+                            isPass: false,
+                            showPass: true,
+                            onPressed: (val) {},
+                            validate: (String? val) {
+                              if(val != null) {
+                                if(val.length >= 3) {
+                                  return null;
+                                }
+                              }
+                              return 'Este campo es Requerido';
+                            }
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      DecorationField.fieldBy(
+                        ctr: _pass, fco: _fpass, help: 'Ingresa tu Contraseña',
+                        iconoPre: Icons.security,
+                        orden: 3,
                         isPass: true,
+                        showPass: _showPass,
+                        onPressed: (val) => setState(() {
+                          _showPass = val;
+                        }),
                         validate: (String? val) {
                           if(val != null) {
                             if(val.length >= 3) {
@@ -147,6 +212,31 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () => _autenticar(), 
                   child: const Texto(txt: 'AUTENTICARME', txtC: Colors.black, isBold: true)
                 ),
+              ),
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Texto(txt: 'HARBI: ${globals.ipHarbi}'),
+                  ),
+                ),
+                if(globals.ipHarbi.isEmpty)
+                  IconButton(
+                    onPressed: () async {
+                      bool hasIp = await _sock.getIpConnectionToHarbi();
+                      if(hasIp) {
+                        _sock.msgErr = 'Identifícate por favor';
+                      }
+                    },
+                    iconSize: 18,
+                    color: Colors.white,
+                    icon: const Icon(Icons.refresh)
+                  )
+                ],
               )
             ],
           )
@@ -156,59 +246,18 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   ///
-  Widget _fieldBy({
-    required TextEditingController ctr,
-    required FocusNode fco,
-    required String help,
-    required Function validate,
-    bool isPass = false
-  }) {
-
-    return TextFormField(
-      controller: ctr,
-      focusNode: fco,
-      textInputAction: TextInputAction.next,
-      obscureText: (!isPass) ? false : _showPass,
-      validator: (val) => validate(val),
-      decoration: InputDecoration(
-        suffixIcon: (!isPass)
-        ? null
-        : IconButton(
-          onPressed: () => setState((){ _showPass = !_showPass; }),
-          icon: Icon((_showPass) ? Icons.visibility : Icons.visibility_off)
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Colors.grey,
-            width: 1
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Colors.grey,
-            width: 1
-          ),
-        ),
-        errorStyle: const TextStyle(
-          color: Color.fromARGB(255, 255, 244, 149)
-        ),
-        helperText: help
-      ),
-    );
-  }
-
-  ///
   Future<void> _initWidget(_) async {
 
-    final socketPr = context.read<SocketConn>();
-
     _sock.msgErr = 'Datos de Conección';
-    await socketPr.getNameRed();
-    bool hasIp = await socketPr.getIpConnectionToHarbi();
+    await _sock.getNameRed();
+    bool hasIp = await _sock.getIpConnectionToHarbi();
     if(hasIp) {
       _sock.msgErr = 'Identifícate por favor';
+    }
+    String uri = await GetPaths.getFileByPath('connpass');
+    File filepass = File(uri);
+    if(filepass.existsSync()) {
+      _users.value = Map<String, dynamic>.from( json.decode( filepass.readAsStringSync() ));
     }
   }
 
@@ -217,35 +266,63 @@ class _LoginPageState extends State<LoginPage> {
 
     if(_frmKey.currentState!.validate()) {
 
-      _sock.msgErr = 'Validando Credenciales';
+      _sock.isLoged = false;
+      bool isConnected = await _sock.ping();
 
-      final data = {
-        'username' : _curc.text.toLowerCase(),
-        'password' : _pass.text.toLowerCase()
-      };
-
-      String dom = await GetPaths.getDominio();
-      String base = 'secure-api-check';
-      http.Response resp = await http.post(Uri.parse('$dom$base'), body: json.encode(data),
-         headers: {'Content-type': 'application/json', 'Accept': 'application/json'}
-      );
-      if(resp.statusCode == 200) {
-        final r = Map<String, dynamic>.from(json.decode(resp.body));
-
-        globals.tkServ = '0';
-        if(r.containsKey('token')) {
-          globals.tkServ = r['token'];
+      if(!isConnected) {
+        if(globals.ipHarbi.isEmpty) {
+          _sock.msgErr = 'Desconocida la IP de HARBI';
+        }else{
+          _sock.msgErr = 'No hay conección con HARBI';
         }
-        
-        _sock.msgErr = 'Conectando tu Herramienta HARBI';
-        final sock = context.read<SocketConn>();
-        RequestEvent event = RequestEvent(
-          event: 'initConnection', fnc: 'x', data: data
-        );
-        sock.send(event);
       }else{
-        _sock.msgErr = 'Credenciales Invalidas';
+
+        _sock.msgErr = 'Validando Credenciales';
+
+        final data = {
+          'username' : _curc.text.toLowerCase().trim(),
+          'password' : _pass.text.toLowerCase().trim()
+        };
+        if(_otroUser) {
+          data['only_check'] = '1';
+        }
+        bool abort = await _sock.awaitResponseSocket(
+          event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
+          msgInit: 'Haciendo login en local',
+          msgExito: 'Login Autorizado'
+        );
+
+        if(!_sock.msgErr.contains('Error')) {
+          if(abort) {
+            await _hacerLoginFromServer(data);
+          }else{
+            _sock.isLoged = true;
+          }
+        }else{
+          if(_sock.msgErr.contains('Inexistente')) {
+            await _hacerLoginFromServer(data);
+          }
+        }
       }
     }
   }
+
+  ///
+  Future<void> _hacerLoginFromServer(Map<String, dynamic> data) async {
+
+    globals.tkServ = '';
+    bool abort = await _sock.awaitResponseSocket(
+      event: RequestEvent(event: 'connection', fnc: 'make_login_server', data: data),
+      msgInit: 'Buscando Credenciales',
+      msgExito: 'Login Autorizado'
+    );
+
+    if(abort) {
+      _sock.msgErr = 'Credenciales Invalidas';
+    }else{
+      _sock.isLoged = true;
+    }
+  }
+
+  
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/config/sng_manager.dart';
 import 'package:scp/src/pages/widgets/texto.dart';
 import 'package:scp/src/providers/pages_provider.dart';
+import 'package:scp/src/vars/globals.dart';
 
 class ConfigPage extends StatefulWidget {
 
@@ -12,6 +14,21 @@ class ConfigPage extends StatefulWidget {
 }
 
 class _ConfigPageState extends State<ConfigPage> {
+
+  bool isAdmin = false;
+  final Globals globals = getSngOf<Globals>();
+
+  @override
+  void initState() {
+
+    for (var i = 0; i < globals.roles.length; i++) {
+      if(globals.roles[i].contains('ADMIN')) {
+        isAdmin = true;
+      }
+    }
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -25,14 +42,17 @@ class _ConfigPageState extends State<ConfigPage> {
         const Texto(txt: 'ACCIONES Y CONFIGURACIONES', sz: 13),
         s10,
         _iteMenu(context, icon: Icons.home, label: 'Portada', secc: 'home'),
-        const Divider(color: Colors.grey),
-        const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
-        s10,
-        _iteMenu(context, icon: Icons.business, label: 'Empresas y Miembros', secc: 'empresas'),
-        s10,
-        _iteMenu(context, icon: Icons.account_circle_outlined, label: 'Miembros Administrativos', secc: 'admin_user'),
-        s10,
-        const Divider(),
+        if(isAdmin)
+          ...[
+            const Divider(color: Colors.grey),
+            const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
+            s10,
+            _iteMenu(context, icon: Icons.business, label: 'Empresas y Miembros', secc: 'empresas'),
+            s10,
+            _iteMenu(context, icon: Icons.account_circle_outlined, label: 'Miembros Administrativos', secc: 'admin_user'),
+            s10,
+            const Divider(),
+          ]
       ],
     );
   }

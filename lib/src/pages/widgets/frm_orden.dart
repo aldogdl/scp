@@ -64,7 +64,7 @@ class _FrmOrdenState extends State<FrmOrden> {
                     ),
                     Expanded(
                       child: Column(
-                        children: [
+                        children: const [
                           Texto(
                             txt: 'Datos del Solicitante', 
                             txtC: Colors.blue, sz: 22,

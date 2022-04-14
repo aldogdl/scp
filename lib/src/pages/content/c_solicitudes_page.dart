@@ -117,24 +117,13 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
                   valueListenable: _seccView,
                   builder: (_, seccion, __) {
 
-                    if(seccion == 'fotos') {
-                      return FutureBuilder(
-                        future: _hidratarKeysAsFotos(),
-                        builder: (_, AsyncSnapshot snap) {
-
-                          if(snap.connectionState == ConnectionState.done) {
-                            if(itemProv.fotosByPiezas.isNotEmpty) {
-                              return _visorDeFotos();
-                            }else{
-                              return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
-                            }
-                          }
-                          return _loading();
-                        }
-                      );
-
-                    }else{
-                      return const FrmOrden();
+                    switch (seccion) {
+                      case 'fotos':
+                        return _seccionFotos();
+                      case 'rastrear':
+                        return _seccionRastrear();
+                      default:
+                        return const FrmOrden();
                     }
                   }
                 );
@@ -157,6 +146,46 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
         icono, size: 150,
         color: Colors.black.withOpacity(opacity)
       ),
+    );
+  }
+
+  ///
+  Widget _seccionFotos() {
+
+    return FutureBuilder(
+      future: _hidratarKeysAsFotos(),
+      builder: (_, AsyncSnapshot snap) {
+
+        if(snap.connectionState == ConnectionState.done) {
+          if(itemProv.fotosByPiezas.isNotEmpty) {
+            return _visorDeFotos();
+          }else{
+            return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
+          }
+        }
+        return _loading();
+      }
+    );
+  }
+
+  ///
+  Widget _seccionRastrear() {
+
+    return FutureBuilder(
+      future: _getAllContacts(),
+      builder: (_, AsyncSnapshot snap) {
+
+        if(snap.connectionState == ConnectionState.done) {
+          if(itemProv.fotosByPiezas.isNotEmpty) {
+            return Center(
+              child: Texto(txt: 'todos los contactos'),
+            );
+          }else{
+            return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
+          }
+        }
+        return _loading();
+      }
     );
   }
 
@@ -206,7 +235,6 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
             showTrackOnHover: true,
             trackVisibility: true,
             child: ListView.builder(
-              //padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
               shrinkWrap: true,
               controller: _scrollCtl,
               itemCount: pzas.length,
@@ -384,11 +412,12 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     return Row(
       children: [
         _icoAction(
-          icono: Icons.slow_motion_video_sharp,
+          icono: (_seccView.value == 'rastrear') ? Icons.image : Icons.slow_motion_video_sharp,
           icolor: const Color.fromARGB(255, 221, 221, 221),
-          tip: 'Rastrear Orden [Ctr+Alt+R]',
+          tip: (_seccView.value == 'rastrear') ? 'Ver Fotos' : 'Rastrear Orden [Ctr+Alt+R]',
           fnc: () {
-            
+            _seccView.value = (_seccView.value == 'rastrear') ? 'fotos' : 'rastrear';
+            setState(() {});
           },
         ),
         _icoAction(
@@ -676,6 +705,12 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
       return data.first;
     }
     return null;
+  }
+
+  ///
+  Future<void> _getAllContacts() async {
+
+    print('ok');
   }
 
   ///

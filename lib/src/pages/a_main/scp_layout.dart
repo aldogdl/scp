@@ -80,7 +80,7 @@ class _ScpLayoutState extends State<ScpLayout> with WindowListener {
                   ]
                 ),
               ),
-              const StatusBarr()
+              StatusBarr()
             ],
           )
         ),
