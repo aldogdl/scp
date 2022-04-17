@@ -53,13 +53,40 @@ class SocketConn extends ChangeNotifier {
   }
 
   ///
+  String _msgCron = 'X';
+  String get msgCron => _msgCron;
+  void setMsgCronWithoutNotified(String msg) { _msgCron = msg; }
+  set msgCron(String msg) {
+    _msgCron = msg;
+    notifyListeners();
+  }
+
+  ///
+  List<Map<String, dynamic>> _manifests = [];
+  List<Map<String, dynamic>> get manifests => _manifests;
+  set manifests(List<Map<String, dynamic>> msg) {
+    _manifests = msg;
+    notifyListeners();
+  }
+  void addManifest(Map<String, dynamic> msg) {
+    _manifests.insert(0, msg);
+    notifyListeners();
+  }
+
+  /// Usado para notificar en el status bar un cambio de version del centinela
+  bool _alertCV = false;
+  bool get alertCV => _alertCV;
+  set alertCV(bool msg) {
+    _alertCV = msg;
+    notifyListeners();
+  }
+
+  ///
   String _msgErr = '';
   String get msgErr => _msgErr;
-  void setMsgWithoutNotified(String msg) {
+  void setMsgWithoutNotified(String msg) { _msgErr = msg; }
+  set msgErr(String msg) {
     _msgErr = msg;
-  }
-  set msgErr(String connected) {
-    _msgErr = connected;
     notifyListeners();
   }
 
@@ -244,7 +271,7 @@ class SocketConn extends ChangeNotifier {
     return event;
   }
 
-  ///
+  /// Return TRUE si ubo un error o los intentos se agotaron 
   Future<bool> awaitResponseSocket({
     required RequestEvent event,
     required String msgInit,
@@ -297,10 +324,17 @@ class SocketConn extends ChangeNotifier {
     }
 
     if(response.containsKey('event')) {
+      
       if(response['event'] == 'ping') {
         _msgErr = (response['fnc'] == 'ok') ? 'ping-ok' : 'ping-er';
         return;
       }
+
+      if(response['event'] == 'from_centinela') {
+        await _determinarFncCentinela(response['fnc'], Map<String, dynamic>.from(response['data']));
+        return;
+      }
+
       await _determinarFunction(response['fnc'], Map<String, dynamic>.from(response['data']));
       return;
     }
@@ -314,7 +348,7 @@ class SocketConn extends ChangeNotifier {
     switch (fnc) {
       case 'set_data_connx':
         _registrarVariablesDeUsuario(params);
-        _msgErr = (params.containsKey('err')) ? params['err'] : 'No Autorizado';
+        msgErr = (params.containsKey('err')) ? params['err'] : 'No Autorizado';
         break;
       case 'make_login':
         _registrarVariablesDeUsuario(params);
@@ -331,6 +365,24 @@ class SocketConn extends ChangeNotifier {
         break;
       case 'new_contact':
         msgErr = (params.containsKey('err')) ? 'new_contact-er' : 'new_contact-ok';
+        break;
+      default:
+        _msgErr = 'Sin Función';
+    }
+  }
+
+  ///
+  Future<void> _determinarFncCentinela(String fnc, Map<String, dynamic> params) async {
+
+    switch (fnc) {
+      case 'update':
+        msgCron =  'CAMBIO DE V: ${params['to_version']}';
+        alertCV = true;
+        addManifest(params);
+        msgErr = (params.containsKey('err')) ? params['err'] : 'ERROR al Descargar CENTINELA FILE';
+        break;
+      case 'cron':
+        msgCron =  '${params['time']} V: ${params['vers']}';
         break;
       default:
         _msgErr = 'Sin Acción';

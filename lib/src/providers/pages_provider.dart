@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 
 enum Paginas {
+  solicitudesNon,
   solicitudes,
   cotizadores,
   solicitantes,
@@ -9,6 +10,7 @@ enum Paginas {
 
 enum Consola {
   harbi,
+  centinela,
   alertas,
   errores,
   scm
@@ -25,6 +27,14 @@ class PageProvider extends ChangeNotifier {
   void resetPage() {
     _page = Paginas.solicitudes;
     _confSecction = 'home';
+  }
+
+  ///
+  bool _closeConsole = true;
+  bool get closeConsole => _closeConsole;
+  set closeConsole(bool isClose) {
+    _closeConsole = isClose;
+    notifyListeners();
   }
 
   Consola _consola = Consola.harbi;

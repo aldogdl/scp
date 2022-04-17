@@ -43,12 +43,4 @@ class WindowCnfProvider extends ChangeNotifier {
     _contentSize = Size(w, size.height);
     notifyListeners();
   }
-
-  ///
-  bool _closeConsole = true;
-  bool get closeConsole => _closeConsole;
-  set closeConsole(bool isClose) {
-    _closeConsole = isClose;
-    notifyListeners();
-  }
 }

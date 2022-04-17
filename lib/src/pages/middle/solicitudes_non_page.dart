@@ -7,15 +7,15 @@ import '../../config/sng_manager.dart';
 import '../../services/rutas/rutas_cache.dart';
 import '../../vars/globals.dart';
 
-class SolicitudesPage extends StatefulWidget {
+class SolicitudesNonPage extends StatefulWidget {
 
-  const SolicitudesPage({ Key? key }) : super(key: key);
+  const SolicitudesNonPage({ Key? key }) : super(key: key);
 
   @override
-  State<SolicitudesPage> createState() => _SolicitudesPageState();
+  State<SolicitudesNonPage> createState() => _SolicitudesNonPageState();
 }
 
-class _SolicitudesPageState extends State<SolicitudesPage> {
+class _SolicitudesNonPageState extends State<SolicitudesNonPage> {
 
   final Globals globals = getSngOf<Globals>();
   final RutasCache rutasCache = getSngOf<RutasCache>();
@@ -42,7 +42,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
             ),
             Expanded(
               child: LstOrdenes(
-                asignadas: true,
+                asignadas: false,
                 onLoading: (Map<String, dynamic> res) {
                   setState(() {
                     _isLoading = res['isLoading'];

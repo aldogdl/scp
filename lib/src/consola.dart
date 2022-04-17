@@ -6,6 +6,7 @@ import 'package:scp/src/pages/consola/harbi.dart';
 import 'package:scp/src/pages/consola/scm.dart';
 import 'package:scp/src/providers/pages_provider.dart';
 
+import 'pages/consola/centinela.dart';
 import 'providers/window_cnf_provider.dart';
 
 class ConsolaSide extends StatelessWidget {
@@ -86,6 +87,11 @@ class ConsolaSide extends StatelessWidget {
             isActive: (pageProvi.consola == Consola.harbi) ? true : false
           ),
           _btn(
+            label: 'Centinela',
+            fnc: () => pageProvi.consola = Consola.centinela,
+            isActive: (pageProvi.consola == Consola.centinela) ? true : false
+          ),
+          _btn(
             label: 'Alertas',
             fnc: () => pageProvi.consola = Consola.alertas,
             isActive: (pageProvi.consola == Consola.alertas) ? true : false
@@ -102,11 +108,11 @@ class ConsolaSide extends StatelessWidget {
           ),
           const Spacer(),
           IconButton(
-            onPressed: () => winCnf.closeConsole = true,
+            onPressed: () => pageProvi.closeConsole = true,
             icon: const Icon(Icons.cleaning_services_rounded, color: Colors.white, size: 15)
           ),
           IconButton(
-            onPressed: () => winCnf.closeConsole = true,
+            onPressed: () => pageProvi.closeConsole = true,
             icon: const Icon(Icons.close, color: Colors.white, size: 20)
           )
         ],
@@ -142,6 +148,9 @@ class ConsolaSide extends StatelessWidget {
     switch (pagina) {
       case Consola.harbi:
         child = const HarbiConsola();
+        break;
+      case Consola.centinela:
+        child = const CentinelaConsola();
         break;
       case Consola.alertas:
         child = const AlertasConsola();

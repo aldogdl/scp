@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scp/src/pages/content/c_config_page.dart';
+import 'package:scp/src/pages/content/c_solicitudes_non_page.dart';
 import 'package:scp/src/pages/widgets/windows_buttons.dart';
 import 'package:scp/src/providers/socket_conn.dart';
 import 'providers/pages_provider.dart';
@@ -55,7 +56,7 @@ class ContentSide extends StatelessWidget {
                 Consumer<PageProvider>(
                   builder: (_, PageProvider page, __) => _determinarWidget(page.page),
                 ),
-                if(!context.watch<WindowCnfProvider>().closeConsole)
+                if(!context.watch<PageProvider>().closeConsole)
                   const Positioned(
                     bottom: 0, left: 0,
                     child: ConsolaSide(),
@@ -71,12 +72,15 @@ class ContentSide extends StatelessWidget {
   ///
   Widget _head(BuildContext context) {
 
+    String titulo = context.watch<PageProvider>().page.name.toUpperCase();
+    titulo = (titulo == 'SOLICITUDESNON') ? 'SOLICITUDES SIN ASIGNAR' : titulo;
+
     return Row(
       children: [
         const SizedBox(width: 5),
         const Icon(Icons.pages, size: 20, color: Color.fromARGB(255, 33, 150, 243)),
         const SizedBox(width: 10),
-        _txt(label: context.watch<PageProvider>().page.name.toUpperCase()),
+        _txt(label: titulo),
         const Spacer(),
         ..._headSwithConnection(context),
         const SizedBox(width: 10),
@@ -137,6 +141,9 @@ class ContentSide extends StatelessWidget {
 
     late Widget child;
     switch (pagina) {
+      case Paginas.solicitudesNon:
+        child = const CSolicitudesNonPage();
+        break;
       case Paginas.solicitudes:
         child = const CSolicitudesPage();
         break;
@@ -153,4 +160,6 @@ class ContentSide extends StatelessWidget {
     }
     return child;
   }
+
+
 }

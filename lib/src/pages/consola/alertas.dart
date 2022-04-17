@@ -13,7 +13,7 @@ class _AlertasConsolaState extends State<AlertasConsola> {
   Widget build(BuildContext context) {
     
     return const SizedBox(
-      child: Text('alertas', style: TextStyle(color: Colors.white),),
+      child: Text('alertas', style: TextStyle(color: Colors.white)),
     );
   }
 }

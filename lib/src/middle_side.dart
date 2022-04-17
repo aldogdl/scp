@@ -4,6 +4,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:scp/src/pages/middle/config_page.dart';
 import 'package:scp/src/pages/middle/cotizadores_page.dart';
 import 'package:scp/src/pages/middle/solicitantes_page.dart';
+import 'package:scp/src/pages/middle/solicitudes_non_page.dart';
 import 'package:scp/src/pages/middle/solicitudes_page.dart';
 import 'package:scp/src/providers/pages_provider.dart';
 
@@ -73,6 +74,9 @@ class MiddleSide extends StatelessWidget {
 
     late Widget child;
     switch (pagina) {
+      case Paginas.solicitudesNon:
+        child = const SolicitudesNonPage();
+        break;
       case Paginas.solicitudes:
         child = const SolicitudesPage();
         break;

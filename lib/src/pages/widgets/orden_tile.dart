@@ -24,6 +24,24 @@ class OrdenTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
+    bool isVisible = true;
+    context.watch<ItemSelectGlobProvider>().ordenesAsignadas.forEach((idAvo, lstOrdenes) {
+      if(lstOrdenes.contains(orden.id)) {
+        isVisible = false;
+      }
+    });
+
+    return Visibility(
+      visible: isVisible,
+      child: Center(
+        child: _body(context),
+      ),
+    );
+  }
+
+  ///
+  Widget _body(BuildContext context) {
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: Selector<ItemSelectGlobProvider, int>(
@@ -66,7 +84,6 @@ class OrdenTile extends StatelessWidget {
       ),
     );
   }
-
   ///
   Widget _content() {
     

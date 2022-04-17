@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/pages/widgets/my_tool_tip.dart';
-import 'package:scp/src/providers/pages_provider.dart';
-import 'package:scp/src/vars/globals.dart';
 
+import 'config/sng_manager.dart';
+import 'pages/widgets/my_tool_tip.dart';
+import 'providers/pages_provider.dart';
+import 'vars/globals.dart';
 import 'providers/window_cnf_provider.dart';
 
 class ToolsBarr extends StatelessWidget {
@@ -21,6 +21,11 @@ class ToolsBarr extends StatelessWidget {
       color: context.read<WindowCnfProvider>().sidebarColor,
       child: Column(
         children: [
+          _btn(
+            tip: 'Solicitudes sin Asiganar', icono: Icons.extension_off_outlined,
+            isActive: (context.watch<PageProvider>().page == Paginas.solicitudesNon) ? true : false,
+            fnc: () => pageProvi.page = Paginas.solicitudesNon
+          ),
           _btn(
             tip: 'Solicitudes', icono: Icons.extension_outlined,
             isActive: (context.watch<PageProvider>().page == Paginas.solicitudes) ? true : false,

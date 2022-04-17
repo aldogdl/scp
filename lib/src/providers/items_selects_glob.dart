@@ -1,8 +1,8 @@
-
-
 import 'package:flutter/foundation.dart' show ChangeNotifier;
-import 'package:scp/src/entity/orden_entity.dart';
-import 'package:scp/src/entity/piezas_entity.dart';
+
+import '../entity/contacto_entity.dart';
+import '../entity/orden_entity.dart';
+import '../entity/piezas_entity.dart';
 
 class ItemSelectGlobProvider extends ChangeNotifier {
 
@@ -11,6 +11,7 @@ class ItemSelectGlobProvider extends ChangeNotifier {
     _idPzaSelect = -1;
     _piezas = [];
     _fotosByPiezas = [];
+    _ordenesAsignadas = {};
   }
 
   ///
@@ -30,6 +31,60 @@ class ItemSelectGlobProvider extends ChangeNotifier {
   int get idPzaSelect => _idPzaSelect;
   set idPzaSelect(int id) {
     _idPzaSelect = id;
+    notifyListeners();
+  }
+
+  ///
+  List<ContactoEntity> _avos = [];
+  List<ContactoEntity> get avos => _avos;
+  set avos(List<ContactoEntity> avoslst) {
+    _avos = avoslst;
+    notifyListeners();
+  }
+
+  ///
+  Map<int, List<int>> _ordenesAsignadas = {};
+  Map<int, List<int>> get ordenesAsignadas => _ordenesAsignadas;
+  set ordenesAsignadas(Map<int, List<int>> ordenlst) {
+    _ordenesAsignadas = ordenlst;
+    notifyListeners();
+  }
+
+  ///
+  void ordenesAsignadasInsert(int idAvo, int idOrden) {
+
+    if(_ordenesAsignadas.containsKey(idAvo)) {
+      _ordenesAsignadas[idAvo]!.insert(0, idOrden);
+    }else{
+      _ordenesAsignadas.putIfAbsent(idAvo, () => [idOrden]);
+    }
+    notifyListeners();
+  }
+
+  ///
+  void ordenesAsignadasRemove(int idAvo, int idOrden) {
+    if(_ordenesAsignadas.containsKey(idAvo)) {
+      _ordenesAsignadas[idAvo]!.remove(idOrden);
+      if(_ordenesAsignadas[idAvo]!.isEmpty) {
+        _ordenesAsignadas.remove(idAvo);
+      }
+    }
+    notifyListeners();
+  }
+
+  ///
+  List<OrdenEntity> _ordenes = [];
+  List<OrdenEntity> get ordenes => _ordenes;
+  set ordenes(List<OrdenEntity> ordenlst) {
+    _ordenes = ordenlst;
+    notifyListeners();
+  }
+
+  ///
+  set ordenInsert(Map<String, dynamic> ordenlst) {
+    final ord = OrdenEntity();
+    ord.fromServer(ordenlst);
+    _ordenes.insert(0, ord);
     notifyListeners();
   }
 

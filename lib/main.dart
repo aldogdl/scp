@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:scp/src/providers/centinela_file_provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/pages/a_main/scp_layout.dart';
@@ -46,6 +47,7 @@ class ProvidersConfig extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PageProvider()),
         ChangeNotifierProvider(create: (_) => SocketConn()),
         ChangeNotifierProvider(create: (_) => ItemSelectGlobProvider()),
+        ChangeNotifierProvider(create: (_) => CentinelaFileProvider()),
       ],
       child: MaterialApp(
         scrollBehavior: MyCustomScrollBehavior(),
