@@ -43,30 +43,13 @@ class ContactoEntity {
   }
 
   ///
-  Map<String, dynamic> toJsonForAdmin(List<Map<String, dynamic>> cargos, {bool isAdmin = false}) {
+  Map<String, dynamic> toJsonForAdminUser() {
     
-    String role = 'ROLE_AVO';
-    String admin = 'ROLE_ADMIN';
-    final strR = cargos.where((element) => element['tit'] == cargo);
-    if(strR.isNotEmpty) {
-      role = strR.first['role'];
-    }
-    List<String> losRoles = [role];
-    if(isAdmin) {
-      if(!losRoles.contains(admin)) {
-        losRoles.add(admin);
-      }
-    }else{
-      if(losRoles.contains(admin)) {
-        losRoles.remove(admin);
-      }
-    }
-
     return {
       'id': id,
       'empresaId': 1,
       'curc': curc,
-      'roles': losRoles,
+      'roles': roles,
       'password': (password.isEmpty) ? '1234567' : password,
       'nombre': nombre,
       'isCot': false,

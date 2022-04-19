@@ -44,10 +44,12 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   bool _hasErrorSave = false;
   bool _absClickAvo = false;
   bool _isLoad = false;
+  int _isValidTarger = 0;
   Map<String, List<OrdenEntity>> _ordenesAvo = {};
-  
+  dynamic _dataSaving;
+  CPush _cpushOrden = CPush.asignacion;
   String _portadaTipo = 'sin_data';
-
+  String _acc = 'Se Asignaron nuevas Ordenes';
   final String _msg = 'Al seleccionar un Asesor de Ventas OnLine, podrás enlistar '
   'todas las  ORDENES con las que cuenta actualmente.';
 
@@ -120,13 +122,18 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
             msg: 'Desasiganar',
             isActive: isActive,
             icono: Icons.cut_outlined, bg: const Color.fromARGB(255, 117, 8, 0),
-            fnc: () async => await _desasignarOrden()
+            fnc: () async => await _desasignarOrden(itemProv.idOrdenSelect)
           ),
           _iconAcc(
             msg: 'Guardar Cambios',
             isActive: isActive,
             icono: Icons.save, bg: const Color.fromARGB(255, 60, 47, 97),
-            fnc: () async => await _guardarAsignacion()
+            fnc: () async {
+              _acc = 'Se Asignaron nuevas Ordenes';
+              _cpushOrden = CPush.asignacion;
+              _dataSaving = itemProv.ordenesAsignadas;
+              await _guardarAsignacion();
+            }
           ),
         ],
       )
@@ -214,7 +221,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () => _seleccionandoAvo(index),
+                  onDoubleTap: () => _seleccionandoAvo(index),
                   child: Center(
                     child: _tileAvo(index),
                   ),
@@ -370,7 +377,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
                 setState(() {});
               },
               child: Center(
-                child: _tileOrdenesAsig(items[index]),
+                child: _tileOrdenesAsig(items[index], from),
               ),
             ),
           );
@@ -384,46 +391,80 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
     double op = (_idAvoSelect == itemProv.avos[index].id) ? 0 : 0.05;
     Color cb = (_idAvoSelect == itemProv.avos[index].id) ? const Color.fromARGB(255, 30, 154, 255) : Colors.grey.withOpacity(0.5);
-    
-    return Container(
-      padding: const EdgeInsets.all(8),
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        border: Border.all(color: cb, width: 0.5),
-        color: Colors.white.withOpacity(op)
-      ),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Texto(txt: itemProv.avos[index].nombre, sz: 16, txtC: Colors.white),
-          ),
-          const Divider(color: Colors.grey),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Texto(txt: itemProv.avos[index].curc),
-              const Spacer(),
-              const Texto(txt: 'Ords: ', sz: 12),
-              _chip(
-                label: _centiProv.getCantOrdenesDelAvo(
-                  itemProv.avos[index].id,
-                  recientes: (itemProv.ordenesAsignadas.containsKey(itemProv.avos[index].id))
-                    ? itemProv.ordenesAsignadas[itemProv.avos[index].id]!.length : 0
-                )
+
+    return DragTarget<int>(
+      key: Key('$index'),
+      onAccept: (int? idOrden) async {
+
+        List<int> noAceptar = [];
+        if(_ordenesAvo.isNotEmpty) {
+          if(_ordenesAvo.containsKey('${itemProv.avos[index].id}')) {
+            noAceptar = _ordenesAvo['${itemProv.avos[index].id}']!.map((e) => e.id).toList();
+          }
+        }
+
+        if(!noAceptar.contains(idOrden)) {
+          setState(() { _isValidTarger = 1; });
+          Future.delayed(const Duration(milliseconds: 1000), (){
+            setState(() { _isValidTarger = 0; });
+          });
+          await _reasignarOrdenTo(idOrden!, itemProv.avos[index].id);
+        }else{
+          setState(() { _isValidTarger = 2; });
+          Future.delayed(const Duration(milliseconds: 1000), (){
+            setState(() { _isValidTarger = 0; });
+          });
+        }
+      },
+      builder: (_, __, ___) {
+        
+        return MyToolTip(
+          msg: 'Dbl. click para Seleccionar',
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            margin: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: cb,
+                width: 0.5
               ),
-              const SizedBox(width: 10),
-              const Texto(txt: 'Pzs: ', sz: 12),
-              _chip(label: _centiProv.getCantDePiezasDelAvo(itemProv.avos[index].id), bg: Colors.red)
-            ],
-          ),
-        ]
-      ),
+              color: Colors.white.withOpacity(op)
+            ),
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Texto(txt: itemProv.avos[index].nombre, sz: 16, txtC: Colors.white),
+                ),
+                const Divider(color: Colors.grey),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Texto(txt: itemProv.avos[index].curc),
+                    const Spacer(),
+                    const Texto(txt: 'Ords: ', sz: 12),
+                    _chip(
+                      label: _centiProv.getCantOrdenesDelAvo(
+                        itemProv.avos[index].id,
+                        recientes: (itemProv.ordenesAsignadas.containsKey(itemProv.avos[index].id))
+                          ? itemProv.ordenesAsignadas[itemProv.avos[index].id]!.length : 0
+                      )
+                    ),
+                    const SizedBox(width: 10),
+                    const Texto(txt: 'Pzs: ', sz: 12),
+                    _chip(label: _centiProv.getCantDePiezasDelAvo(itemProv.avos[index].id), bg: Colors.red)
+                  ],
+                ),
+              ]
+            )
+          )
+        );
+      },
     );
   }
 
   ///
-  Widget _tileOrdenesAsig(OrdenEntity orden) {
+  Widget _tileOrdenesAsig(OrdenEntity orden, String from) {
 
     Widget sp10 = const SizedBox(width: 10);
     double op = (itemProv.idOrdenSelect == orden.id) ? 0 : 0.05;
@@ -459,15 +500,42 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              IconButton(
-                padding: const EdgeInsets.all(0),
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(
-                  maxWidth: 18, maxHeight: 18
+              if(from != 'bottom')
+                IconButton(
+                  padding: const EdgeInsets.all(0),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(
+                    maxWidth: 18, maxHeight: 18
+                  ),
+                  onPressed: () async => await _desasignarOrden(orden.id),
+                  icon: const Icon(Icons.cut, color: Color.fromARGB(255, 255, 126, 117), size: 18)
+                )
+              else
+                MyToolTip(
+                  msg: 'Arrastra para Reasignar',
+                  child: Draggable<int>(
+                    data: orden.id,
+                    child: (_isValidTarger == 0)
+                    ? const Icon(Icons.rotate_left_rounded, color: Color.fromARGB(255, 255, 126, 117), size: 18)
+                    : (_isValidTarger == 1)
+                      ? const Icon(Icons.check_circle_outlined, color: Colors.blue, size: 18)
+                      : const Icon(Icons.warning_amber, color: Colors.orange, size: 18),
+                    childWhenDragging: _chip(label: '${orden.id}', bg: const Color.fromARGB(255, 231, 175, 6)),
+                    feedback: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 231, 175, 6),
+                        borderRadius: BorderRadius.circular(50)
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.rotate_left_rounded, color: Color.fromARGB(255, 0, 0, 0), size: 18),
+                          Texto(txt: 'Reasignar la Orden ${orden.id} a...', txtC: Colors.black, isBold: true)
+                        ],
+                      )
+                    ),
+                  )
                 ),
-                onPressed: () async => await _desasignarOrden(),
-                icon: const Icon(Icons.cut, color: Color.fromARGB(255, 255, 126, 117), size: 18)
-              ),
               const SizedBox(width: 10),
               const Texto(txt: 'ID: ', sz: 12),
               _chip(label: '${orden.id}', bg: Colors.white.withOpacity(0.1)),
@@ -642,6 +710,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       winCnf = context.read<WindowCnfProvider>();
       itemProv = context.read<ItemSelectGlobProvider>();
       _centiProv = context.read<CentinelaFileProvider>();
+      itemProv.avos.clear();
     }
 
     if(itemProv.avos.isEmpty) {
@@ -666,13 +735,14 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   }
 
   ///
-  Future<void> _desasignarOrden() async {
+  Future<void> _desasignarOrden(int idOrden) async {
+
     const msg = 'Estás segur@ de quitar esta orden al Asesor de Ventas OnLine?';
     bool? acc = await _showAlert(
-      titulo: 'DESASIGNAR ORDEN RECIENTE', msg: msg, withYesOrNot: true
+      titulo: 'DESASIGNAR ORDEN RECIENTE', msg: msg, onlyAlert: false, withYesOrNot: true
     );
     if(acc ?? false) {
-      itemProv.ordenesAsignadasRemove(_idAvoSelect, itemProv.idOrdenSelect);
+      itemProv.ordenesAsignadasRemove(_idAvoSelect, idOrden);
       setState(() {});
     }
   }
@@ -723,6 +793,26 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   }
 
   ///
+  Future<void> _reasignarOrdenTo(int idOrden, int idAvo) async {
+
+    String msg = '';
+    if(itemProv.ordenesAsignadas.isNotEmpty) {
+      msg = 'Para reasignar una orden, es necesario primeramente terminar con '
+      'el proceso actual de asignación, y posteriormente proceguir con esta operación.';
+    }
+
+    if(msg.isNotEmpty) {
+      _showAlert(titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg);
+      return;
+    }
+
+    _acc = 'Se Reasignó la Orden $idOrden al AVO con el ID: $idAvo';
+    _dataSaving = [idAvo, idOrden];
+    _cpushOrden = CPush.reasignacion;
+    await _guardarAsignacion();
+  }
+
+  ///
   Future<void> _guardarAsignacion() async {
 
     String msg = '';
@@ -730,9 +820,11 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       msg = 'No existen los datos referenciales acerca de un historial de seguimiento '
       'de piezas, LOS DATOS DEL CENTINELA ESTÁN BACÍOS';
     }
-    if(itemProv.ordenesAsignadas.isEmpty) {
-      msg = 'No hay ningúna ORDEN actualmente dentro de la lista de asignaciones '
-      'por favor, selecciona una orden y asignala a un AVO.';
+    if(_cpushOrden != CPush.reasignacion) {
+      if(itemProv.ordenesAsignadas.isEmpty) {
+        msg = 'No hay ningúna ORDEN actualmente dentro de la lista de asignaciones '
+        'por favor, selecciona una orden y asignala a un AVO.';
+      }
     }
 
     if(msg.isNotEmpty) {
@@ -743,7 +835,10 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     msg = 'Estas a punto de modificar datos en el sistema general realizando '
     'cambios importantes en la Base de Datos y demás sistemas.\n¿Estás '
     'segur@ de querer continuar?.';
-    bool? acc = await _showAlert(titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg, withYesOrNot: true);
+    bool? acc = await _showAlert(
+      titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg, onlyAlert: false, withYesOrNot: true
+    );
+    
     acc = (acc == null) ? false : acc;
     if(acc) {
       acc = null;
@@ -832,52 +927,31 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
   ///
   Stream<String> _saving() async* {
-
-    yield 'Preparando datos....';
-    await _centiProv.commit(CPush.asignacion, itemProv.ordenesAsignadas);
+    
+    yield 'Preparando datos...';
+    await _centiProv.commit(_cpushOrden, _dataSaving);
     _centiProv.updateVersion();
-    await Future.delayed(const Duration(seconds: 1));
-    // yield 'Guardando datos en Servidor REMOTO';
-    // await _centiProv.push(CPush.asignacion, isLocal: false);
-    yield 'Guardando datos en Servidor LOCAL';
+    Future.delayed(const Duration(milliseconds: 500));
+    
     _centiProv.setManifest(
       sendId: globals.idUser,
       sendFrom: context.read<SocketConn>().username,
       toVersion: int.parse('${_centiProv.centinela['version']}'),
-      message: 'Se Asignaron nuevas Ordenes'
+      message: _acc
     );
-    await _centiProv.push(CPush.asignacion, isLocal: true);
+    yield 'Guardando datos en Servidor REMOTO';
+    await _centiProv.push(_cpushOrden, isLocal: false);
+    yield 'Guardando datos en Servidor LOCAL';
+    await _centiProv.push(_cpushOrden, isLocal: true);
+    
     if(!_centiProv.result['abort']) {
 
-      // Enviamos las ordenes asignadas a la parte inferior de la pantalla
-      itemProv.ordenesAsignadas.forEach((idAvo, ordenesAsign) {
+      if(_cpushOrden == CPush.asignacion) {
+        _enviarAbajoLasOrdenesAsignadas();
+        yield 'Limpiando Cache';
+        _limpiandoCache();
+      }
 
-        // Convertir los ids en Entitys
-        List<OrdenEntity> nords = [];
-        for (var i = 0; i < ordenesAsign.length; i++) {
-          nords.add(
-            itemProv.ordenes.firstWhere((element) => element.id == ordenesAsign[i])
-          );
-        }
-
-        if(_ordenesAvo.containsKey('$idAvo')) {
-          _ordenesAvo['$idAvo']!.insertAll(0, nords);
-        }else{
-          _ordenesAvo.putIfAbsent('$idAvo', () => nords);
-        }
-      });
-
-      yield 'Limpiando Cache';
-
-      // Eliminamos las ordenes asignadas tambien en la variable _ordenes.
-      itemProv.ordenesAsignadas.forEach((idAvo, ordenes) {
-        List<OrdenEntity> lstOld = List<OrdenEntity>.from(itemProv.ordenes);
-        for (var i = 0; i < ordenes.length; i++) {
-          lstOld.removeWhere((element) => element.id == ordenes[i]);
-        }
-        itemProv.ordenes = List<OrdenEntity>.from(lstOld);
-        lstOld = [];
-      });
       await _getOrdenesByAvo(force: true);
       // Limpiamos las ordenes asignadas
       itemProv.ordenesAsignadas = {};
@@ -892,10 +966,17 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     required String titulo,
     required String msg,
     bool withYesOrNot = false,
+    bool onlyAlert = true,
+    bool onlyYES = false,
+    String msgOnlyYes = 'SI',
   }) async {
 
     return await WidgetsAndUtils.showAlert(
-      context, titulo: titulo, msg: msg, withYesOrNot: withYesOrNot
+      context, titulo: titulo, msg: msg,
+      onlyAlert: onlyAlert,
+      msgOnlyYes: msgOnlyYes,
+      onlyYES: onlyYES,
+      withYesOrNot: withYesOrNot
     );
   }
 
@@ -940,4 +1021,37 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     });
   }
 
+  /// Enviamos las ordenes asignadas a la parte inferior de la pantalla
+  void _enviarAbajoLasOrdenesAsignadas() {
+
+    itemProv.ordenesAsignadas.forEach((idAvo, ordenesAsign) {
+
+      // Convertir los ids en Entitys
+      List<OrdenEntity> nords = [];
+      for (var i = 0; i < ordenesAsign.length; i++) {
+        nords.add(
+          itemProv.ordenes.firstWhere((element) => element.id == ordenesAsign[i])
+        );
+      }
+
+      if(_ordenesAvo.containsKey('$idAvo')) {
+        _ordenesAvo['$idAvo']!.insertAll(0, nords);
+      }else{
+        _ordenesAvo.putIfAbsent('$idAvo', () => nords);
+      }
+    });
+  }
+
+  /// Eliminamos las ordenes asignadas tambien en la variable _ordenes.
+  void _limpiandoCache() {
+
+    itemProv.ordenesAsignadas.forEach((idAvo, ordenes) {
+      List<OrdenEntity> lstOld = List<OrdenEntity>.from(itemProv.ordenes);
+      for (var i = 0; i < ordenes.length; i++) {
+        lstOld.removeWhere((element) => element.id == ordenes[i]);
+      }
+      itemProv.ordenes = List<OrdenEntity>.from(lstOld);
+      lstOld = [];
+    });
+  }
 }

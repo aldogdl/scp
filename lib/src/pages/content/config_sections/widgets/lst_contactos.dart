@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/entity/request_event.dart';
 import 'package:scp/src/pages/content/config_sections/widgets/decoration_field.dart';
+import 'package:scp/src/services/get_content_files.dart';
 
 import '../../../../entity/contacto_entity.dart';
 import '../../../../providers/socket_conn.dart';
@@ -163,7 +165,8 @@ class _LstContactosState extends State<LstContactos> {
         visualDensity: VisualDensity.compact,
         icon: const Icon(Icons.delete, size: 18, color: Colors.red),
         onPressed: () async {
-          final acc = await _isShuredeleteContact();
+          bool? acc = await _isShuredeleteContact();
+          acc = (acc == null) ? false : acc;
           if(acc) {
             _deleteContact(_contacts.value[index].id);
           }
@@ -221,11 +224,11 @@ class _LstContactosState extends State<LstContactos> {
   }) => Texto(txt: 'id: $id', sz: 12, isBold: true, txtC: Colors.orange);
 
   ///
-  Future<bool> _isShuredeleteContact() async {
+  Future<bool?> _isShuredeleteContact() async {
 
     String msg = 'Estás a punto de eliminar permanentemente los datos del contacto '
-    'seleccionado, esta acción borrará dicha imformación de nuestras bases de datos '
-    'permanentemente sin poder recuperala posteriormente.';
+    'seleccionado. Ésta acción borrará dicha información de nuestras bases de datos '
+    'permanentemente sin poder recuperarla posteriormente.';
 
     return await showDialog(
       context: context,
@@ -288,7 +291,7 @@ class _LstContactosState extends State<LstContactos> {
   ///
   Future<void> _deleteContact(int idContac) async {
 
-    String element = (widget.isAdmin) ? 'ADMINISTRADOR' : 'CONTACTO';
+    String element = (widget.isAdmin) ? 'COLABORADOR' : 'CONTACTO';
 
     late ContactoEntity contactDel;
     final ctD = _contacts.value.where((element) => element.id == idContac);
@@ -327,6 +330,9 @@ class _LstContactosState extends State<LstContactos> {
       if(contactDel.curc.startsWith('snet')) {
         _cantSols--;
       }
+
+      // -- borrar contacto del historial de logins.
+      await GetContentFile.deleteRegOfLogin(contactDel.curc);
     }
   }
 
@@ -355,7 +361,7 @@ class _LstContactosState extends State<LstContactos> {
     List<ContactoEntity> losCon = [];
     await _contacEm.getAllContacts(tipo: (widget.isAdmin) ? 'anet' : 'noAdmin');
     final provi = context.read<SocketConn>();
-    String msg =  'RECUPERANDO ${ (widget.isAdmin) ? 'ADMINISTRADORES' : 'CONTACTOS' }';
+    String msg =  'RECUPERANDO ${ (widget.isAdmin) ? 'COLABORADORES' : 'CONTACTOS' }';
     provi.msgErr = msg;
     _cantCots = 0;
     _cantSols = 0;

@@ -42,6 +42,7 @@ class _AdminUsersState extends State<AdminUsers> {
   bool _isAbsorbing = false;
   bool _showPass = true;
   bool _isAdmin = false;
+  bool _isAVO = false;
   int _idContac = 0;
   late Future<void> _getMetas;
 
@@ -82,47 +83,28 @@ class _AdminUsersState extends State<AdminUsers> {
                 policy: OrderedTraversalPolicy(),
                 child: Column(
                   children: [
-                    const Texto(txt: 'GESTIONA ADMINISTRATIVOS', txtC: Colors.white, isBold: true),
+                    const Texto(txt: 'GESTIONA DATOS DE COLABORADORES', txtC: Colors.white, isBold: true),
                     const SizedBox(height: 26),
-                    const Texto(txt: 'DATOS DE COLABORADORES', txtC: Colors.green, isBold: true),
+                    const Texto(txt: 'CAPTURA LA INFORMACIÓN SOLICITADA', txtC: Colors.green, isBold: true),
                     const Divider(color: Colors.grey),
-                    const SizedBox(height: 21),
+                    const SizedBox(height: 20),
                     _frm(),
+                    const SizedBox(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Texto(txt: 'Puede fungir como Administradora?', txtC: Colors.white),
-                        Checkbox(
-                          value: _isAdmin,
-                          checkColor: Colors.black,
-                          onChanged: (val) {
-                            setState(() {
-                              _isAdmin = val ?? false;
-                            });
-                          }
-                        ),
+                        _isAdminAndAvo(),
                         const Spacer(),
-                        FocusTraversalOrder(
-                          order: const NumericFocusOrder(11),
-                          child: AbsorbPointer(
-                            absorbing: _isAbsorbing,
-                            child: ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all(
-                                  (_isAbsorbing) ? Colors.black : Colors.blue
-                                )
-                              ),
-                              onPressed: () => _saveData(),
-                              child: const Texto(txt: 'Continuar', txtC: Colors.black)
-                            ),
-                          )
-                        ),
-                        const SizedBox(width: 10),
+                        _btnSend(),
                         if(_isAbsorbing)
-                          const SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(),
-                          )
+                          ...[
+                            const SizedBox(width: 10),
+                            const SizedBox(
+                              width: 20, height: 20,
+                              child: CircularProgressIndicator(),
+                            )
+                          ]
                         else
                           const SizedBox(width: 20),
                       ],
@@ -147,32 +129,11 @@ class _AdminUsersState extends State<AdminUsers> {
         ),
         ValueListenableBuilder<bool>(
           valueListenable: _refreshList,
-          builder: (_, refresh, __) {
-
-            return LstContactos(
-              refresh: refresh,
-              isAdmin: true,
-              onTap: (contac, acc) {
-                switch (acc) {
-                  case 'hidratarScreen':
-                    _contact = contac;
-                    _hidratarScreenByIdContact();
-                    break;
-                  case 'clear':
-                    _resetScreen();
-                    break;
-                  case 'add':
-                    _resetScreen();
-                    _userFcs.requestFocus();
-                    break;
-                  default:
-                    _contact = contac;
-                    _hidratarScreenByIdContact();
-                    break;
-                }
-              },
-            );
-          }
+          builder: (_, refresh, __) => LstContactos(
+            refresh: refresh,
+            isAdmin: true,
+            onTap: (contac, acc) => _accContactos(contac, acc),
+          )
         )
       ],
     );
@@ -308,6 +269,84 @@ class _AdminUsersState extends State<AdminUsers> {
   }
 
   ///
+  Widget _isAdminAndAvo() {
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Texto(txt: 'Puede fungir como:', txtC: Colors.blue),
+        Row(
+          children: [
+            const Texto(txt: 'Administrador', txtC: Colors.white),
+            Checkbox(
+              value: _isAdmin,
+              checkColor: Colors.black,
+              onChanged: (val) {
+                setState(() {
+                  _isAdmin = val ?? false;
+                });
+              }
+            ),
+            const SizedBox(width: 10),
+            const Texto(txt: 'Asesor de Ventas OnLine', txtC: Colors.white),
+            Checkbox(
+              value: _isAVO,
+              checkColor: Colors.black,
+              onChanged: (val) {
+                setState(() {
+                  _isAVO = val ?? false;
+                });
+              }
+            ),
+          ],
+        )
+      ],
+    );
+  }
+  
+  ///
+  Widget _btnSend() {
+
+    return FocusTraversalOrder(
+      order: const NumericFocusOrder(11),
+      child: AbsorbPointer(
+        absorbing: _isAbsorbing,
+        child: ElevatedButton(
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(
+              (_isAbsorbing) ? Colors.black : Colors.blue
+            )
+          ),
+          onPressed: () => _saveData(),
+          child: const Texto(txt: 'CONTINUAR', txtC: Colors.black)
+        ),
+      )
+    );
+  }
+
+  ///
+  void _accContactos(ContactoEntity contac, String acc) {
+
+    switch (acc) {
+      case 'hidratarScreen':
+        _contact = contac;
+        _hidratarScreenByIdContact();
+        break;
+      case 'clear':
+        _resetScreen();
+        break;
+      case 'add':
+        _resetScreen();
+        _userFcs.requestFocus();
+        break;
+      default:
+        _contact = contac;
+        _hidratarScreenByIdContact();
+        break;
+    }
+  }
+
+  ///
   Future<void> _getDatosMeta() async {
 
     final tCargos = await GetContentFile.roles();
@@ -318,24 +357,6 @@ class _AdminUsersState extends State<AdminUsers> {
         }
       }).toList();
       _cargoSelect = cargos.first['tit'];
-    }
-  }
-
-  ///
-  void _hidratarScreenByIdContact() {
-
-    if(_contact != null) {
-      if(_contact!.id == 0){
-        _resetScreen();
-      }
-      _usernameCtrl.text = _contact!.nombre;
-      _celCtrl.text = _contact!.celular;
-      _passwordCtrl.text = 'same-password';
-      _idContac = _contact!.id;
-      _cargoSelect = _contact!.cargo;
-      _isAdmin = (_contact!.roles.contains('ROLE_ADMIN')) ? true : false;
-
-      setState(() {});
     }
   }
 
@@ -353,7 +374,7 @@ class _AdminUsersState extends State<AdminUsers> {
 
       provi.msgErr = 'Actualizando datos directamente en el Servidor'; 
       ContactoEntity cont = _hidratarContactoFromScreen();
-      final data = cont.toJsonForAdmin(cargos, isAdmin: _isAdmin);
+      final data = cont.toJsonForAdminUser();
       
       setState(() { _isAbsorbing = true; });
 
@@ -368,7 +389,7 @@ class _AdminUsersState extends State<AdminUsers> {
         cont.id  = _contacEm.result['body']['c'];
         cont.curc= _contacEm.result['body']['curc'];
         _idContac= cont.id;
-        await _updateDataBaseLocal(cont.toJsonForAdmin(cargos, isAdmin: _isAdmin));
+        await _updateDataBaseLocal(cont.toJsonForAdminUser());
       }
     }
   }
@@ -417,8 +438,28 @@ class _AdminUsersState extends State<AdminUsers> {
     _usernameCtrl.text = '';
     _celCtrl.text = '';
     _isAdmin = false;
+    _isAVO = false;
     _passwordCtrl.text = '1234567';
     _cargoSelect = cargos.first['tit'];
+  }
+
+  ///
+  void _hidratarScreenByIdContact() {
+
+    if(_contact != null) {
+      if(_contact!.id == 0){
+        _resetScreen();
+      }
+      _usernameCtrl.text = _contact!.nombre;
+      _celCtrl.text = _contact!.celular;
+      _passwordCtrl.text = 'same-password';
+      _idContac = _contact!.id;
+      _cargoSelect = _contact!.cargo;
+      _isAdmin = (_contact!.roles.contains('ROLE_ADMIN')) ? true : false;
+      _isAVO = (_contact!.roles.contains('ROLE_AVO')) ? true : false;
+
+      setState(() {});
+    }
   }
 
   ///
@@ -429,9 +470,35 @@ class _AdminUsersState extends State<AdminUsers> {
       ent.id = _idContac;
     }
     ent.nombre = _usernameCtrl.text.toUpperCase().trim();
-    ent.cargo  = _cargoSelect;
     ent.celular= _celCtrl.text.trim();
     ent.password = _passwordCtrl.text.trim();
+
+    ent.cargo  = _cargoSelect;
+    String role = '';
+    String roleAvo = 'ROLE_AVO';
+    String admin = 'ROLE_ADMIN';
+    final strR = cargos.where((element) => element['tit'] == _cargoSelect);
+    if(strR.isNotEmpty) {
+      role = strR.first['role'];
+    }
+
+    List<String> losRoles = [];
+    if(role.isNotEmpty) {
+      if(!losRoles.contains(role)) {
+        losRoles.add(role);
+      }
+    }
+    if(_isAdmin) {
+      if(!losRoles.contains(admin)) {
+        losRoles.add(admin);
+      }
+    }
+    if(_isAVO) {
+      if(!losRoles.contains(roleAvo)) {
+        losRoles.add(roleAvo);
+      }
+    }
+    ent.roles = (losRoles.isEmpty) ? [roleAvo] : losRoles;
     return ent;
   }
 

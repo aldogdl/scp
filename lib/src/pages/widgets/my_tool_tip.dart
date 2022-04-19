@@ -14,6 +14,7 @@ class MyToolTip extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Tooltip(
+      waitDuration: const Duration(milliseconds: 500),
       message: msg,
         decoration: BoxDecoration(
         color: Colors.black,

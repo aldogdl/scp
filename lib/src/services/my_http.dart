@@ -38,7 +38,13 @@ class MyHttp {
 
     req.headers.addAll(headers);
     req.fields['data'] = json.encode(data);
-    http.Response response = await http.Response.fromStream(await req.send());
+    late http.Response response;
+    try {
+      response = await http.Response.fromStream(await req.send());
+    } catch (e) {
+      result = {'abort':true, 'msg': e.toString(), 'body':'ERROR, Sin conección al servidor, intentalo nuevamente.'};
+      return;
+    }
 
     if(response.statusCode == 200) {
       clean();

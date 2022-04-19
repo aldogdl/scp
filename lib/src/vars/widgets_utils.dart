@@ -5,6 +5,39 @@ import '../pages/widgets/texto.dart';
 class WidgetsAndUtils {
 
   ///
+  static Future<bool?> showAlertBody(BuildContext context, {
+    required String titulo,
+    required Widget body,
+    bool onlyAlert = true,
+    bool withYesOrNot = false,
+    bool onlyYES = false,
+    String msgOnlyYes = 'SI',
+  }) async {
+
+    return showDialog<bool?>(
+      context: context,
+      builder: (_) => AlertDialog(
+        contentPadding: const EdgeInsets.all(0),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+              child: Texto(txt: titulo, sz: 19, isBold: true, isCenter: true, txtC: Colors.white),
+            ),
+            const Divider(),
+            body
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: (onlyAlert) ? null : _acctiones(context, withYesOrNot, onlyYES, msgOnlyYes),
+      )
+    );
+  }
+
+  ///
   static Future<bool?> showAlert(BuildContext context, {
     required String titulo,
     required String msg,
@@ -15,25 +48,25 @@ class WidgetsAndUtils {
   }) async {
 
     return showDialog<bool?>(
-        context: context,
-        builder: (_) => AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Texto(txt: titulo, sz: 19, isBold: true, isCenter: true, txtC: Colors.white),
-              const Divider(),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.33,
-                child: Texto(txt: msg, isCenter: true, sz: 17),
-              )
-            ],
-          ),
-          actionsAlignment: MainAxisAlignment.spaceEvenly,
-          actions: (!onlyAlert) ? null : _acctiones(context, withYesOrNot, onlyYES, msgOnlyYes),
-        )
-      );
+      context: context,
+      builder: (_) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Texto(txt: titulo, sz: 19, isBold: true, isCenter: true, txtC: Colors.white),
+            const Divider(),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.33,
+              child: Texto(txt: msg, isCenter: true, sz: 17),
+            )
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: (onlyAlert) ? null : _acctiones(context, withYesOrNot, onlyYES, msgOnlyYes),
+      )
+    );
   }
 
   ///

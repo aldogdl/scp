@@ -1,6 +1,5 @@
-import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show ChangeNotifier;
@@ -9,7 +8,8 @@ import 'package:scp/src/services/my_http.dart';
 import '../services/get_paths.dart';
 
 enum CPush {
-  asignacion
+  asignacion,
+  reasignacion
 }
 
 class CentinelaFileProvider extends ChangeNotifier {
@@ -50,18 +50,21 @@ class CentinelaFileProvider extends ChangeNotifier {
     };
   }
   
-  /// guardamos los cambios solo en memoria.
+  /// ->Guardamos los cambios solo en memoria.
   Future<void> commit(CPush msg, dynamic data) async {
 
     switch (msg) {
       case CPush.asignacion:
         await _persistAsignacion(Map<int, List<int>>.from(data));
         break;
+      case CPush.reasignacion:
+        await _persistReasignacion(List<int>.from(data));
+        break;
       default:
     }
   }
 
-  /// Enviamos los cambio realizados a los servidores.
+  /// ->Enviamos los cambio realizados a los servidores.
   Future<void> push(CPush to, {bool isLocal = true}) async {
 
     if(manifest.isEmpty) {
@@ -70,6 +73,9 @@ class CentinelaFileProvider extends ChangeNotifier {
 
     switch (to) {
       case CPush.asignacion:
+        await _saveToServerAsignaciones(isLocal);
+        break;
+      case CPush.reasignacion:
         await _saveToServerAsignaciones(isLocal);
         break;
       default:
@@ -87,7 +93,7 @@ class CentinelaFileProvider extends ChangeNotifier {
     }
   }
 
-  /// Obtenemos los datos del centinela desde el arcivo.
+  /// ->Obtenemos los datos del centinela desde el arcivo.
   Future<void> getFromFile() async {
 
     String pathTo = await GetPaths.getFileByPath('centinela');
@@ -180,14 +186,43 @@ class CentinelaFileProvider extends ChangeNotifier {
           }
         }
       }
-
     });
+  }
+
+  /// Guardamos los cambios en base a una reasignacion
+  /// El parametro avoOrden contiene una lista de 2 enteros 1. el avo 2. la orden
+  Future<void> _persistReasignacion(List<int> avoOrden) async {
+
+    if(!_centinela.containsKey('avo')){
+      _centinela.putIfAbsent('avo', () => <String, dynamic>{});
+    }
+    String idAvoOwn = '';
+    List<String> newOrdenesOwn = [];
+    _centinela['avo'].forEach((idAvo, ordenes) async {
+      
+      if(ordenes.isNotEmpty) {
+        ordenes = List<String>.from(ordenes);
+      }
+      if(ordenes.contains('${avoOrden.last}')) {
+        idAvoOwn = idAvo;
+        bool make = ordenes.remove('${avoOrden.last}');
+        if(make) {
+          newOrdenesOwn = ordenes;
+        }
+      }
+    });
+
+    if(idAvoOwn.isNotEmpty) {
+      _centinela['avo'][idAvoOwn] = newOrdenesOwn;
+      _centinela['avo']['${avoOrden.first}'].insert(0, '${avoOrden.last}');
+    }
   }
 
   ///
   Future<void> _saveToServerAsignaciones(isLocal) async {
 
     var asig = getAsignaciones();
+    
     String pathTo = await GetPaths.getUri('ordenes_asignadas', isLocal: isLocal);
     await MyHttp.post(pathTo, {'info':asig, 'version':_centinela['version'], 'manifest':manifest});
     result = MyHttp.result;
