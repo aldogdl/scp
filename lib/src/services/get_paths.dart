@@ -95,6 +95,7 @@ class GetPaths {
 
   /// Guardamos la ip que apunta a la base de datos local
   static Future<Map<String, dynamic>> setBaseDbLocal(String ip) async {
+    
     File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
     if (paths.existsSync()) {
       Map mapa = json.decode(paths.readAsStringSync());
@@ -129,7 +130,9 @@ class GetPaths {
 
   ///
   static Future<Map<String, dynamic>> getConnectionFtp(
-      {bool isLocal = true}) async {
+    {bool isLocal = true}
+  ) async {
+
     final pathDt = await _getFromFilePathsProd('ftp');
     String sufix = (isLocal) ? 'l' : 'r';
     return {
@@ -142,6 +145,7 @@ class GetPaths {
 
   ///
   static Future<Map<String, dynamic>> getBaseLocalAndRemoto() async {
+
     final paths = await _getFromFilePathsProd('portServer');
 
     return {
@@ -155,6 +159,7 @@ class GetPaths {
 
   ///
   static Future<String> getUri(String uri, {bool isLocal = true}) async {
+
     Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
 
     String base = '${uriPath['base_l']}${uriPath['uri']}/';
