@@ -14,6 +14,7 @@ import '../../services/get_paths.dart';
 import '../../vars/globals.dart';
 
 class LoginPage extends StatefulWidget {
+
   const LoginPage({Key? key}) : super(key: key);
 
   @override
@@ -234,24 +235,26 @@ class _LoginPageState extends State<LoginPage> {
 
   ///
   Future<void> _initWidget(_) async {
-    _sock.msgErr = 'Datos de Conección';
+
     await _sock.getNameRed();
-    bool hasIp = await _sock.getIpConnectionToHarbi();
-    if (hasIp) {
-      _sock.msgErr = 'Identifícate por favor';
-    }
     String uri = await GetPaths.getFileByPath('connpass');
     File filepass = File(uri);
     if (filepass.existsSync()) {
-      _users.value =
-          Map<String, dynamic>.from(json.decode(filepass.readAsStringSync()));
+      _users.value = Map<String, dynamic>.from(json.decode(filepass.readAsStringSync()));
     }
   }
 
   ///
   Future<void> _autenticar() async {
+
     if (_frmKey.currentState!.validate()) {
       _sock.isLoged = false;
+      _sock.msgErr = 'Recuperando datos de Conección';
+      bool hasIp = await _sock.getIpConnectionToHarbi(pass: _pass.text.toLowerCase().trim());
+      if (hasIp) {
+        _sock.msgErr = 'Identifícate por favor';
+      }
+
       bool isConnected = await _sock.ping();
 
       if (!isConnected) {
@@ -261,6 +264,7 @@ class _LoginPageState extends State<LoginPage> {
           _sock.msgErr = 'No hay conección con HARBI';
         }
       } else {
+
         _sock.msgErr = 'Validando Credenciales';
 
         final data = {
@@ -271,10 +275,12 @@ class _LoginPageState extends State<LoginPage> {
           data['only_check'] = '1';
         }
         bool abort = await _sock.awaitResponseSocket(
-            event: RequestEvent(
-                event: 'connection', fnc: 'exite_user_local', data: data),
-            msgInit: 'Haciendo login en local',
-            msgExito: 'Login Autorizado');
+          event: RequestEvent(
+            event: 'connection', fnc: 'exite_user_local', data: data
+          ),
+          msgInit: 'Haciendo login en local',
+          msgExito: 'Login Autorizado'
+        );
 
         if (!_sock.msgErr.contains('Error')) {
           if (abort) {
@@ -293,12 +299,14 @@ class _LoginPageState extends State<LoginPage> {
 
   ///
   Future<void> _hacerLoginFromServer(Map<String, dynamic> data) async {
+
     globals.tkServ = '';
     bool abort = await _sock.awaitResponseSocket(
-        event: RequestEvent(
-            event: 'connection', fnc: 'make_login_server', data: data),
-        msgInit: 'Buscando Credenciales',
-        msgExito: 'Login Autorizado');
+      event: RequestEvent(
+        event: 'connection', fnc: 'make_login_server', data: data
+      ),
+      msgInit: 'Buscando Credenciales',
+      msgExito: 'Login Autorizado');
 
     if (abort) {
       _sock.msgErr = 'Credenciales Invalidas';

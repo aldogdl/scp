@@ -5,30 +5,35 @@ import 'package:path/path.dart' as p;
 import '../config/sng_manager.dart';
 import '../vars/globals.dart';
 
+
 class GetPaths {
 
   static final Globals globals = getSngOf<Globals>();
 
-  static String env = 'dev';
-
+  static String env  = 'dev';
+  static const int _port = 80;
   static const String package = 'autoparnet';
   static const String nameFilePaths = 'paths_dev.json';
   static const String nameFilePathsP = 'paths_prod.json';
   static p.Style estiloPlatform = p.Style.windows;
   static const Map<String, dynamic> getPrefix = {
-    'cotizador': 'ctz',
-    'solicitante': 'cli'
+    'cotizador':'ctz',
+    'solicitante':'cli'
   };
 
   ///
   static Future<int> getPort(String from) async {
-    final puerto = await _getFromFilePathsProd(from);
 
-    int? port = int.tryParse('${puerto['uri']}');
-    if (port != null) {
+    if(from == 'self') {
+      return _port;
+    }
+
+    final puerto = await _getFromFilePathsProd(from);
+    int? port = int.tryParse('${puerto['data']}');
+    if(port != null) {
       return port;
     }
-    return 80;
+    return _port;
   }
 
   /// Obtenemos el separador del sistema
@@ -38,72 +43,56 @@ class GetPaths {
   }
 
   /// Recuperamos la data del archivo principal de paths
-  static Future<Map<String, dynamic>?> getContentFilePaths(
-      {bool isProd = false}) async {
+  static Future<Map<String, dynamic>?> getContentFilePaths({bool isProd = false}) async {
+
     List<String> sep = [getSep()];
     Map<String, dynamic>? pathsFinder;
     late File paths;
-    if (!isProd) {
+    if(!isProd) {
       String assets = '${p.context.current}${sep.first}assets${sep.first}';
       paths = File('$assets$nameFilePaths');
-    } else {
+    }else{
       paths = File('${getPathRoot()}${sep.first}$nameFilePathsP');
     }
-    if (paths.existsSync()) {
-      pathsFinder =
-          Map<String, dynamic>.from(json.decode(paths.readAsStringSync()));
+    if(paths.existsSync()) {
+      pathsFinder = Map<String, dynamic>.from(json.decode(paths.readAsStringSync()));
     }
     return pathsFinder;
   }
 
   /// Obtenemos el path a root del proyecto
   static String getPathRoot() {
-    var context = p.Context(style: estiloPlatform);
-    return context.join(
-        Directory.systemTemp.parent.parent.path, 'Roaming', 'com.$package');
+    var context = p.Context(style: p.Style.windows);
+    return context.join(Directory.systemTemp.parent.parent.path, 'Roaming', 'com.$package');
   }
 
   ///
   static Future<void> deleteFilePathsProd() async {
+
     File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
-    if (paths.existsSync()) {
+    if(paths.existsSync()) {
       paths.deleteSync();
     }
   }
 
   /// Revisamos la existencia del archivo paths para produccion
   static Future<bool> existFilePathsProd() async {
+
     File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
     return paths.existsSync();
   }
 
   /// Recuperamos la URI segun key desde el archivo de produccion
   static Future<Map<String, dynamic>> _getFromFilePathsProd(String key) async {
-    File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
-    if (paths.existsSync()) {
-      Map mapa = json.decode(paths.readAsStringSync());
-      if (mapa.containsKey(key)) {
-        return {
-          'base_r': mapa['server_remote'],
-          'base_l': mapa['server_local'],
-          'uri': mapa[key],
-        };
-      }
-    }
-    return {};
-  }
 
-  /// Guardamos la ip que apunta a la base de datos local
-  static Future<Map<String, dynamic>> setBaseDbLocal(String ip) async {
     File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
-    if (paths.existsSync()) {
-      Map mapa = json.decode(paths.readAsStringSync());
-      if (mapa.containsKey('server_local')) {
-        if (mapa['server_local'].toString().contains('_ip_')) {
-          mapa['server_local'] =
-              mapa['server_local'].toString().replaceAll('_ip_', ip);
-          paths.writeAsStringSync(json.encode(mapa));
-        }
+    if(paths.existsSync()) {
+      Map mapa = json.decode( paths.readAsStringSync() );
+      if(mapa.containsKey(key)) {
+        return {
+          'base': mapa['server'],
+          'data': mapa[key],
+        };
       }
     }
     return {};
@@ -111,6 +100,7 @@ class GetPaths {
 
   /// Recuperamos la URI segun key desde el archivo de produccion
   static Directory? getPathsFolderTo(String key) {
+
     Directory? pathFolder = Directory('${getPathRoot()}${getSep()}$key');
     return pathFolder;
   }
@@ -118,57 +108,59 @@ class GetPaths {
   ///
   static Future<String> getFileByPath(String path) async {
     final paths = await _getFromFilePathsProd(path);
-    return paths['uri'];
+    return paths['data'];
   }
 
   ///
-  static Future<String> getDominio({bool isLocal = true}) async {
-    final paths = await _getFromFilePathsProd('portServer');
-    return (isLocal) ? paths['base_l'] : paths['base_r'];
-  }
+  static Future<String> getDominio({isLocal = true}) async {
 
+    if(isLocal) {
+      return 'http://${globals.ipHarbi}:$_port/$package/public_html/';
+    }
+    final paths = await _getFromFilePathsProd('server');
+    return paths['data'];
+  }
+  
   ///
-  static Future<Map<String, dynamic>> getConnectionFtp(
-      {bool isLocal = true}) async {
+  static Future<Map<String, dynamic>> getConnectionFtp() async {
+
     final pathDt = await _getFromFilePathsProd('ftp');
-    String sufix = (isLocal) ? 'l' : 'r';
     return {
-      'url': pathDt['base_$sufix'],
-      'u': pathDt['uri']['u_$env'],
-      'p': pathDt['uri']['p_$env'],
+      'url': pathDt['base'],
+      'u'  : pathDt['data']['u-$env'],
+      'p'  : pathDt['data']['p-$env'],
       'ssl': true
     };
   }
 
   ///
   static Future<Map<String, dynamic>> getBaseLocalAndRemoto() async {
-    final paths = await _getFromFilePathsProd('portServer');
 
     return {
-      'local': paths['base_l'],
-      'remoto': paths['base_r'],
-      'ipHarbi': globals.ipHarbi,
+      'local'   : await getDominio(),
+      'remoto'  : await getDominio(isLocal: false),
+      'ipHarbi' : globals.ipHarbi,
       'ptoHarbi': globals.portHarbi,
-      'pto-loc': paths['uri'],
+      'pto-loc' : _port,
     };
   }
 
   ///
   static Future<String> getUri(String uri, {bool isLocal = true}) async {
-    Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
 
-    String base = '${uriPath['base_l']}${uriPath['uri']}/';
-    if (!isLocal) {
-      base = '${uriPath['base_r']}${uriPath['uri']}/';
+    Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
+    String base = '${await getDominio()}${uriPath['data']}/';
+    if(!isLocal) {
+      base = '${uriPath['base']}${uriPath['data']}/';
     }
     return base;
   }
 
   ///
-  static Future<String> getPathToLogoMarcaOf(String marca,
-      {bool isLocal = true}) async {
+  static Future<String> getPathToLogoMarcaOf(String marca) async {
+
     const carpeta = 'mrks_logos/';
-    final dom = await getDominio(isLocal: isLocal);
+    final dom = await getDominio();
     return '$dom$carpeta$marca';
   }
 }

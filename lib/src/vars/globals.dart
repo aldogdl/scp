@@ -7,6 +7,7 @@ class Globals {
   String myIp = '';
   String ipHarbi = '';
   String portHarbi = '';
+  Map<String, dynamic> ipDbs = {};
   String tkServ = '';
   int idUser = 0;
   String curc = '';
