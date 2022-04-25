@@ -32,6 +32,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 10),
             TxtBskOrden(
               onSearch: (String val) {
                 _txtLoading = val;
@@ -44,10 +45,11 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
               child: LstOrdenes(
                 asignadas: true,
                 onLoading: (Map<String, dynamic> res) {
-                  setState(() {
-                    _isLoading = res['isLoading'];
-                    _txtLoading = res['msg'];
-                  });
+                  _isLoading = res['isLoading'];
+                  _txtLoading = res['msg'];
+                  if(mounted) {
+                    setState(() { });
+                  }
                 },
               ),
             ),

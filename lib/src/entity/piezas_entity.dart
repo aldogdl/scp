@@ -13,6 +13,22 @@ class PiezasEntity {
   int orden = 0;
 
   ///
+  void fromScreen(Map<String, dynamic> json) {
+
+    id = json['id'];
+    est = json['est'];
+    stt = json['stt'];
+    piezaName = json['piezaName'];
+    origen = json['origen'];
+    lado = json['lado'];
+    posicion = json['posicion'];
+    fotos = json['fotos'];
+    obs = json['obs'];
+    ruta = json['ruta'];
+    orden = json['orden'];
+  }
+
+  ///
   void fromServer(Map<String, dynamic> data) {
     id = data['p_id'];
     est = data['p_est'];

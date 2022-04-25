@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/vars/widgets_utils.dart';
 
+import 'pages/widgets/change_ip_dialog.dart';
+import 'services/get_content_files.dart';
+import 'pages/widgets/widgets_utils.dart';
 import 'config/sng_manager.dart';
 import 'entity/request_event.dart';
 import 'providers/pages_provider.dart';
@@ -14,8 +16,8 @@ class StatusBarr extends StatelessWidget {
 
   StatusBarr({Key? key}) : super(key: key);
 
-  final Globals globals = getSngOf<Globals>();
-
+  final Globals _globals = getSngOf<Globals>();
+  
   @override
   Widget build(BuildContext context) {
     
@@ -39,14 +41,49 @@ class StatusBarr extends StatelessWidget {
             context.read<PageProvider>().resetPage();
           }),
           const SizedBox(width: 10),
-          Texto(txt: 'SWP de: ${watchC.username} [${globals.curc}]', sz: 12, txtC: const Color(0xFFFFFFFF)),
-          _btnTxt(label: '<C:>', fnc: () => context.read<PageProvider>().closeConsole = false),
+          Texto(txt: 'SWP de: ${watchC.username} [${_globals.curc}]', sz: 12, txtC: const Color(0xFFFFFFFF)),
+          const SizedBox(width: 15),
+          _btnIconAndTxt(txt: '0', tip: 'Errores', icono: Icons.close, fnc: (){
+            context.read<PageProvider>().consola = Consola.errores;
+            if(context.read<PageProvider>().closeConsole) {
+              context.read<PageProvider>().closeConsole = false;
+            }
+          }),
           const SizedBox(width: 5),
-          _btnIconAndTxt(txt: '0', tip: 'Errores', icono: Icons.close, fnc: (){}),
+          _btnIconAndTxt(txt: '0', tip: 'Alertas', icono: Icons.warning_amber_outlined, fnc: (){
+            context.read<PageProvider>().consola = Consola.alertas;
+            if(context.read<PageProvider>().closeConsole) {
+              context.read<PageProvider>().closeConsole = false;
+            }
+          }),
           const SizedBox(width: 5),
-          _btnIconAndTxt(txt: '0', tip: 'Alertas', icono: Icons.warning_amber_outlined, fnc: (){}),
-          const SizedBox(width: 5),
-          _btnIconAndTxt(txt: '0', tip: 'SCM', icono: Icons.local_post_office_outlined, fnc: (){}),
+          _btnIconAndTxt(txt: '0', tip: 'SCM', icono: Icons.local_post_office_outlined, fnc: (){
+            context.read<PageProvider>().consola = Consola.scm;
+            if(context.read<PageProvider>().closeConsole) {
+              context.read<PageProvider>().closeConsole = false;
+            }
+          }),
+          if(readC.hasErrWithIpDbLocal.isNotEmpty)
+            ...[
+              const SizedBox(width: 8),
+              TextButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                  padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () async => await _changeIp(context, readC),
+                child: Text(
+                  ' ${readC.hasErrWithIpDbLocal} ',
+                  textScaleFactor: 1,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    backgroundColor: Color.fromARGB(255, 146, 35, 27)
+                  ),
+                )
+              ),
+            ],
           const Spacer(),
           Texto(txt: 'HARBI. ${watchC.idConn}', sz: 12, txtC: const Color.fromARGB(255, 255, 255, 255)),
           const SizedBox(width: 5),
@@ -139,6 +176,7 @@ class StatusBarr extends StatelessWidget {
     );
   }
 
+  // ---------------------- CONTROLADOR --------------------------------
 
   ///
   Future<void> _reconectar(BuildContext context, SocketConn _sock) async {
@@ -148,12 +186,12 @@ class StatusBarr extends StatelessWidget {
       titulo: 'RECONECTANDO A HARBI',
       msg: 'Recuerda antes de reconectar a Harbi, necesitas reiniciarlo, por favor '
       'realiza primeramente dicha acción y posteriormente presiona el botón de HECHO.',
-      onlyYES: true, msgOnlyYes: 'HECHO'
+      onlyAlert: false, onlyYES: true, msgOnlyYes: 'HECHO'
     );
 
     final data = {
-      'username' : globals.curc,
-      'password' : globals.password
+      'username' : _globals.curc,
+      'password' : _globals.password
     };
     await _sock.awaitResponseSocket(
       event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
@@ -167,6 +205,43 @@ class StatusBarr extends StatelessWidget {
     }else{
       _sock.msgCron= 'ERROR';
     }
+
+  }
+
+  ///
+  Future<void> _changeIp(BuildContext context, SocketConn _sock) async {
+
+    String help = 'La IP hacia el servidor LOCAL';
+    if(!_globals.isLocalConn) {
+      help = 'La IP hacia el servidor REMOTO';
+    }
+    List<int> ipN = [];
+    var regExp = RegExp(r'[0-9]{1,3}');
+    var str = _sock.hasErrWithIpDbLocal;
+    Iterable<Match> matches = regExp.allMatches(str);
+    for (Match m in matches) {
+      int? ip = int.tryParse(m[0]!);
+      if(ip != null) {
+        ipN.add(ip);
+      }
+    }
+    
+    await WidgetsAndUtils.showAlertBody(
+      context,
+      titulo: 'CAMBIANDO PROTOCOLO IP',
+      onlyAlert: true,
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: ChangeIpDialog(
+          ipCurrent: (ipN.isNotEmpty) ? ipN.join('.') : '',
+          msgHelp: help,
+          onSave: (String ipNew) async {
+            await GetContentFile.cambiarIpEnArchivoPath(ipNew);
+            _sock.hasErrWithIpDbLocal = '';
+          }
+        ),
+      )
+    );
 
   }
 

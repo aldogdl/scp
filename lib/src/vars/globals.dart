@@ -14,5 +14,8 @@ class Globals {
   String password = '';
   List<String> roles = [];
   FocusNode focusMain = FocusNode();
-
+  
+  List<String> posic = ['DELANTERA', 'TRASERA', 'LATERAL', 'MOTOR', 'SUSPENSION'];
+  List<String> lugar = ['IZQUIERDO', 'DERECHO', 'CENTRAL', 'SUPERIOR', 'INFERIOR'];
+  List<String> origenes = ['SEMINUEVA Original', 'GENÉRICA nueva', 'CUALQUIER Orígen'];
 }

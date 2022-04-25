@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:extended_image/extended_image.dart';
-import 'package:scp/src/pages/widgets/frm_orden.dart';
+import 'package:scp/src/pages/widgets/widgets_utils.dart';
+import 'package:scp/src/repository/ordenes_repository.dart';
+import 'package:scp/src/services/rutas/est_stt.dart';
 
+import 'widgets/rastrear_lst_contacs.dart';
+import '../widgets/frm_orden.dart';
 import '../widgets/my_tool_tip.dart';
 import '../widgets/pieza_tile.dart';
 import '../widgets/texto.dart';
+import '../../config/sng_manager.dart';
 import '../../entity/piezas_entity.dart';
 import '../../providers/items_selects_glob.dart';
 import '../../providers/window_cnf_provider.dart';
-import '../../config/sng_manager.dart';
+import '../../services/scm/scm_entity.dart';
+import '../../services/scm/scm_repository.dart';
 import '../../vars/intents/show_action_main.dart';
 import '../../vars/globals.dart';
 import '../../vars/shortcut_activators.dart';
@@ -25,7 +31,9 @@ class CSolicitudesPage extends StatefulWidget {
 class _CSolicitudesPageState extends State<CSolicitudesPage> {
 
   final Globals globals = getSngOf<Globals>();
-
+  final OrdenesRepository _ordenEm = OrdenesRepository();
+  final ScmRepository _scmEm = ScmRepository();  
+  
   final ExtendedPageController _pageCtl = ExtendedPageController();
   final ScrollController _scrollCtl = ScrollController();
   final ScrollController _scrollTxtCtl = ScrollController();
@@ -121,9 +129,30 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
                       case 'fotos':
                         return _seccionFotos();
                       case 'rastrear':
-                        return _seccionRastrear();
+                        if(itemProv.fotosByPiezas.isNotEmpty) {
+                          return RastrearLstContacs(
+                            toSend: (List<int> idCotizadores) async => await _buscarCotizacion(idCotizadores),
+                          );
+                        }else{
+                          return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
+                        }
+                      case 'rastreador':
+                        if(itemProv.fotosByPiezas.isNotEmpty) {
+                          return const Text('Aqui la seccion de Rasteador');
+                        }else{
+                          return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
+                        }
                       default:
-                        return const FrmOrden();
+                        return FrmOrden(
+                          onFinish: (acc) {
+                            if(acc == 'add') {
+                              print('adiono una nueva');
+                            }
+                            setState(() {
+                              _seccView.value = 'fotos';
+                            });
+                          },
+                        );
                     }
                   }
                 );
@@ -159,27 +188,6 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
         if(snap.connectionState == ConnectionState.done) {
           if(itemProv.fotosByPiezas.isNotEmpty) {
             return _visorDeFotos();
-          }else{
-            return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
-          }
-        }
-        return _loading();
-      }
-    );
-  }
-
-  ///
-  Widget _seccionRastrear() {
-
-    return FutureBuilder(
-      future: _getAllContacts(),
-      builder: (_, AsyncSnapshot snap) {
-
-        if(snap.connectionState == ConnectionState.done) {
-          if(itemProv.fotosByPiezas.isNotEmpty) {
-            return Center(
-              child: Texto(txt: 'todos los contactos'),
-            );
           }else{
             return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
           }
@@ -242,8 +250,13 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
                 pieza: pzas[index],
                 onSelect: (int idPza) {
                   int indexPz = itemProv.fotosByPiezas.indexWhere((element) => element['id'] == idPza);
-                  if(indexPz != -1) {
-                    _pageCtl.jumpToPage(indexPz);
+                  if(_seccView.value == 'fotos') {
+                    if(indexPz != -1) {
+                      _pageCtl.jumpToPage(indexPz);
+                    }
+                  }
+                  if(_seccView.value == 'editar') {
+                    itemProv.piezaSelect = pzas[index];
                   }
                 },
               ),
@@ -416,7 +429,15 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           icolor: const Color.fromARGB(255, 221, 221, 221),
           tip: (_seccView.value == 'rastrear') ? 'Ver Fotos' : 'Rastrear Orden [Ctr+Alt+R]',
           fnc: () {
-            _seccView.value = (_seccView.value == 'rastrear') ? 'fotos' : 'rastrear';
+            String newSecc = _seccView.value;
+            newSecc = (_seccView.value == 'rastrear') ? 'fotos' : 'rastrear';
+            if(newSecc == 'rastrear') {
+              int? status = int.tryParse(itemProv.ordenEntitySelect!.stt) ?? 0;
+              if(status > 2) {
+                newSecc = 'rastreador';
+              }
+            }
+            _seccView.value = newSecc;
             setState(() {});
           },
         ),
@@ -708,14 +729,224 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   }
 
   ///
-  Future<void> _getAllContacts() async {
-
-    print('ok');
-  }
-
-  ///
   void _putFocusActions() {
     _fcuActions.requestFocus();
     _hasFocus.value = true;
   }
+
+  ///
+  Future<void> _buscarCotizacion(List<int> idCotizadores) async {
+
+    int codeStatus = 1;
+
+    await WidgetsAndUtils.showAlertBody(
+      context,
+      titulo: 'Buscar Cotizaciones',
+      dismissible: false,
+      body: StatefulBuilder(
+        builder: (BuildContext context, StateSetter setStateIn) {
+          
+          return Container(
+            width: MediaQuery.of(context).size.width * 0.5,
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if(codeStatus == 1)
+                  ..._dialogBskOkTask((value) {
+                      setStateIn((){
+                        codeStatus = 2;
+                      });
+                    },
+                  ),
+                if(codeStatus == 2)
+                  ..._dialogBskLoading(idCotizadores)
+              ]
+            ),
+          );
+        }
+      )
+    );
+  }
+
+  ///
+  List<Widget> _dialogBskOkTask(ValueChanged<void> onTap) {
+
+    String msg = 'Estás a punto de enviar esta solicitud '
+    'al Servidor Central de Mensajería con el objetivo '
+    'de encontrar entre los cotizadores seleccionados '
+    'el mejor precio.';
+
+    return [
+      Texto(txt: msg, isCenter: true),
+      const SizedBox(height: 8),
+      const Texto(
+        txt: '¿Estás segur@ de continuar?',
+        txtC: Colors.white, isCenter: true
+      ),
+      const SizedBox(height: 15),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(Colors.red)
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Texto(txt: 'NO ENVIAR', txtC: Colors.white)
+          ),
+          ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(Colors.purple)
+            ),
+            onPressed: () => onTap(null),
+            child: const Texto(txt: 'SI ENVIAR', txtC: Colors.white)
+          ),
+        ],
+      )
+    ];
+  }
+
+  ///
+  List<Widget> _dialogBskLoading(List<int> idCotizadores) {
+
+    return [
+      const Texto(
+        txt: 'Estamos actualizando las Base de Datos, espera un momento por favor',
+        isCenter: true
+      ),
+      const SizedBox(height: 10),
+      StreamBuilder<String>(
+        initialData: 'Iniciando',
+        stream: _sendToCotizar(idCotizadores),
+        builder: (_, AsyncSnapshot<String> snap) {
+
+          if(snap.data!.contains('ok')) {
+            Navigator.of(context).pop();
+            Future.delayed(const Duration(milliseconds: 1000), (){
+              _seccView.value = 'rastreador';
+            });
+          }
+          if(snap.data!.contains('ERROR') || snap.data!.isEmpty) {
+            return _dialogBskHasError(snap.data);
+          }else{
+            return _dialogBskInProcess(snap.data);
+          }
+        }
+      )
+    ];
+  }
+
+  ///
+  Widget _dialogBskInProcess(String? txt) {
+
+    return Column(
+      children: [
+        const SizedBox(
+          width: 40, height: 40,
+          child: CircularProgressIndicator()
+        ),
+        const SizedBox(height: 10),
+        Texto(txt: txt ?? '', isCenter: true, txtC: Colors.white)
+      ],
+    );
+  }
+
+  ///
+  Widget _dialogBskHasError(String? txt) {
+
+    return Column(
+      children: [
+        Texto(txt: txt ?? '', isCenter: true),
+        const SizedBox(height: 15),
+        const Texto(
+          txt: 'POR FAVOR INTÉNTALO DE NUEVO',
+          txtC: Colors.amber,
+        ),
+        const SizedBox(height: 10),
+        ElevatedButton(
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(Colors.red)
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Texto(txt: 'ENTENDIDO', txtC: Colors.white)
+        ),
+      ],
+    );
+  }
+
+  ///
+  Stream<String> _sendToCotizar(List<int> idCotizadores) async* {
+
+    final scm = ScmEntity();
+    var data = scm.jsonToCotizar(
+      idOrden: itemProv.idOrdenSelect,
+      idOwn: itemProv.ordenEntitySelect!.uId,
+      idAvo: globals.idUser
+    );
+    
+    final version = DateTime.now().millisecondsSinceEpoch;
+    await Future.delayed(const Duration(milliseconds: 2000));
+
+    // Guardamos en la base de datos remota el registro de la orden de busqueda
+    // para la SCM, solo para que ya este enterada de un nuevo mensaje.
+    // NOTA: No es necesario que el registro este en la BD local, ya que solo es
+    // utilizado por la SCM para enterarce de una nueva tarea.
+    yield 'Enviando al Servidor Principal';
+    
+    await _scmEm.setBuscarCotizacionesOrden(data, isLocal: false);
+    if(!_scmEm.result['abort']) {
+
+      yield 'Actualizaremos Status de la Orden';
+      final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
+      data = {
+        'orden': itemProv.idOrdenSelect,
+        'version': 0,
+        'est': oStt['est'],
+        'stt': oStt['stt'],
+        'rta': oStt['rta']
+      };
+      
+      // Actualizamos el Status de la orden en el archivo centinela tanto en
+      // remoto como en local para que HARBI actualice las aplicaciones.
+      await Future.delayed(const Duration(milliseconds: 500));
+      yield 'Actualizando Orden en LOCAL';
+      await _ordenEm.changeStatusToServer(data, isLocal: true);
+      yield 'Actualizando Orden en REMOTO';
+      await _ordenEm.changeStatusToServer(data, isLocal: false);
+      
+      if(!_ordenEm.result['abort']) {
+
+        yield 'Las Piezas obtendrán un nuevo Status.';
+        final pStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
+        data = {
+          'version': version,
+          'orden': itemProv.idOrdenSelect,
+          'est': pStt['est'],
+          'stt': pStt['stt'],
+          'rta': pStt['rta'],
+          'cotz': idCotizadores,
+        };
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        yield 'Actualizando Piezas en LOCAL.';
+        await _ordenEm.buildStatusForBuscarPiezas(data, isLocal: true);
+        yield 'Actualizando Piezas en REMOTO.';
+        await _ordenEm.buildStatusForBuscarPiezas(data, isLocal: false);
+
+        if(!_ordenEm.result['abort']) {
+          yield 'ok';
+        }else{
+          yield '${_scmEm.result['body']}';
+        }
+      }else{
+        yield '${_scmEm.result['body']}';
+      }
+    }else{
+      yield '${_scmEm.result['body']}';
+    }
+  }
+
 }

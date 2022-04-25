@@ -16,15 +16,25 @@ class ToolsBarr extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final pageProvi = context.watch<PageProvider>();
+
     return Container(
       width: context.read<WindowCnfProvider>().tamToolBar,
       color: context.read<WindowCnfProvider>().sidebarColor,
       child: Column(
         children: [
-          _btn(
-            tip: 'Solicitudes sin Asiganar', icono: Icons.extension_off_outlined,
-            isActive: (context.watch<PageProvider>().page == Paginas.solicitudesNon) ? true : false,
-            fnc: () => pageProvi.page = Paginas.solicitudesNon
+          FutureBuilder<bool>(
+            future: _isAdmin(),
+            initialData: false,
+            builder: (_, AsyncSnapshot snap) {
+              if(snap.data) {
+                return _btn(
+                  tip: 'Solicitudes sin Asiganar', icono: Icons.extension_off_outlined,
+                  isActive: (context.watch<PageProvider>().page == Paginas.solicitudesNon) ? true : false,
+                  fnc: () => pageProvi.page = Paginas.solicitudesNon
+                );
+              }
+              return const SizedBox();
+            }
           ),
           _btn(
             tip: 'Solicitudes', icono: Icons.extension_outlined,
@@ -52,6 +62,7 @@ class ToolsBarr extends StatelessWidget {
     );
   }
 
+  ///
   Widget _btn({
     required String tip,
     required IconData icono,
@@ -69,5 +80,16 @@ class ToolsBarr extends StatelessWidget {
         )
       ),
     );
+  }
+
+  ///
+  Future<bool> _isAdmin() async {
+
+    for (var i = 0; i < globals.roles.length; i++) {
+      if(globals.roles[i].contains('ADMIN')) {
+        return true;
+      }
+    }
+    return false;
   }
 }

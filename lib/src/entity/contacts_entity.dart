@@ -20,7 +20,7 @@ class ContacsEntity {
 
     id = data['c_id'];
     curc = data['c_curc'];
-    roles = data['c_roles'];
+    roles = List<String>.from(data['c_roles']);
     nombre = data['c_nombre'];
     isCot = data['c_isCot'];
     cargo = data['c_cargo'];
@@ -30,7 +30,7 @@ class ContacsEntity {
     domicilio = data['e_domicilio'];
     cp = data['e_cp'];
     isLocal = data['e_isLocal'];
-    telFijo = data['e_telFijo'];
+    telFijo = int.tryParse(data['e_telFijo']) ?? 0;
     latLng = data['e_latLng'];
   }
   

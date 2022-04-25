@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scp/src/providers/socket_conn.dart';
 import 'package:scp/src/repository/ordenes_repository.dart';
-import 'package:scp/src/vars/widgets_utils.dart';
+import 'package:scp/src/pages/widgets/widgets_utils.dart';
 
 
 import '../widgets/my_tool_tip.dart';

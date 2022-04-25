@@ -1,3 +1,4 @@
+import 'package:blur/blur.dart';
 import 'package:flutter/material.dart';
 
 import 'texto.dart';
@@ -13,11 +14,11 @@ class LoadingMiddle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
-      color: Colors.black.withOpacity(0.5),
-      child: Column(
+    return Blur(
+      blur: 2.5,
+      colorOpacity: 0.1,
+      blurColor: Colors.black,
+      overlay: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -32,6 +33,12 @@ class LoadingMiddle extends StatelessWidget {
             child: Texto(txt: 'Recuperando $msg', sz: 12, txtC: Colors.amber),
           )
         ],
+      ),
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        color: Colors.black.withOpacity(0.5),
+        child: const SizedBox.expand(),
       ),
     );
   }

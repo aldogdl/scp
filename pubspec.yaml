@@ -1,6 +1,6 @@
 name: scp
 description: A new Flutter project.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
 
@@ -9,9 +9,11 @@ environment:
 
 dependencies:
   bitsdojo_window: ^0.1.1+1
+  blur: ^3.1.0
   cached_network_image: ^3.2.0
   cron: ^0.4.1
   cupertino_icons: ^1.0.2
+  dropdown_search: ^3.0.1
   extended_image: ^6.0.2+1
   flutter:
     sdk: flutter
@@ -34,7 +36,6 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 # The following section is specific to Flutter.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

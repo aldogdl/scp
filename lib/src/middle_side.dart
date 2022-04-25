@@ -81,7 +81,7 @@ class MiddleSide extends StatelessWidget {
         child = const SolicitudesPage();
         break;
       case Paginas.solicitantes:
-        child = const SolicitantesPage();
+        child = SolicitantesPage();
         break;
       case Paginas.cotizadores:
         child = const CotizadoresPage();

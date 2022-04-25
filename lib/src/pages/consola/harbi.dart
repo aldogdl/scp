@@ -153,7 +153,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
                 _txtCon(label: 'IP Harbi: ${globals.ipHarbi}'),
                 _txtCon(label: 'Puerto: ${globals.portHarbi}'),
                 _txtCon(label: 'ID Harbi: ${socketConn.idConn}'),
-                _txtCon(label: 'Conección: ${socketConn.username}'),
+                _txtCon(label: 'Conexión: ${socketConn.username}'),
               ],
             ),
           ),
@@ -164,7 +164,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const Texto(txt: 'Llave de Conección', txtC: Colors.amber),
+                const Texto(txt: 'Llave de Conexión', txtC: Colors.amber),
                 Container(
                   constraints: BoxConstraints.expand(
                     height: MediaQuery.of(context).size.height * 0.13

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/pages/consola/alertas.dart';
-import 'package:scp/src/pages/consola/errores.dart';
-import 'package:scp/src/pages/consola/harbi.dart';
-import 'package:scp/src/pages/consola/scm.dart';
-import 'package:scp/src/providers/pages_provider.dart';
 
+import 'pages/consola/alertas.dart';
+import 'pages/consola/errores.dart';
+import 'pages/consola/scm.dart';
 import 'pages/consola/centinela.dart';
+import 'providers/pages_provider.dart';
 import 'providers/window_cnf_provider.dart';
 
 class ConsolaSide extends StatelessWidget {
@@ -71,21 +70,16 @@ class ConsolaSide extends StatelessWidget {
         mainAxisSize: MainAxisSize.max,
         children: [
           const SizedBox(width: 5),
-          const Text(
+          Text(
             '<C:>',
             textScaleFactor: 1,
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.white.withOpacity(0.3),
               fontWeight: FontWeight.bold,
               fontSize: 11
             ),
           ),
           const SizedBox(width: 10),
-          _btn(
-            label: 'Harbi',
-            fnc: () => pageProvi.consola = Consola.harbi,
-            isActive: (pageProvi.consola == Consola.harbi) ? true : false
-          ),
           _btn(
             label: 'Centinela',
             fnc: () => pageProvi.consola = Consola.centinela,
@@ -146,9 +140,6 @@ class ConsolaSide extends StatelessWidget {
 
     late Widget child;
     switch (pagina) {
-      case Consola.harbi:
-        child = const HarbiConsola();
-        break;
       case Consola.centinela:
         child = const CentinelaConsola();
         break;
@@ -162,6 +153,7 @@ class ConsolaSide extends StatelessWidget {
         child = const ScmConsola();
         break;
       default:
+        child = const ScmConsola();
     }
     return child;
   }

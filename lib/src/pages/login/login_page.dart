@@ -34,6 +34,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _showPass = true;
   bool _otroUser = false;
   bool _isInit = false;
+  int _intentosConn = 1;
   String _defaultUser = 'Cargando';
   List<String> items = ['Cargando'];
   final ValueNotifier<Map<String, dynamic>> _users =
@@ -57,10 +58,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    
     if (!_isInit) {
       _isInit = true;
       _sock = context.read<SocketConn>();
-      _sock.setMsgWithoutNotified('Buscando Conecciónes');
+      _sock.setMsgWithoutNotified('Buscando Conexiones');
     }
 
     return Scaffold(body: _body());
@@ -68,6 +70,7 @@ class _LoginPageState extends State<LoginPage> {
 
   ///
   Widget _body() {
+
     return Column(children: [
       WindowTitleBarBox(
           child: Row(children: [
@@ -248,9 +251,13 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _autenticar() async {
 
     if (_frmKey.currentState!.validate()) {
+      
       _sock.isLoged = false;
-      _sock.msgErr = 'Recuperando datos de Conección';
-      bool hasIp = await _sock.getIpConnectionToHarbi(pass: _pass.text.toLowerCase().trim());
+      _sock.msgErr = 'Recuperando datos de Conexión';
+      bool hasIp = await _sock.getIpConnectionToHarbi(
+        pass: _pass.text.toLowerCase().trim(),
+        ipNew: (_intentosConn > 1) ? globals.myIp : '0'
+      );
       if (hasIp) {
         _sock.msgErr = 'Identifícate por favor';
       }
@@ -261,38 +268,51 @@ class _LoginPageState extends State<LoginPage> {
         if (globals.ipHarbi.isEmpty) {
           _sock.msgErr = 'Desconocida la IP de HARBI';
         } else {
-          _sock.msgErr = 'No hay conección con HARBI';
+          if(_intentosConn == 1) {
+            _intentosConn = 2;
+            _sock.msgErr = 'Probando con mi IP';
+            _autenticar();
+          }else{
+            _sock.msgErr = 'No hay conexión con HARBI';
+          }
         }
       } else {
+        await validarCredenciales();
+      }
+    }
+  }
 
-        _sock.msgErr = 'Validando Credenciales';
+  ///
+  Future<void> validarCredenciales() async {
 
-        final data = {
-          'username': _curc.text.toLowerCase().trim(),
-          'password': _pass.text.toLowerCase().trim()
-        };
-        if (_otroUser) {
-          data['only_check'] = '1';
-        }
-        bool abort = await _sock.awaitResponseSocket(
-          event: RequestEvent(
-            event: 'connection', fnc: 'exite_user_local', data: data
-          ),
-          msgInit: 'Haciendo login en local',
-          msgExito: 'Login Autorizado'
-        );
+    _sock.msgErr = 'Validando Credenciales';
 
-        if (!_sock.msgErr.contains('Error')) {
-          if (abort) {
-            await _hacerLoginFromServer(data);
-          } else {
-            _sock.isLoged = true;
-          }
-        } else {
-          if (_sock.msgErr.contains('Inexistente')) {
-            await _hacerLoginFromServer(data);
-          }
-        }
+    final data = {
+      'username': _curc.text.toLowerCase().trim(),
+      'password': _pass.text.toLowerCase().trim()
+    };
+    if (_otroUser) {
+      data['only_check'] = '1';
+    }
+    bool abort = await _sock.awaitResponseSocket(
+      event: RequestEvent(
+        event: 'connection', fnc: 'exite_user_local', data: data
+      ),
+      msgInit: 'Haciendo login en local',
+      msgExito: 'Login Autorizado'
+    );
+
+    if (!_sock.msgErr.contains('Error')) {
+      if (abort) {
+        await _hacerLoginFromServer(data);
+      } else {
+        _sock.isLoged = true;
+        globals.password = data['password']!;
+        globals.curc = data['username']!;
+      }
+    } else {
+      if (_sock.msgErr.contains('Inexistente')) {
+        await _hacerLoginFromServer(data);
       }
     }
   }
@@ -312,6 +332,8 @@ class _LoginPageState extends State<LoginPage> {
       _sock.msgErr = 'Credenciales Invalidas';
     } else {
       _sock.isLoged = true;
+      globals.password = data['password']!;
+      globals.curc = data['username']!;
     }
   }
 }

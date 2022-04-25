@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 
 import '../entity/contacto_entity.dart';
+import '../entity/contacts_entity.dart';
 import '../entity/orden_entity.dart';
 import '../entity/piezas_entity.dart';
 
@@ -39,6 +40,17 @@ class ItemSelectGlobProvider extends ChangeNotifier {
   List<ContactoEntity> get avos => _avos;
   set avos(List<ContactoEntity> avoslst) {
     _avos = avoslst;
+    notifyListeners();
+  }
+
+  ///
+  List<ContacsEntity> _contacts = [];
+  List<ContacsEntity> get contacts => _contacts;
+  set contactsOfNotified(List<ContacsEntity> contactslst) {
+    _contacts = contactslst;
+  }
+  set contacts(List<ContacsEntity> contactslst) {
+    _contacts = contactslst;
     notifyListeners();
   }
 
@@ -93,6 +105,14 @@ class ItemSelectGlobProvider extends ChangeNotifier {
   List<PiezasEntity> get piezas => _piezas;
   set piezas(List<PiezasEntity> pzas) {
     _piezas = pzas;
+    notifyListeners();
+  }
+
+  /// Usada para refrescar el FRM de edicion de la orden y sus piezas
+  PiezasEntity _piezaSelect = PiezasEntity();
+  PiezasEntity get piezaSelect => _piezaSelect;
+  set piezaSelect(PiezasEntity pzas) {
+    _piezaSelect = pzas;
     notifyListeners();
   }
 

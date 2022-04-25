@@ -7,13 +7,14 @@ class DecorationField {
   static Widget fieldBy({
     required TextEditingController ctr,
     required FocusNode fco,
+    required double orden,
     required String help,
     required Function validate,
     required IconData iconoPre,
-    required double orden,
     bool isPass = false,
     bool showPass = true,
-    ValueChanged<bool>? onPressed
+    int minLines = 1,
+    ValueChanged<bool>? onPressed,
   }) {
 
     return FocusTraversalOrder(
@@ -21,6 +22,7 @@ class DecorationField {
       child: TextFormField(
         controller: ctr,
         focusNode: fco,
+        maxLines: minLines,
         textInputAction: TextInputAction.next,
         obscureText: (!isPass) ? false : showPass,
         validator: (val) => validate(val),

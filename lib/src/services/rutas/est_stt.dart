@@ -8,9 +8,17 @@ class EstStt {
   String ruta = '';
   String estacion = '';
 
-  // Revisamos que exista en caso contrario descargamos la ruta adecuada
-  static Future<void> putIfAbsent(String ruta) async {
+  // Revisamos que exista, en caso contrario descargamos la ruta adecuada
+  static Future<void> init(String ruta) async {
     if(r.rutas.containsKey(ruta)) {
+      await r.hidratarByRuta(ruta);
+    }
+  }
+
+  // Revisamos que exista, en caso contrario descargamos la ruta adecuada
+  static Future<void> _putIfAbsent(String ruta) async {
+
+    if(!r.rutas.containsKey(ruta)) {
       await r.hidratarByRuta(ruta);
     }
   }
@@ -18,7 +26,7 @@ class EstStt {
   // Revisamos que exista en caso contrario descargamos la ruta adecuada
   static Future<Map<String, dynamic>> getNextSttByEst(Map<String, dynamic> data) async {
 
-    await putIfAbsent(data['rta']);
+    await _putIfAbsent(data['rta']);
     if(r.rutas.containsKey(data['rta'])) {
 
       List<String> rta = List<String>.from(r.rutas[data['rta']]['rta'][data['est']]);
@@ -44,22 +52,50 @@ class EstStt {
   /// Obtenemos el status inicial de la estacion solicitada
   static String getFirstSttByEst(Map<String, dynamic> data) {
 
-    putIfAbsent(data['rta']);
+    _putIfAbsent(data['rta']);
     if(r.rutas.containsKey(data['rta'])) {
       return r.rutas[data['rta']]['rta'][data['est']].first;
     }
-    return 'En CACHE...';
+    return 'Ruta Desconocida';
   }
 
-  /// Obtenemos el estatus segun su estacion
+  
+  /// Obtenemos el primer estatus de la pieza estacion busqueda
+  static Future<Map<String, dynamic>> getFirstSttByEstBusqueda(Map<String, dynamic> data) async {
+
+    _putIfAbsent(data['rta']);
+    Map<String, dynamic> rstt = {};
+
+    if(r.rutas.containsKey(data['rta'])) {
+      r.rutas[data['rta']]['est'].forEach((key, value) {
+        if(value == 'Buscando Piezas') {
+          rstt = {'est':key, 'stt':r.rutas[data['rta']]['rta'][key].first, 'rta':data['rta']};
+        }
+      });
+    }
+    return rstt;
+  }
+
+  /// Obtenemos la siguiente estacion
+  static String getNextEst(Map<String, dynamic> data) {
+
+    _putIfAbsent(data['rta']);
+    if(r.rutas.containsKey(data['rta'])) {
+      //TODO
+    }
+    return 'Ruta Desconocida';
+  }
+
+  /// Obtenemos la estacion solicitada
   static String getEst(Map<String, dynamic> data) {
 
-    putIfAbsent(data['rta']);
+    _putIfAbsent(data['rta']);
     if(r.rutas.containsKey(data['rta'])) {
       return r.rutas[data['rta']]['est'][data['est']];
     }
-    return 'En CACHE...';
+    return 'Ruta Desconocida';
   }
+
 
   /// Obtenemos el estatus segun su estacion
   static String getSttByEst(Map<String, dynamic> data) {
@@ -69,12 +105,12 @@ class EstStt {
       data['rta'] = '1648924605064399';
     }
     /// fin tmp
-    
-    putIfAbsent(data['rta']);
+
+    _putIfAbsent(data['rta']);
     if(r.rutas.containsKey(data['rta'])) {
       return r.rutas[data['rta']]['stt'][data['est']][data['stt']];
     }
-    return 'En CACHE...';
+    return 'Ruta Desconocida';
   }
 
 }

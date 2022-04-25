@@ -39,7 +39,7 @@ class CConfigPage extends StatelessWidget {
         child = const AdminUsers();
         break;
       default:
-        child = const Home();
+        child = Home();
     }
     return child;
   }

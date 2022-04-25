@@ -38,8 +38,8 @@ class GetPaths {
   }
 
   /// Recuperamos la data del archivo principal de paths
-  static Future<Map<String, dynamic>?> getContentFilePaths(
-      {bool isProd = false}) async {
+  static Future<Map<String, dynamic>?> getContentFilePaths({bool isProd = false}) async {
+    
     List<String> sep = [getSep()];
     Map<String, dynamic>? pathsFinder;
     late File paths;
@@ -169,11 +169,4 @@ class GetPaths {
     return base;
   }
 
-  ///
-  static Future<String> getPathToLogoMarcaOf(String marca,
-      {bool isLocal = true}) async {
-    const carpeta = 'mrks_logos/';
-    final dom = await getDominio(isLocal: isLocal);
-    return '$dom$carpeta$marca';
-  }
 }

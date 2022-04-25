@@ -24,6 +24,14 @@ class ContactsRepository {
   }
 
   ///
+  Future<void> getAllCotizadores() async {
+    
+    String uri = await GetPaths.getUri('get_all_cotizadores');
+    await MyHttp.get(uri);
+    result = MyHttp.result;
+  }
+
+  ///
   Future<void> getAllContacts({String tipo = 'noAdmin'}) async {
     
     String uri = await GetPaths.getUri('get_all_contactos_by');

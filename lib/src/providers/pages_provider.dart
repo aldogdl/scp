@@ -9,7 +9,6 @@ enum Paginas {
 }
 
 enum Consola {
-  harbi,
   centinela,
   alertas,
   errores,
@@ -18,14 +17,14 @@ enum Consola {
 
 class PageProvider extends ChangeNotifier {
 
-  Paginas _page = Paginas.solicitudes;
+  Paginas _page = Paginas.config;
   Paginas get page => _page;
   set page(Paginas p) {
     _page = p;
     notifyListeners();
   }
   void resetPage() {
-    _page = Paginas.solicitudes;
+    _page = Paginas.config;
     _confSecction = 'home';
   }
 
@@ -37,7 +36,7 @@ class PageProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Consola _consola = Consola.harbi;
+  Consola _consola = Consola.alertas;
   Consola get consola => _consola;
   set consola(Consola p) {
     _consola = p;

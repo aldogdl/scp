@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../pages/widgets/texto.dart';
+import 'texto.dart';
 
 class WidgetsAndUtils {
 
@@ -11,11 +11,13 @@ class WidgetsAndUtils {
     bool onlyAlert = true,
     bool withYesOrNot = false,
     bool onlyYES = false,
+    bool dismissible = true,
     String msgOnlyYes = 'SI',
   }) async {
 
     return showDialog<bool?>(
       context: context,
+      barrierDismissible: dismissible,
       builder: (_) => AlertDialog(
         contentPadding: const EdgeInsets.all(0),
         content: Column(
@@ -32,7 +34,8 @@ class WidgetsAndUtils {
           ],
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: (onlyAlert) ? null : _acctiones(context, withYesOrNot, onlyYES, msgOnlyYes),
+        actions: (onlyAlert)
+        ? null : _acctiones(context, withYesOrNot, onlyYES, msgOnlyYes, false),
       )
     );
   }
@@ -45,6 +48,7 @@ class WidgetsAndUtils {
     bool withYesOrNot = false,
     bool onlyYES = false,
     String msgOnlyYes = 'SI',
+    bool focusOnConfirm = false,
   }) async {
 
     return showDialog<bool?>(
@@ -64,7 +68,9 @@ class WidgetsAndUtils {
           ],
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: (onlyAlert) ? null : _acctiones(context, withYesOrNot, onlyYES, msgOnlyYes),
+        actions: (onlyAlert)
+        ? null
+        : _acctiones(context, withYesOrNot, onlyYES, msgOnlyYes, focusOnConfirm),
       )
     );
   }
@@ -74,12 +80,22 @@ class WidgetsAndUtils {
     BuildContext context,
     bool siAndNo,
     bool onlyYes,
-    String msgOnlyYes
+    String msgOnlyYes,
+    bool focusOnConfirm,
   ) {
 
-    List<Widget> btns = [_btnAlert(context, acc: msgOnlyYes, bg: Colors.purple, fnc: true)];
+    List<Widget> btns = [
+      _btnAlert(
+        context, acc: msgOnlyYes,
+        bg: Colors.purple, fnc: true, focusOnConfirm: focusOnConfirm
+      )
+    ];
+
     if(siAndNo) {
-      btns.insert(0, _btnAlert(context, acc: 'NO', bg: Colors.red, fnc: false));
+      btns.insert(0, _btnAlert(
+        context, acc: 'NO',
+        bg: Colors.red, fnc: false, focusOnConfirm: false
+      ));
     }
     return btns;
   }
@@ -88,10 +104,12 @@ class WidgetsAndUtils {
   static Widget _btnAlert(BuildContext context, {
     required bool fnc,
     required String acc,
-    required Color bg
+    required Color bg,
+    required bool focusOnConfirm,
   }) {
 
     return ElevatedButton(
+      autofocus: focusOnConfirm,
       style: ButtonStyle(
         backgroundColor: MaterialStateProperty.all(bg)
       ),

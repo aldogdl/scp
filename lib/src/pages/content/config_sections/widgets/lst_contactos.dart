@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/entity/request_event.dart';
+
 import 'package:scp/src/pages/content/config_sections/widgets/decoration_field.dart';
 import 'package:scp/src/services/get_content_files.dart';
 

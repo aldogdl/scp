@@ -2,12 +2,12 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show ChangeNotifier;
-import 'package:scp/src/services/my_http.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:network_info_plus/network_info_plus.dart';
 
 import '../config/sng_manager.dart';
+import '../services/my_http.dart';
 import '../services/get_paths.dart';
 import '../vars/globals.dart';
 import '../entity/request_event.dart';
@@ -20,7 +20,6 @@ class SocketConn extends ChangeNotifier {
   final String _app = 'SCP';
 
   String pin = '';
-  bool _isPing = false;
   IOWebSocketChannel? _socket;
   IOWebSocketChannel get socket => _socket!;
 
@@ -106,6 +105,14 @@ class SocketConn extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Utilizado para indicar una nueva ip para la base de datos o servidor local
+  String _hasErrWithIpDbLocal = '';
+  String get hasErrWithIpDbLocal => _hasErrWithIpDbLocal;
+  set hasErrWithIpDbLocal(String clv) {
+    _hasErrWithIpDbLocal = clv;
+    notifyListeners();
+  }
+
   ///
   void cerrarConection() {
     isConnectedSocked = false;
@@ -127,6 +134,7 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<void> getNameRed() async {
+
     if (globals.myIp.isEmpty) {
       globals.wifiName = await info.getWifiName() ?? '';
       globals.myIp = await info.getWifiIP() ?? '';
@@ -137,7 +145,7 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<bool> ping() async {
-    _isPing = true;
+
     int intentos = 1;
     bool abort = false;
     bool isCon = checkConeccion();
@@ -157,7 +165,7 @@ class SocketConn extends ChangeNotifier {
         }
         if (intentos >= 5) {
           abort = true;
-          msgErr = 'No se alcanzó una conección con HARBI';
+          msgErr = 'No se alcanzó una conexión con HARBI';
           return false;
         }
         intentos++;
@@ -188,12 +196,12 @@ class SocketConn extends ChangeNotifier {
       return true;
     });
 
-    _isPing = false;
     return !abort;
   }
 
-  /// Retorna true si la las variables de coneccion estan correctas.
+  /// Retorna true si la las variables de conexion estan correctas.
   bool checkConeccion() {
+
     bool isCon = isConnectedSocked;
 
     if (_socket == null) {
@@ -246,6 +254,7 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<RequestEvent> _fillMetaData(RequestEvent event) async {
+
     var data = Map<String, dynamic>.from(event.data);
     data['id'] = idConn;
     data['app'] = _app;
@@ -273,9 +282,10 @@ class SocketConn extends ChangeNotifier {
 
   /// Return TRUE si ubo un error o los intentos se agotaron
   Future<bool> awaitResponseSocket(
-      {required RequestEvent event,
-      required String msgInit,
-      required String msgExito}) async {
+    {required RequestEvent event,
+    required String msgInit,
+    required String msgExito}
+  ) async {
     bool abort = true;
     int intentos = 1;
     msgErr = msgInit;
@@ -301,6 +311,7 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<void> _conectar() async {
+
     msgErr = 'Contactando a HARBI';
     await Future.delayed(const Duration(milliseconds: 1000));
     try {
@@ -311,7 +322,7 @@ class SocketConn extends ChangeNotifier {
       return;
     }
 
-    msgErr = 'Esperando Respuesta de Conección';
+    msgErr = 'Esperando Respuesta de Conexión';
     await Future.delayed(const Duration(milliseconds: 1000));
     _socket!.stream.listen((event) {
       pin = 'ok';
@@ -322,6 +333,7 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<void> _determinarEvento(Map<String, dynamic> response) async {
+
     if (response.containsKey('connId')) {
       idConn = response['connId'];
       return;
@@ -349,7 +361,9 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<void> _determinarFunction(
-      String fnc, Map<String, dynamic> params) async {
+    String fnc, Map<String, dynamic> params
+  ) async {
+
     switch (fnc) {
       case 'set_data_connx':
         _registrarVariablesDeUsuario(params);
@@ -379,7 +393,9 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<void> _determinarFncCentinela(
-      String fnc, Map<String, dynamic> params) async {
+    String fnc, Map<String, dynamic> params
+  ) async {
+
     switch (fnc) {
       case 'update':
         msgCron = 'CAMBIO DE V: ${params['to_version']}';
@@ -409,7 +425,7 @@ class SocketConn extends ChangeNotifier {
 
   /// Recuperamos la Ip de Harbi, pero siempre tiene que ser desde el servidor
   /// remoto, ya que no sabemos desde que maquina se esta corriendo la SCP.
-  Future<bool> getIpConnectionToHarbi({String pass = ''}) async {
+  Future<bool> getIpConnectionToHarbi({String pass = '', String ipNew = '0'}) async {
 
     String url = '';
     if(pass.isNotEmpty) {
@@ -423,22 +439,31 @@ class SocketConn extends ChangeNotifier {
 
       await MyHttp.get(url);
       if(MyHttp.result['msg'] == 'ok') {
+        
+        if(MyHttp.result['body'].isEmpty) {
+          msgErr = 'Credenciales Invalidas';
+          return false;
+        }
+
         String ipH = utf8.decode(base64Decode(MyHttp.result['body']));
         if(ipH.contains(':')) {
           final partes = List<String>.from(ipH.split(':'));
-          globals.ipHarbi = partes.first;
+          globals.ipHarbi = (ipNew != '0') ? ipNew : partes.first;
           globals.portHarbi = partes.last;
         }
+        
         if(globals.ipHarbi.contains('.')) {
-          msgErr = 'Probando Conección';
+
+          msgErr = 'Probando Conexión';
           await MyHttp.get('http://${globals.ipHarbi}:${globals.portHarbi}/internal/get_ipdb');
+
           if(MyHttp.result.containsKey('base_r')) {
             globals.ipDbs = Map<String, dynamic>.from(MyHttp.result);
             MyHttp.clean();
-            msgErr = 'Conección via API exitoza';
+            msgErr = 'Conexión via API exitosa';
             return true;
           }else{
-            msgErr = 'No hay conección con HARBI';
+            msgErr = 'No hay conexión con HARBI';
           }
         }
         return false;

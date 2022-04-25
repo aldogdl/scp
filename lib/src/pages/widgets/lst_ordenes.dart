@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/providers/socket_conn.dart';
 
 import 'orden_tile.dart';
 import '../../config/sng_manager.dart';
@@ -98,6 +99,13 @@ class _LstOrdenesState extends State<LstOrdenes> {
     await _ordenEm.getAllOrdenesByAvo(avo);
 
     List<OrdenEntity> recSer = [];
+    if(_ordenEm.result['abort']) {
+      if(_ordenEm.result['body'].contains('Host')) {
+        context.read<SocketConn>().hasErrWithIpDbLocal = _ordenEm.result['body'];
+        _ordenEm.result['body'] = '';
+      }
+    }
+
     if(_ordenEm.result['body'].isNotEmpty) {
       for (var i = 0; i < _ordenEm.result['body'].length; i++) {
         OrdenEntity ent = OrdenEntity();
@@ -118,9 +126,12 @@ class _LstOrdenesState extends State<LstOrdenes> {
         return;
       }
     }
+
     if(widget.asignadas) {
+      // Visualizamos las ordenes que estan asignadas al AVO
       await _determinarAccionSegunStatus(indexOrden);
     }else{
+      // Estamos en la seccion de no asignadas
       provi.piezas = [];
       provi.fotosByPiezas = [];
       provi.idPzaSelect = 0;
@@ -134,7 +145,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
 
     var cStt = provi.ordenes[index].status();
     var nStt = <String, dynamic>{};
-
+    
     // Si el status esta entre los casos siguientes su cambio de Status es en
     // automático en caso contrario el cambio es manual realizado por el usuario
     switch (cStt['stt']) {
@@ -164,7 +175,8 @@ class _LstOrdenesState extends State<LstOrdenes> {
         provi.ordenes[index].stt = nStt['stt'];
         nStt['orden'] = provi.ordenes[index].id;
         nStt['version'] = DateTime.now().millisecondsSinceEpoch;
-        _ordenEm.changeStatusToRemoto(nStt);
+        _ordenEm.changeStatusToServer(nStt, isLocal: true);
+        _ordenEm.changeStatusToServer(nStt, isLocal: false);
       }
     }
   }

@@ -6,7 +6,7 @@ import '../../config/sng_manager.dart';
 import '../../providers/pages_provider.dart';
 import '../../services/get_content_files.dart';
 import '../../vars/globals.dart';
-import '../../vars/widgets_utils.dart';
+import '../widgets/widgets_utils.dart';
 
 class ConfigPage extends StatefulWidget {
 
@@ -271,7 +271,7 @@ class _ConfigPageState extends State<ConfigPage> {
           return FutureBuilder(
             future: _getAllRegistroUserLogin(),
             builder: (_, AsyncSnapshot snap) {
-              print('gastando recursos');
+              
               if(snap.connectionState == ConnectionState.done) {
                 if(_regsLogins.isNotEmpty) {
                   return _lstRegLogins(setState);
