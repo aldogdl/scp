@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:path/path.dart' as p;
 
 import '../config/sng_manager.dart';
@@ -167,6 +168,27 @@ class GetPaths {
       base = '${uriPath['base_r']}${uriPath['uri']}/';
     }
     return base;
+  }
+
+  ///
+  static String getNextPortadas() {
+
+    Random rnd = Random();
+    File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
+    if(paths.existsSync()) {
+      Map<String, dynamic> content = json.decode(paths.readAsStringSync());
+      
+      if(content.containsKey('portadas')) {
+        int has = content['portadas'].length;
+        int fnum = rnd.nextInt(has);
+        print(has);
+        print(fnum);
+        if(content['portadas'].containsKey('$fnum')) {
+          return content['portadas']['$fnum'];
+        }
+      }
+    }
+    return 'C:\\Users\\devfull\\AppData\\Roaming\\com.autoparnet\\portadas\\1.jpg';
   }
 
 }

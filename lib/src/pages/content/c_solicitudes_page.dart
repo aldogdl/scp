@@ -187,7 +187,10 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
 
         if(snap.connectionState == ConnectionState.done) {
           if(itemProv.fotosByPiezas.isNotEmpty) {
-            return _visorDeFotos();
+            return MouseRegion(
+              cursor: SystemMouseCursors.move,
+              child: _visorDeFotos(),
+            );
           }else{
             return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
           }
