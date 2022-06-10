@@ -519,16 +519,14 @@ class _FrmOrdenState extends State<FrmOrden> {
     }
 
     return DropdownSearch<Map<String, dynamic>>(
-        mode: Mode.MENU,
-        showSelectedItems: false,
+        // mode: Mode.MENU,
+        // showSelectedItems: false,
+        // showSearchBox: true,
+
         items: items,
-        showSearchBox: true,
         selectedItem: itemSelected,
         itemAsString: (Map<String, dynamic>? u) =>  u!['nombre'],
-        dropdownSearchDecoration: DecorationField.get(
-          help: help,
-          iconoPre: icono
-        ),
+        
         //popupItemDisabled: (Map<String, dynamic> s) => s['nombre'].startsWith('I'),
         onChanged: (valSel){
           if(valSel != null) {
@@ -695,10 +693,10 @@ class _FrmOrdenState extends State<FrmOrden> {
   ///
   Future<bool> _getDatosByOrdenAndPieza() async {
 
+    _items = context.read<ItemSelectGlobProvider>();
     if(autos.isEmpty) {
       autos = await GetContentFile.getAllAuto();
     }
-    _items = context.read<ItemSelectGlobProvider>();
     if(_items.ordenEntitySelect != null) {
       idMark = _items.ordenEntitySelect!.mkId;
       idModl = _items.ordenEntitySelect!.mdId;
@@ -742,10 +740,6 @@ class _FrmOrdenState extends State<FrmOrden> {
       piezaData.orden = _items.idOrdenSelect;
       piezaData.est = (_items.piezaSelect.est == '0') ? '3' : _items.piezaSelect.est;
       piezaData.stt = (_items.piezaSelect.stt == '0') ? '1' : _items.piezaSelect.stt;
-      piezaData.ruta = (_items.piezaSelect.ruta == '0') ? '0' : _items.piezaSelect.ruta;
-      if(piezaData.ruta == '0') {
-        piezaData.ruta = _items.piezas.first.ruta;
-      }
       _fotosCurrents = [];
       _items.piezaSelect = piezaData;
     }
@@ -823,7 +817,6 @@ class _FrmOrdenState extends State<FrmOrden> {
       'fotosD': fotosD,
       'pathF': pathF,
       'obs': deta.replaceFirst(deta[0], deta[0].toUpperCase()),
-      'ruta': _items.piezaSelect.ruta,
       'orden': _items.piezaSelect.orden
     };
   }

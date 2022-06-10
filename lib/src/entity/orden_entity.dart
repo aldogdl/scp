@@ -30,7 +30,7 @@ class OrdenEntity {
     eId = data['e_id'];
     est = data['o_est'];
     stt = data['o_stt'];
-    ruta = data['o_ruta'];
+    //ruta = data['o_ruta'];
     anio = data['o_anio'];
     mkLogo = data['mk_logo'];
     marca = data['mk_nombre'];

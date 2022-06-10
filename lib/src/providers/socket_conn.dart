@@ -19,6 +19,8 @@ class SocketConn extends ChangeNotifier {
   final info = NetworkInfo();
   final String _app = 'SCP';
 
+  String verOldCentinela = '';
+
   String pin = '';
   IOWebSocketChannel? _socket;
   IOWebSocketChannel get socket => _socket!;
@@ -78,10 +80,12 @@ class SocketConn extends ChangeNotifier {
   }
 
   /// Usado para notificar en el status bar un cambio de version del centinela
+  int cantAlert = 0;
   bool _alertCV = false;
   bool get alertCV => _alertCV;
   set alertCV(bool msg) {
     _alertCV = msg;
+    cantAlert++;
     notifyListeners();
   }
 
@@ -395,11 +399,21 @@ class SocketConn extends ChangeNotifier {
   Future<void> _determinarFncCentinela(
     String fnc, Map<String, dynamic> params
   ) async {
+    
+    if(params.containsKey('vers')) {
+      if(verOldCentinela.isEmpty) {
+        verOldCentinela = params['vers'];
+      }else{
+        if(params['vers'] != verOldCentinela) {
+          verOldCentinela = params['vers'];
+          alertCV = true;
+        }
+      }
+    }
 
     switch (fnc) {
       case 'update':
         msgCron = 'CAMBIO DE V: ${params['to_version']}';
-        alertCV = true;
         addManifest(params);
         msgErr = (params.containsKey('err'))
             ? params['err']
@@ -437,7 +451,32 @@ class SocketConn extends ChangeNotifier {
         url = 'https://autoparnet.com/$uri';
       }
 
-      await MyHttp.get(url);
+      if(globals.isLocalConn) {
+        url = await GetPaths.getDominio();
+        url = '$url$uri';
+      }
+      
+      try {
+        await MyHttp.get(url);
+      } catch (e) {
+        Uri uri = Uri.parse(url);
+        if(e.toString().contains(uri.host)) {
+          msgErr = '${uri.host}, no respode.';
+        }else{
+          msgErr = 'Sin Respuesta del Servidor';
+        }
+        return false;
+      }
+      
+      final tipoR = MyHttp.result['body'].runtimeType;
+      
+      if(tipoR == String) {
+        if(MyHttp.result['body'].contains('ERROR')) {
+          msgErr = MyHttp.result['body'];
+          return false;
+        }
+      }
+
       if(MyHttp.result['msg'] == 'ok') {
         
         if(MyHttp.result['body'].isEmpty) {

@@ -4,8 +4,8 @@ import '../widgets/loading_middle.dart';
 import '../widgets/lst_ordenes.dart';
 import '../widgets/txt_bsk_orden.dart';
 import '../../config/sng_manager.dart';
-import '../../services/rutas/rutas_cache.dart';
 import '../../vars/globals.dart';
+import '../../services/status/stts_cache.dart';
 
 class SolicitudesNonPage extends StatefulWidget {
 
@@ -18,7 +18,7 @@ class SolicitudesNonPage extends StatefulWidget {
 class _SolicitudesNonPageState extends State<SolicitudesNonPage> {
 
   final Globals globals = getSngOf<Globals>();
-  final RutasCache rutasCache = getSngOf<RutasCache>();
+  final SttsCache rutasCache = getSngOf<SttsCache>();
 
   bool _isLoading = true;
   String _txtLoading = 'Ordenes';

@@ -7,7 +7,7 @@ import 'my_tool_tip.dart';
 import '../../entity/orden_entity.dart';
 import '../../providers/items_selects_glob.dart';
 import '../../services/get_path_images.dart';
-import '../../services/rutas/est_stt.dart';
+import '../../services/status/est_stt.dart';
 
 const Color clrSelec = Color.fromARGB(255, 19, 84, 138);
 
@@ -25,7 +25,7 @@ class OrdenTile extends StatelessWidget {
   Widget build(BuildContext context) {
 
     bool isVisible = true;
-    context.watch<ItemSelectGlobProvider>().ordenesAsignadas.forEach((idAvo, lstOrdenes) {
+    context.read<ItemSelectGlobProvider>().ordenesAsignadas.forEach((idAvo, lstOrdenes) {
       if(lstOrdenes.contains(orden.id)) {
         isVisible = false;
       }
@@ -84,6 +84,7 @@ class OrdenTile extends StatelessWidget {
       ),
     );
   }
+
   ///
   Widget _content() {
     
@@ -167,20 +168,22 @@ class OrdenTile extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(100),
-        child: FutureBuilder(
-          future: GetPathImages.getPathToLogoMarcaOf(orden.mkLogo),
-          builder: (_, AsyncSnapshot dataUri) {
-            if(dataUri.connectionState == ConnectionState.done) {
-              if(dataUri.hasData) {
-                return CachedNetworkImage(
-                  imageUrl: dataUri.data,
-                  fit: BoxFit.contain,
-                );
+        child: (orden.mkLogo == '0')
+        ? const Icon(Icons.car_repair, color: Colors.black)
+        : FutureBuilder(
+            future: GetPathImages.getPathToLogoMarcaOf(orden.mkLogo),
+            builder: (_, AsyncSnapshot dataUri) {
+              if(dataUri.connectionState == ConnectionState.done) {
+                if(dataUri.hasData) {
+                  return CachedNetworkImage(
+                    imageUrl: dataUri.data,
+                    fit: BoxFit.contain,
+                  );
+                }
               }
-            }
-            return const SizedBox();
-          },
-        ),
+              return const SizedBox();
+            },
+          ),
       ),
     );
   }

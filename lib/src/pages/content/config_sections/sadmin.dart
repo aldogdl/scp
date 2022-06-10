@@ -14,7 +14,8 @@ class _SadminState extends State<Sadmin> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+
+    return const SizedBox(
       child: Center(
         child: Texto(txt: 'SADMIN')
       ),

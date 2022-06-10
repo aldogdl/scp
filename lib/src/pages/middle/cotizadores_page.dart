@@ -15,7 +15,7 @@ class _CotizadoresPageState extends State<CotizadoresPage> {
 
   final ContactsRepository _contacEm = ContactsRepository();
   late Future _getAllCotizadores;
-  List<ContacsEntity> _items = [];
+  final List<ContacsEntity> _items = [];
 
   @override
   void initState() {

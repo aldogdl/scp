@@ -21,7 +21,7 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final _sock = context.read<SocketConn>();
+    final sock = context.read<SocketConn>();
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -62,11 +62,11 @@ class Home extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Expanded(
-            child: _datosGenerales(_sock),
+            child: _datosGenerales(sock),
           ),
           SizedBox(
             height: 40,
-            child: _acciones(context, _sock),
+            child: _acciones(context, sock),
           )
         ],
       )
@@ -74,7 +74,7 @@ class Home extends StatelessWidget {
   }
 
   ///
-  Widget _datosGenerales(SocketConn _sock) {
+  Widget _datosGenerales(SocketConn sock) {
 
     String urlR = 'Desconocido';
     String urlL = 'Desconocido';
@@ -107,10 +107,10 @@ class Home extends StatelessWidget {
     List<Map<String, dynamic>> datosDer = [
       {'c':'Puerto a HARBI:', 'v':globals.portHarbi},
       {'c':'Puerto a Servidor:', 'v':portL},
-      {'c':'ID de Conexión a HARBI:', 'v':_sock.idConn},
+      {'c':'ID de Conexión a HARBI:', 'v':sock.idConn},
       {'c':'MIS DATOS:', 'v':'...'},
       {'c':'Identificación:', 'v':globals.idUser},
-      {'c':'Usuario:', 'v':_sock.username},
+      {'c':'Usuario:', 'v':sock.username},
       {'c':'CURC:', 'v':globals.curc},
     ];
 
@@ -140,7 +140,7 @@ class Home extends StatelessWidget {
   }
 
   ///
-  Widget _acciones(BuildContext context, SocketConn _sock) {
+  Widget _acciones(BuildContext context, SocketConn sock) {
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,8 +148,8 @@ class Home extends StatelessWidget {
       children: [
         TextButton.icon(
           onPressed: () {
-            _sock.cerrarConection();
-            _sock.isLoged = false;
+            sock.cerrarConection();
+            sock.isLoged = false;
             context.read<PageProvider>().resetPage();
           },
           icon: const Icon(Icons.logout),
@@ -161,7 +161,7 @@ class Home extends StatelessWidget {
           label: const Texto(txt: 'Desconectar a HARBI')
         ),
         TextButton.icon(
-          onPressed: () => _reconectar(context, _sock),
+          onPressed: () => _reconectar(context, sock),
           icon: const Icon(Icons.settings_power_outlined),
           label: const Texto(txt: 'Reconectar con HARBI')
         ),
@@ -189,7 +189,7 @@ class Home extends StatelessWidget {
   }
 
   ///
-  Future<void> _reconectar(BuildContext context, SocketConn _sock) async {
+  Future<void> _reconectar(BuildContext context, SocketConn sock) async {
 
     await WidgetsAndUtils.showAlert(
       context,
@@ -203,17 +203,17 @@ class Home extends StatelessWidget {
       'username' : globals.curc,
       'password' : globals.password
     };
-    await _sock.awaitResponseSocket(
+    await sock.awaitResponseSocket(
       event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
       msgInit: 'Haciendo login en local',
       msgExito: 'Login Autorizado'
     );
 
-    if(!_sock.msgErr.contains('Error')) {
-        _sock.msgCron= 'OK.';
-        _sock.isLoged = true;
+    if(!sock.msgErr.contains('Error')) {
+        sock.msgCron= 'OK.';
+        sock.isLoged = true;
     }else{
-      _sock.msgCron= 'ERROR';
+      sock.msgCron= 'ERROR';
     }
 
   }

@@ -34,12 +34,12 @@ class _CentinelaConsolaState extends State<CentinelaConsola> {
       ),
       child: Scrollbar(
         controller: _scrollCtr,
-        isAlwaysShown: true,
         radius: const Radius.circular(3),
-        showTrackOnHover: true,
+        thumbVisibility: true,
         trackVisibility: true,
         child: ListView.builder(
           controller: _scrollCtr,
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(right: 15),
           itemCount: provi.manifests.length,
           itemBuilder: (_, index) {

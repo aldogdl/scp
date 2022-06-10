@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:scp/src/pages/middle/config_page.dart';
-import 'package:scp/src/pages/middle/cotizadores_page.dart';
-import 'package:scp/src/pages/middle/solicitantes_page.dart';
-import 'package:scp/src/pages/middle/solicitudes_non_page.dart';
-import 'package:scp/src/pages/middle/solicitudes_page.dart';
-import 'package:scp/src/providers/pages_provider.dart';
 
-import 'package:scp/src/providers/window_cnf_provider.dart';
+import 'pages/middle/config_page.dart';
+import 'pages/middle/cotizadores_page.dart';
+import 'pages/middle/solicitantes_page.dart';
+import 'pages/middle/solicitudes_non_page.dart';
+import 'pages/middle/solicitudes_page.dart';
+import 'providers/pages_provider.dart';
+import 'providers/window_cnf_provider.dart';
 
 class MiddleSide extends StatelessWidget {
   
@@ -73,6 +73,7 @@ class MiddleSide extends StatelessWidget {
   Widget _determinarWidget(Paginas pagina) {
 
     late Widget child;
+
     switch (pagina) {
       case Paginas.solicitudesNon:
         child = const SolicitudesNonPage();

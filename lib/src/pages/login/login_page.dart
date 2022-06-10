@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
-    WidgetsBinding.instance!.addPostFrameCallback(_initWidget);
+    WidgetsBinding.instance.addPostFrameCallback(_initWidget);
     super.initState();
   }
 

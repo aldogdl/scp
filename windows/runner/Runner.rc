@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
+            VALUE "CompanyName", "com.autoparnet" "\0"
             VALUE "FileDescription", "scp" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "scp" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2022 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2022 com.autoparnet. All rights reserved." "\0"
             VALUE "OriginalFilename", "scp.exe" "\0"
             VALUE "ProductName", "scp" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

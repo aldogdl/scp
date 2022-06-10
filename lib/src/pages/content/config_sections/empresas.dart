@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../config/sng_manager.dart';
+import '../../../vars/globals.dart';
 import 'widgets/decoration_field.dart';
 import 'widgets/lst_contactos.dart';
 import '../../widgets/texto.dart';
@@ -19,6 +21,7 @@ class Empresas extends StatefulWidget {
 
 class _EmpresasState extends State<Empresas> {
 
+  final _globals = getSngOf<Globals>();
   final ContactsRepository _contacEm = ContactsRepository();
 
   final GlobalKey<FormState> _frmKey = GlobalKey<FormState>();
@@ -53,6 +56,7 @@ class _EmpresasState extends State<Empresas> {
   bool _isAbsorbing = false;
   int _idEmp = 0;
   int _idContac = 0;
+  bool _isOtherContac = false;
 
   @override
   void initState() {
@@ -109,6 +113,18 @@ class _EmpresasState extends State<Empresas> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        const Texto(txt: 'Agregar como Nuevo Contacto?'),
+                        FocusTraversalOrder(
+                          order: const NumericFocusOrder(9),
+                          child: Checkbox(
+                            value: _isOtherContac,
+                            checkColor: Colors.black,
+                            onChanged: (val) => setState(() {
+                              _isOtherContac = val ?? false;
+                            })
+                          ),
+                        ),
+                        const SizedBox(width: 10),
                         const Texto(txt: 'Es local?'),
                         FocusTraversalOrder(
                           order: const NumericFocusOrder(9),
@@ -483,28 +499,62 @@ class _EmpresasState extends State<Empresas> {
 
       final provi = context.read<SocketConn>();
       
-      provi.msgErr = 'Actualizando datos directamente en el Servidor';
       EmpresaEntity emp = _hidratarEmpresaFromScreen(); 
       ContactoEntity cont = _hidratarContactoFromScreen();
-
-      final data = {'empresa' : emp.toJson(), 'contacto': cont.toJson()};
+      Map<String, dynamic> dataContac = cont.toJson();
+      if(_isOtherContac) {
+        dataContac['isOtherContac'] = _isOtherContac;
+        dataContac['id'] = 0;
+      }
+      final data = {'empresa' : emp.toJson(), 'contacto': dataContac};
       setState(() { _isAbsorbing = true; });
 
-      await _contacEm.safeDataContact(data, isLocal: false);
+      if(!_globals.isLocalConn) {
+        provi.msgErr = 'Actualizando datos directamente en el Servidor';
+        await _contacEm.safeDataContact(data, isLocal: false);
+        if(_contacEm.result['abort']) {
+          provi.msgErr = _contacEm.result['body'];
+          debugPrint(_contacEm.result['msg']);
+        }else{
+          provi.msgErr = 'Actualizando Servidor Local';
+          emp.id   = _contacEm.result['body']['e'];
+          cont.id  = _contacEm.result['body']['c'];
+          cont.curc= _contacEm.result['body']['curc'];
+          _idEmp   = emp.id;
+          _idContac= cont.id;
+          Map<String, dynamic> dataContac = cont.toJson();
+          if(_isOtherContac) {
+            dataContac['isOtherContac'] = _isOtherContac;
+            dataContac['id'] = 0;
+          }
+          await _updateDataBaseLocal({'empresa' : emp.toJson(), 'contacto': dataContac});
+        }
 
-      if(_contacEm.result['abort']) {
-        provi.msgErr = _contacEm.result['body'];
-        debugPrint(_contacEm.result['msg']);
-        setState(() { _isAbsorbing = false; });
       }else{
+        
         provi.msgErr = 'Actualizando Servidor Local';
-        emp.id   = _contacEm.result['body']['e'];
-        cont.id  = _contacEm.result['body']['c'];
-        cont.curc= _contacEm.result['body']['curc'];
-        _idEmp   = emp.id;
-        _idContac= cont.id;
-        await _updateDataBaseLocal({'empresa' : emp.toJson(), 'contacto': cont.toJson()});
+        await _contacEm.safeDataContact(data, isLocal: true);
+        if(_contacEm.result['abort']) {
+          provi.msgErr = _contacEm.result['body'];
+          debugPrint(_contacEm.result['msg']);
+        }else{
+          provi.msgErr = 'Datos guardados con éxito';
+          emp.id   = _contacEm.result['body']['e'];
+          cont.id  = _contacEm.result['body']['c'];
+          cont.curc= _contacEm.result['body']['curc'];
+          _idEmp   = emp.id;
+          _idContac= cont.id;
+          Future.delayed(const Duration(milliseconds: 2000), (){
+            provi.msgErr = '';
+          });
+          final ct = ContactoEntity();
+          ct.fromFrmToList(data);
+          _refreshList.value = !_refreshList.value;
+          _resetScreen();
+        }
       }
+
+      setState(() { _isAbsorbing = false; });
     }
   }
 

@@ -8,6 +8,7 @@
 
 #include <bitsdojo_window_windows/bitsdojo_window_plugin.h>
 #include <network_info_plus_windows/network_info_plus_windows_plugin.h>
+#include <screen_retriever/screen_retriever_plugin.h>
 #include <window_manager/window_manager_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
@@ -15,6 +16,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("BitsdojoWindowPlugin"));
   NetworkInfoPlusWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("NetworkInfoPlusWindowsPlugin"));
+  ScreenRetrieverPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("ScreenRetrieverPlugin"));
   WindowManagerPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("WindowManagerPlugin"));
 }

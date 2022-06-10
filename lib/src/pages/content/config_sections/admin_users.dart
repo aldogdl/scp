@@ -378,19 +378,26 @@ class _AdminUsersState extends State<AdminUsers> {
       
       setState(() { _isAbsorbing = true; });
 
-      await _contacEm.safeDataContact(data, isLocal: false);
+      if(!globals.isLocalConn) {
+        await _contacEm.safeDataContact(data, isLocal: false);
+        if(_contacEm.result['abort']) {
+          provi.msgErr = _contacEm.result['body'];
+          debugPrint(_contacEm.result['msg']);
+        }
+      }
 
+      provi.msgErr = 'Actualizando Servidor Local';
+      await _contacEm.safeDataContact(data, isLocal: true);
       if(_contacEm.result['abort']) {
         provi.msgErr = _contacEm.result['body'];
         debugPrint(_contacEm.result['msg']);
-        setState(() { _isAbsorbing = false; });
       }else{
-        provi.msgErr = 'Actualizando Servidor Local';
         cont.id  = _contacEm.result['body']['c'];
         cont.curc= _contacEm.result['body']['curc'];
         _idContac= cont.id;
         await _updateDataBaseLocal(cont.toJsonForAdminUser());
       }
+      setState(() { _isAbsorbing = false; });
     }
   }
 

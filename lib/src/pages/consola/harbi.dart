@@ -29,7 +29,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
 
   @override
   void initState() {
-    WidgetsBinding.instance!.addPostFrameCallback((_) => _initWidget(null));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initWidget(null));
     super.initState();
   }
 

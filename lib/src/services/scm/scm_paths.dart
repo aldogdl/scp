@@ -9,16 +9,19 @@ class ScmPaths {
   static getUri(String uri, {bool isLocal = false}) {
 
     final tipo = (isLocal) ? 'base_l' : 'base_r';
-    final base = _globals.ipDbs[tipo];
-    final uris = _paths();
-    return '$base${uris[uri]}';
+    return '${_globals.ipDbs[tipo]}${_paths[uri]}';
+  }
+
+  ///  
+  static getUriHarbi(String uri) {
+
+    return 'http://${_globals.ipHarbi}:${_globals.portHarbi}/${_paths[uri]}';
   }
 
   ///
-  static Map<String, String> _paths() {
+  static const Map<String, String> _paths = {
+      'newCampaing':'scp/solicitudes/set-new-campaing/',
+      'getIdCamp':'scp/get-id-campaing-by-slug/',
+  };
 
-    return <String, String>{
-      'buscar_cotizaciones_orden':'scp/buscar-cotizaciones-orden/',
-    };
-  }
 }

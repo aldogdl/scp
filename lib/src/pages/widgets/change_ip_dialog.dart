@@ -121,6 +121,8 @@ class _ChangeIpDialogState extends State<ChangeIpDialog> {
     _msg = 'Probando Conectividad';
     _abosorbing = true;
     setState(() {});
+    
+    final nav = Navigator.of(context);
     await MyHttp.get('${uri.toString()}$uriPath');
     
     if(MyHttp.result['body'].contains('ERROR') || MyHttp.result['body'].contains('ok')) {
@@ -136,7 +138,7 @@ class _ChangeIpDialogState extends State<ChangeIpDialog> {
     if(resultado) {
       _msg = 'Satisfactorio';
       await Future.delayed(const Duration(milliseconds: 300));
-      Navigator.of(context).pop(true);
+      nav.pop(true);
       widget.onSave(_ctlIp.text);
     }else{
       _msg = 'Intenta con otra IP';

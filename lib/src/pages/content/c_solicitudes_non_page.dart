@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/pages/widgets/instruc_asignar_orden.dart';
 import 'package:scp/src/providers/socket_conn.dart';
 import 'package:scp/src/repository/ordenes_repository.dart';
 import 'package:scp/src/pages/widgets/widgets_utils.dart';
@@ -49,12 +50,14 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   dynamic _dataSaving;
   CPush _cpushOrden = CPush.asignacion;
   String _portadaTipo = 'sin_data';
-  String _acc = 'Se Asignaron nuevas Ordenes';
+  String _acc = 'Se Asignaron nuevas Órdenes';
   final String _msg = 'Al seleccionar un Asesor de Ventas OnLine, podrás enlistar '
-  'todas las  ORDENES con las que cuenta actualmente.';
+  'todas las ÓRDENES con las que cuenta actualmente.';
 
-  final String _inst = 'Para asignar una orden, primero selecciona una de la lista, '
-  'posteriormente selecciona al AVO a quien deseas asignarcela y presiona el botón de asignar.';
+  final String _inst = 'Primero selecciona una orden del listado.\n'
+  'Después con doble click, elige al AVO a quien le será asignada la orden '
+  'y presiona el botón de asignar.\n'
+  'Para finalizar presiona el botón de Guardar.';
   
   @override
   void initState() {
@@ -205,13 +208,12 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     return Center(
       child: Scrollbar(
         controller: _scrollCtr,
-        isAlwaysShown: true,
         radius: const Radius.circular(3),
-        showTrackOnHover: true,
-        trackVisibility: true,
+        thumbVisibility: true,
         child: ListView.builder(
           shrinkWrap: true,
           controller: _scrollCtr,
+          physics: const BouncingScrollPhysics(),
           itemCount: itemProv.avos.length,
           padding: const EdgeInsets.only(right: 10),
           itemBuilder: (_, index) {
@@ -348,7 +350,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
     if(items.isEmpty) {
       if(from == 'bottom') {
-        return _sinDataAvoOrdenes(icono: Icons.table_view_sharp);
+        return const InstrucAsignarOrden();
       }else{
         return const Center(
           child: Texto(txt: 'Sin Ordenes recientemente asignadas', isCenter: true),
@@ -358,12 +360,12 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
     return Scrollbar(
       controller: ctr,
-      isAlwaysShown: true,
       radius: const Radius.circular(3),
-      showTrackOnHover: true,
+      thumbVisibility: true,
       trackVisibility: true,
       child: ListView.builder(
         controller: ctr,
+        physics: const BouncingScrollPhysics(),
         itemCount: items.length,
         padding: const EdgeInsets.only(right: 10),
         itemBuilder: (_, index) {
@@ -515,11 +517,6 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
                   msg: 'Arrastra para Reasignar',
                   child: Draggable<int>(
                     data: orden.id,
-                    child: (_isValidTarger == 0)
-                    ? const Icon(Icons.rotate_left_rounded, color: Color.fromARGB(255, 255, 126, 117), size: 18)
-                    : (_isValidTarger == 1)
-                      ? const Icon(Icons.check_circle_outlined, color: Colors.blue, size: 18)
-                      : const Icon(Icons.warning_amber, color: Colors.orange, size: 18),
                     childWhenDragging: _chip(label: '${orden.id}', bg: const Color.fromARGB(255, 231, 175, 6)),
                     feedback: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -534,6 +531,11 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
                         ],
                       )
                     ),
+                    child: (_isValidTarger == 0)
+                      ? const Icon(Icons.rotate_left_rounded, color: Color.fromARGB(255, 255, 126, 117), size: 18)
+                      : (_isValidTarger == 1)
+                        ? const Icon(Icons.check_circle_outlined, color: Colors.blue, size: 18)
+                        : const Icon(Icons.warning_amber, color: Colors.orange, size: 18),
                   )
                 ),
               const SizedBox(width: 10),
@@ -543,7 +545,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
               const Texto(txt: 'Pzs: ', sz: 12),
               _chip(label: '12', bg: Colors.purple),
               const Spacer(),
-              Texto(txt: 'El status actual'),
+              const Texto(txt: 'El status actual'),
             ],
           ),
         ]
@@ -577,37 +579,6 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       child: Icon(
         icono, size: 150,
         color: Colors.black.withOpacity(opacity)
-      ),
-    );
-  }
-
-  ///
-  Widget _sinDataAvoOrdenes({
-    required IconData icono,
-    double opacity = 0.5,
-  }) {
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Texto(txt: _inst, sz: 17, txtC: const Color.fromARGB(255, 74, 228, 80), isCenter: true),
-          const SizedBox(height: 10),
-          if(_portadaTipo == 'sin_data')
-            SizedBox(
-              width: winCnf.tamMiddle + 200,
-              child: Align(
-                alignment: Alignment.center,
-                child: Texto(txt: _msg, sz: 22, isCenter: true),
-              ),
-            ),
-          Icon(
-            icono, size: 150,
-            color: Colors.black.withOpacity(opacity)
-          ),
-        ],
       ),
     );
   }
@@ -714,7 +685,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     }
 
     if(itemProv.avos.isEmpty) {
-      await _contacEm.getAllContacts(tipo: 'anet');
+      await _contacEm.getAllContacts(tipo: 'anete');
       if(!_contacEm.result['abort']) {
         
         List<ContactoEntity> cts = [];
@@ -929,13 +900,14 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   Stream<String> _saving() async* {
     
     yield 'Preparando datos...';
+    final sock = context.read<SocketConn>();
     await _centiProv.commit(_cpushOrden, _dataSaving);
     _centiProv.updateVersion();
     Future.delayed(const Duration(milliseconds: 500));
     
     _centiProv.setManifest(
       sendId: globals.idUser,
-      sendFrom: context.read<SocketConn>().username,
+      sendFrom: sock.username,
       toVersion: int.parse('${_centiProv.centinela['version']}'),
       message: _acc
     );

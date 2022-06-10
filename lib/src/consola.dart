@@ -17,7 +17,7 @@ class ConsolaSide extends StatelessWidget {
 
     final winCnf = context.read<WindowCnfProvider>();
     final pageProv = context.read<PageProvider>();
-    double widthOfResto = winCnf.tamToolBar + winCnf.tamMiddle;
+    double widthOfResto = winCnf.tamMiddle;
     double w = (widthOfResto * 100) / MediaQuery.of(context).size.width;
     double wt = MediaQuery.of(context).size.width * ((100 - w) / 100);
     

@@ -175,14 +175,13 @@ class GetPaths {
 
     Random rnd = Random();
     File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
+
     if(paths.existsSync()) {
       Map<String, dynamic> content = json.decode(paths.readAsStringSync());
       
       if(content.containsKey('portadas')) {
         int has = content['portadas'].length;
         int fnum = rnd.nextInt(has);
-        print(has);
-        print(fnum);
         if(content['portadas'].containsKey('$fnum')) {
           return content['portadas']['$fnum'];
         }

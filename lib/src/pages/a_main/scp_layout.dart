@@ -8,7 +8,6 @@ import '../../content_side.dart';
 import '../../middle_side.dart';
 import '../../providers/window_cnf_provider.dart';
 import '../../status_barr.dart';
-import '../../tools_bar.dart';
 import '../../vars/globals.dart';
 import '../../vars/intents/show_action_main.dart';
 import '../../vars/shortcut_activators.dart';
@@ -73,10 +72,9 @@ class _ScpLayoutState extends State<ScpLayout> with WindowListener {
             children: [
               Expanded(
                 child: Row(
-                  children: [
-                    ToolsBarr(),
-                    const MiddleSide(),
-                    const Expanded(child: ContentSide())
+                  children: const [
+                    MiddleSide(),
+                    Expanded(child: ContentSide())
                   ]
                 ),
               ),

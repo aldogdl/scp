@@ -11,8 +11,8 @@ import '../../providers/items_selects_glob.dart';
 import '../../repository/ordenes_repository.dart';
 import '../../repository/piezas_repository.dart';
 import '../../services/get_path_images.dart';
-import '../../services/rutas/est_stt.dart';
-import '../../services/rutas/rutas_cache.dart';
+import '../../services/status/est_stt.dart';
+import '../../services/status/stts_cache.dart';
 
 class LstOrdenes extends StatefulWidget {
 
@@ -33,7 +33,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
   final Globals globals = getSngOf<Globals>();
   final OrdenesRepository _ordenEm = OrdenesRepository();
   final PiezasRepository _pzasEm = PiezasRepository();
-  final RutasCache rutasCache = getSngOf<RutasCache>();
+  final SttsCache sttsCache = getSngOf<SttsCache>();
 
   final ScrollController _scrollCtr = ScrollController();
   late ItemSelectGlobProvider provi;
@@ -55,24 +55,19 @@ class _LstOrdenesState extends State<LstOrdenes> {
   @override
   Widget build(BuildContext context) {
 
-    if(!_isInit) {
-      _isInit = true;
-      provi = context.read<ItemSelectGlobProvider>();
-    }
-
-    return Selector<ItemSelectGlobProvider, List<OrdenEntity>>(
-      selector: (_, proviSel) => proviSel.ordenes,
-      builder: (_, ords, __) {
-        
-        return Scrollbar(
-          controller: _scrollCtr,
-          isAlwaysShown: true,
-          radius: const Radius.circular(3),
-          showTrackOnHover: true,
-          trackVisibility: true,
-          child: ListView.builder(
+    return Scrollbar(
+      controller: _scrollCtr,
+      thumbVisibility: true,
+      radius: const Radius.circular(3),
+      trackVisibility: true,
+      child: Selector<ItemSelectGlobProvider, List<OrdenEntity>>(
+        selector: (_, proviSel) => proviSel.ordenes,
+        builder: (_, ords, __) {
+          
+          return ListView.builder(
             controller: _scrollCtr,
             itemCount: ords.length,
+            physics: const BouncingScrollPhysics(),
             itemBuilder: (_, index) {
               
               return GestureDetector(
@@ -82,16 +77,23 @@ class _LstOrdenesState extends State<LstOrdenes> {
                 ),
               );
             }
-          ),
-        );
-      },
+          );
+        },
+      )
     );
   }
 
   ///
   Future<void> _recuperarTodasLasOrdenes() async {
 
-    await rutasCache.hidratar();
+    late final SocketConn sock;
+    if(!_isInit) {
+      _isInit = true;
+      provi = context.read<ItemSelectGlobProvider>();
+      sock = context.read<SocketConn>();
+    }
+    await sttsCache.hidratar();
+
     provi.ordenes = [];
     int avo = (widget.asignadas) ? globals.idUser : 0;
     
@@ -101,7 +103,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
     List<OrdenEntity> recSer = [];
     if(_ordenEm.result['abort']) {
       if(_ordenEm.result['body'].contains('Host')) {
-        context.read<SocketConn>().hasErrWithIpDbLocal = _ordenEm.result['body'];
+        sock.hasErrWithIpDbLocal = _ordenEm.result['body'];
         _ordenEm.result['body'] = '';
       }
     }
@@ -145,7 +147,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
 
     var cStt = provi.ordenes[index].status();
     var nStt = <String, dynamic>{};
-    
+
     // Si el status esta entre los casos siguientes su cambio de Status es en
     // automático en caso contrario el cambio es manual realizado por el usuario
     switch (cStt['stt']) {
@@ -159,7 +161,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
     }
 
     if(nStt.isNotEmpty && !nStt.containsKey('error')) {
-
+      
       bool changeStt = true;
       // Acciones automáticas según el status
       switch (nStt['stt']) {
@@ -176,7 +178,9 @@ class _LstOrdenesState extends State<LstOrdenes> {
         nStt['orden'] = provi.ordenes[index].id;
         nStt['version'] = DateTime.now().millisecondsSinceEpoch;
         _ordenEm.changeStatusToServer(nStt, isLocal: true);
-        _ordenEm.changeStatusToServer(nStt, isLocal: false);
+        if(!globals.isLocalConn) {
+          _ordenEm.changeStatusToServer(nStt, isLocal: false);
+        }
       }
     }
   }
@@ -221,7 +225,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
       }
     }
 
-    widget.onLoading({'isLoading': false, 'msg': 'Ordenes'});
+    widget.onLoading({'isLoading': false, 'msg': 'Piezas'});
   }
 
 }

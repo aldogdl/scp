@@ -56,3 +56,15 @@ final editPza = LogicalKeySet(
   LogicalKeyboardKey.keyE
 );
 class EditPza extends Intent{}
+
+final prevPza = LogicalKeySet(
+  LogicalKeyboardKey.control,
+  LogicalKeyboardKey.arrowUp
+);
+class PrevPza extends Intent{}
+
+final nextPza = LogicalKeySet(
+  LogicalKeyboardKey.control,
+  LogicalKeyboardKey.arrowDown
+);
+class NextPza extends Intent{}

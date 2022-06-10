@@ -1,4 +1,4 @@
-package com.example.scp
+package com.autoparnet.scp
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -270,14 +270,14 @@ class _RastrearLstContacsState extends State<RastrearLstContacs> {
     indice = 0;
     return Scrollbar(
       controller: _scrollCtr,
-      isAlwaysShown: true,
+      thumbVisibility: true,
       radius: const Radius.circular(3),
-      showTrackOnHover: true,
       trackVisibility: true,
       child: SizedBox.expand(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(right: 10),
           controller: _scrollCtr,
+          padding: const EdgeInsets.only(right: 10),
+          physics: const BouncingScrollPhysics(),
           child: Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             columnWidths: const <int, TableColumnWidth>{

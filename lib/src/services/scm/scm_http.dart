@@ -13,6 +13,32 @@ class ScmHttp {
   }
 
   ///
+  static Future<void> get(String uri) async {
+
+    Map<String, String> headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+    };
+    var req = http.MultipartRequest('GET', Uri.parse(uri));
+
+    req.headers.addAll(headers);
+    late http.Response response;
+    try {
+      response = await http.Response.fromStream(await req.send());
+    } catch (e) {
+      result = {'abort':true, 'msg': e.toString(), 'body':'ERROR, Sin conexión con HARBI, intentalo nuevamente.'};
+      return;
+    }
+
+    if(response.statusCode == 200) {
+      clean();
+      result = Map<String, dynamic>.from(json.decode(response.body));
+    }else{
+      _drawErrorInConsole(response);
+    }
+  }
+
+  ///
   static Future<void> post(String uri, Map<String, dynamic> data) async {
 
     Map<String, String> headers = {
@@ -34,6 +60,9 @@ class ScmHttp {
     if(response.statusCode == 200) {
       clean();
       result = Map<String, dynamic>.from(json.decode(response.body));
+      if(result['abort']) {
+        debugPrint(result['msg']);
+      }
     }else{
       _drawErrorInConsole(response);
     }

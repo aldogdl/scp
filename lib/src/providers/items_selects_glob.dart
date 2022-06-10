@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:extended_image/extended_image.dart';
+import 'package:flutter/widgets.dart' show GlobalKey, ChangeNotifier, ValueChanged,
+Curves, Offset, Size;
 
 import '../entity/contacto_entity.dart';
 import '../entity/contacts_entity.dart';
@@ -122,6 +124,133 @@ class ItemSelectGlobProvider extends ChangeNotifier {
   set fotosByPiezas(List<Map<String, dynamic>> fPzas) {
     _fotosByPiezas = fPzas;
     notifyListeners();
+  }
+
+    ///
+  int sIniFotoW = 0;
+  int sIniFotoH = 0;
+  int currentPage = 0;
+  List<GlobalKey<ExtendedImageGestureState>> gestureKey = [];
+  
+  ///
+  Future<void> hidratarKeysAsFotos() async {
+
+    if(fotosByPiezas.isEmpty){ return; }
+    gestureKey.clear();
+    for (var i = 0; i < fotosByPiezas.length; i++) {
+      gestureKey.add(GlobalKey<ExtendedImageGestureState>());
+    }
+  }
+  
+  ///
+  void sigFoto(ExtendedPageController pageCtl, ValueChanged<void> onFinish) {
+
+    if(fotosByPiezas.isNotEmpty) {
+      if(pageCtl.page == fotosByPiezas.length -1) {
+        pageCtl.animateToPage(
+          pageCtl.initialPage,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeIn
+        );
+      }else{
+        pageCtl.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+      }
+      onFinish(null);
+    }
+  }
+
+  ///
+  void backFoto(ExtendedPageController pageCtl, ValueChanged<void> onFinish) {
+
+    if(fotosByPiezas.isNotEmpty) {
+      pageCtl.previousPage(
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeIn
+      );
+      onFinish(null);
+    }
+  }
+
+  ///
+  void zoomFoto(Size mediaQ, double widthOfResto, ValueChanged<void> onFinish) {
+
+    if(fotosByPiezas.isNotEmpty) {
+      double nt = gestureKey[currentPage].currentState!.gestureDetails!.totalScale! + 0.5;
+      gestureKey[currentPage].currentState!.gestureDetails=GestureDetails(
+        actionType: ActionType.zoom,
+        userOffset: true,
+        offset: _calcularCentros(
+          nt, gestureKey[currentPage].currentState!.gestureDetails!.offset!, true,
+          mediaQ: mediaQ,
+          widthOfResto: widthOfResto
+        ),
+        totalScale: nt
+      );
+      onFinish(null);
+    }
+  }
+
+  ///
+  void dismFoto(Size mediaQ, double widthOfResto, ValueChanged<void> onFinish) {
+
+    if(fotosByPiezas.isNotEmpty) {
+
+      if(gestureKey[currentPage].currentState!.gestureDetails!.totalScale! < 1) {
+        gestureKey[currentPage].currentState!.reset();
+        return;
+      }
+      double nt = gestureKey[currentPage].currentState!.gestureDetails!.totalScale! - 0.5;       
+      gestureKey[currentPage].currentState!.gestureDetails=GestureDetails(
+        actionType: ActionType.zoom,
+        userOffset: true,
+        offset: _calcularCentros(
+          nt, gestureKey[currentPage].currentState!.gestureDetails!.offset!, false,
+          mediaQ: mediaQ,
+          widthOfResto: widthOfResto
+        ),
+        totalScale: nt
+      );
+      onFinish(null);
+    }
+  }
+
+  ///
+  Offset _calcularCentros(
+    double nt, Offset current, bool isAdd,
+    {required Size mediaQ, required double widthOfResto}
+  ) {
+
+    double difToCW = current.dx;
+    double difToCH = current.dy;
+  
+    if(isAdd) {
+
+      double w = (widthOfResto * 100) / mediaQ.width;
+      double wContainer = mediaQ.width * ((100 - w) / 100);
+      double hContainer = mediaQ.height;
+
+      double cContainerW = wContainer / 2;
+      double cContainerH = hContainer / 2;
+
+      double centerImgWO = sIniFotoW / 2;
+      double centerImgHO = sIniFotoW / 2;
+
+      double centerImgW = (sIniFotoW * nt) / 2;
+      double centerImgH = (sIniFotoH * nt) / 2;
+      double difW = centerImgW - centerImgWO;
+      double difH = centerImgH - centerImgHO;
+
+      difToCW = cContainerW - difW;
+      difToCH = cContainerH - difH;
+
+      if(difToCW < -cContainerW) {
+        difToCW = current.dx - (cContainerW * 0.5);
+      }
+      if(difToCH < -cContainerH) {
+        difToCH = current.dy - (cContainerH * 0.5);
+      }
+    }
+    return Offset(difToCW, difToCH);
   }
 
 }

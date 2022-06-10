@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:extended_image/extended_image.dart';
-import 'package:scp/src/pages/widgets/widgets_utils.dart';
-import 'package:scp/src/repository/ordenes_repository.dart';
-import 'package:scp/src/services/rutas/est_stt.dart';
+import 'package:scp/src/pages/content/widgets/sin_data.dart';
+import 'package:scp/src/pages/content/widgets/visor_fotos.dart';
 
+
+import '../../services/status/est_stt.dart';
 import 'widgets/rastrear_lst_contacs.dart';
 import '../widgets/frm_orden.dart';
 import '../widgets/my_tool_tip.dart';
 import '../widgets/pieza_tile.dart';
 import '../widgets/texto.dart';
+import '../widgets/widgets_utils.dart';
 import '../../config/sng_manager.dart';
 import '../../entity/piezas_entity.dart';
 import '../../providers/items_selects_glob.dart';
 import '../../providers/window_cnf_provider.dart';
+import '../../repository/ordenes_repository.dart';
 import '../../services/scm/scm_entity.dart';
 import '../../services/scm/scm_repository.dart';
 import '../../vars/intents/show_action_main.dart';
@@ -41,8 +44,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   final ValueNotifier<bool> _hasFocus = ValueNotifier<bool>(false);
   final ValueNotifier<int> _currentFotoNum = ValueNotifier<int>(1);
   final ValueNotifier<String> _seccView = ValueNotifier<String>('fotos');
-  List<GlobalKey<ExtendedImageGestureState>> gestureKey = [];
-
+  
   late final WindowCnfProvider winCnf;
   late final ItemSelectGlobProvider itemProv;
   final double minScale = 0.03;
@@ -50,9 +52,6 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   final double maxScale = 0.6;
 
   int calls = 0;
-  int sIniFotoW = 0;
-  int sIniFotoH = 0;
-  int currentPage = 0;
   bool _isInit = false;
 
   @override
@@ -104,9 +103,9 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
             builder: (_, pzas, __) {
 
               if(pzas.isEmpty) {
-                return _sinData(icono: Icons.extension_off);
+                return const SinData(icono: Icons.extension_off);
               }
-              return _dataAndPiezas(pzas);
+              return _dataAndPiezas();
             },
           ),
         ),
@@ -118,43 +117,15 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
             padding: const EdgeInsets.all(10),
             child: Selector<ItemSelectGlobProvider, List<Map<String, dynamic>>>(
               selector: (_, items) => items.fotosByPiezas,
-              builder: (_, fotos, child) {
+              builder: (_, fotos, __) {
 
-                if(fotos.isEmpty){ return _sinData(icono: Icons.settings_backup_restore_sharp); }
-                return ValueListenableBuilder(
+                if(fotos.isEmpty){
+                  return const SinData(icono: Icons.settings_backup_restore_sharp);
+                }
+
+                return ValueListenableBuilder<String>(
                   valueListenable: _seccView,
-                  builder: (_, seccion, __) {
-
-                    switch (seccion) {
-                      case 'fotos':
-                        return _seccionFotos();
-                      case 'rastrear':
-                        if(itemProv.fotosByPiezas.isNotEmpty) {
-                          return RastrearLstContacs(
-                            toSend: (List<int> idCotizadores) async => await _buscarCotizacion(idCotizadores),
-                          );
-                        }else{
-                          return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
-                        }
-                      case 'rastreador':
-                        if(itemProv.fotosByPiezas.isNotEmpty) {
-                          return const Text('Aqui la seccion de Rasteador');
-                        }else{
-                          return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
-                        }
-                      default:
-                        return FrmOrden(
-                          onFinish: (acc) {
-                            if(acc == 'add') {
-                              print('adiono una nueva');
-                            }
-                            setState(() {
-                              _seccView.value = 'fotos';
-                            });
-                          },
-                        );
-                    }
-                  }
+                  builder: (_, seccion, __) => _determinarWidget(seccion)
                 );
               }
             ),
@@ -165,43 +136,57 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   }
 
   ///
-  Widget _sinData({
-    required IconData icono,
-    double opacity = 0.5
-  }) {
+  Widget _determinarWidget(String seccion) {
 
-    return Center(
-      child: Icon(
-        icono, size: 150,
-        color: Colors.black.withOpacity(opacity)
-      ),
-    );
-  }
+    switch (seccion) {
 
-  ///
-  Widget _seccionFotos() {
+      case 'fotos':
+        return VisorFotos(
+          itemProv: itemProv,
+          currentFotoNum: _currentFotoNum,
+          pageCtl: _pageCtl,
+          onPageChanged: (int index) async {
+            if(itemProv.fotosByPiezas[index]['id'] != itemProv.idPzaSelect) {
+              itemProv.idPzaSelect = itemProv.fotosByPiezas[index]['id'];
+              _hasFocus.value = false;
+              await Future.delayed(const Duration(milliseconds: 100));
+              _putFocusActions();
+            }
+            itemProv.currentPage = index;
+            _currentFotoNum.value = itemProv.currentPage+1;
+          },
+        );
 
-    return FutureBuilder(
-      future: _hidratarKeysAsFotos(),
-      builder: (_, AsyncSnapshot snap) {
-
-        if(snap.connectionState == ConnectionState.done) {
-          if(itemProv.fotosByPiezas.isNotEmpty) {
-            return MouseRegion(
-              cursor: SystemMouseCursors.move,
-              child: _visorDeFotos(),
-            );
-          }else{
-            return _sinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
-          }
+      case 'rastrear':
+        if(itemProv.fotosByPiezas.isNotEmpty) {
+          return RastrearLstContacs(
+            toSend: (List<int> idCotizadores) async => await _buscarCotizacion(idCotizadores),
+          );
+        }else{
+          return const SinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
         }
-        return _loading();
-      }
-    );
+      case 'rastreador':
+        if(itemProv.fotosByPiezas.isNotEmpty) {
+          return const Text('Aqui la seccion de Rasteador');
+        }else{
+          return const SinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
+        }
+      default:
+        return FrmOrden(
+          onFinish: (acc) {
+            if(acc == 'add') {
+              print('adiciono una nueva');
+            }
+            setState(() {
+              _seccView.value = 'fotos';
+            });
+          },
+        );
+    }
   }
 
   ///
-  Widget _dataAndPiezas(List<PiezasEntity> pzas) {
+  Widget _dataAndPiezas() {
 
     return Column(
       children: [
@@ -235,33 +220,27 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
             color: Color.fromARGB(255, 27, 27, 27),
           ),
           child: Center(
-            child: Texto(txt: '${pzas.length} Refacciones Solicitadas', txtC: const Color.fromARGB(255, 2, 224, 132), sz: 16,),
+            child: Texto(
+              txt: '${itemProv.piezas.length} Refacciones Solicitadas',
+              txtC: const Color.fromARGB(255, 2, 224, 132),
+              sz: 16
+            ),
           ),
         ),
         Expanded(
           child: Scrollbar(
             controller: _scrollCtl,
-            isAlwaysShown: true,
+            thumbVisibility: true,
             radius: const Radius.circular(3),
-            showTrackOnHover: true,
             trackVisibility: true,
             child: ListView.builder(
               shrinkWrap: true,
               controller: _scrollCtl,
-              itemCount: pzas.length,
+              physics: const BouncingScrollPhysics(),
+              itemCount: itemProv.piezas.length,
               itemBuilder: (_, index) => PiezaTile(
-                pieza: pzas[index],
-                onSelect: (int idPza) {
-                  int indexPz = itemProv.fotosByPiezas.indexWhere((element) => element['id'] == idPza);
-                  if(_seccView.value == 'fotos') {
-                    if(indexPz != -1) {
-                      _pageCtl.jumpToPage(indexPz);
-                    }
-                  }
-                  if(_seccView.value == 'editar') {
-                    itemProv.piezaSelect = pzas[index];
-                  }
-                },
+                pieza: itemProv.piezas[index],
+                onSelect: (int idPza) => _selectPieza(idPza),
               ),
             ),
           )
@@ -302,9 +281,8 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           Expanded(
             child: Scrollbar(
               controller: _scrollTxtCtl,
-              isAlwaysShown: true,
               radius: const Radius.circular(3),
-              showTrackOnHover: true,
+              thumbVisibility: true,
               trackVisibility: true,
               child: SingleChildScrollView(
                 controller: _scrollTxtCtl,
@@ -369,14 +347,30 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
         zoomFoto: ZoomFoto(),
         dismFoto: DismFoto(),
         editPza : EditPza(),
+        prevPza : PrevPza(),
+        nextPza : NextPza(),
         showActionMain: ShowActionMainIntent()
       },
       actions: <Type, Action<Intent>>{
-        SigFoto : CallbackAction<Intent>(onInvoke: (intent) => _sigFoto()),
-        BackFoto: CallbackAction<Intent>(onInvoke: (intent) => _backFoto()),
-        ZoomFoto: CallbackAction<Intent>(onInvoke: (intent) => _zoomFoto()),
-        DismFoto: CallbackAction<Intent>(onInvoke: (intent) => _dismFoto()),
+        SigFoto : CallbackAction<Intent>(onInvoke: (intent) => itemProv.sigFoto(
+          _pageCtl, (_) => _putFocusActions()
+        )),
+        BackFoto : CallbackAction<Intent>(onInvoke: (intent) => itemProv.backFoto(
+          _pageCtl, (_) => _putFocusActions()
+        )),
+        ZoomFoto: CallbackAction<Intent>(onInvoke: (intent) => itemProv.zoomFoto(
+          MediaQuery.of(context).size, winCnf.tamMiddle, (_) {
+            _putFocusActions();
+          }
+        )),
+        DismFoto: CallbackAction<Intent>(onInvoke: (intent) => itemProv.dismFoto(
+          MediaQuery.of(context).size, winCnf.tamMiddle, (_) {
+            _putFocusActions();
+          }
+        )),
         EditPza : CallbackAction<Intent>(onInvoke: (intent) => _editarPieza()),
+        PrevPza : CallbackAction<Intent>(onInvoke: (intent) => _getPrevPieza()),
+        NextPza : CallbackAction<Intent>(onInvoke: (intent) => _getNextPieza()),
         ShowActionMainIntent: CallbackAction<Intent>(
           onInvoke: (Intent intent) => ActionShowActionMain.showActionsMain(context)
         )
@@ -471,25 +465,37 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           icono: Icons.arrow_back_ios_new,
           icolor: Colors.grey,
           tip: 'Foto Anterior [Ctr+Alt+Izq]',
-          fnc: () => _backFoto(),
+          fnc: () => itemProv.backFoto(
+            _pageCtl, (_) => _putFocusActions()
+          ),
         ),
         _icoAction(
           icono: Icons.arrow_forward_ios,
           icolor: Colors.grey,
           tip: 'Foto Siguiente [Ctr+Alt+Der]',
-          fnc: () => _sigFoto(),
+          fnc: () => itemProv.sigFoto(
+            _pageCtl, (_) => _putFocusActions()
+          ),
         ),
         _icoAction(
           icono: Icons.add_circle_outline_rounded,
           icolor: Colors.white,
           tip: 'Aumentar [Ctr+Alt+Down]',
-          fnc: () => _zoomFoto(),
+          fnc: () => itemProv.zoomFoto(
+            MediaQuery.of(context).size, winCnf.tamMiddle, (_) {
+              _putFocusActions();
+            }
+          ),
         ),
         _icoAction(
           icono: Icons.remove_circle_outline,
           icolor: Colors.white,
           tip: 'Disminuir [Ctr+Alt+Up]',
-          fnc: () => _dismFoto(),
+          fnc: () => itemProv.dismFoto(
+            MediaQuery.of(context).size, winCnf.tamMiddle, (_) {
+              _putFocusActions();
+            }
+          ),
         )
       ],
     );
@@ -520,160 +526,46 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   }
 
   ///
-  Widget _visorDeFotos() {
+  void _getPrevPieza() {
 
-    return Stack(
-      children: [
-
-        ExtendedImageGesturePageView.builder(
-          controller: _pageCtl,
-          itemCount: itemProv.fotosByPiezas.length,
-          physics: const NeverScrollableScrollPhysics(),
-          itemBuilder: (_, int index) {
-
-            return ExtendedImage.network(
-              itemProv.fotosByPiezas[index]['foto'],
-              printError: false,
-              alignment: Alignment.topCenter,
-              fit: BoxFit.contain,
-              mode: ExtendedImageMode.gesture,
-              extendedImageGestureKey: gestureKey[index],
-              initGestureConfigHandler: (ExtendedImageState state) {
-                sIniFotoW = state.extendedImageInfo!.image.width;
-                sIniFotoH = state.extendedImageInfo!.image.height;
-                return GestureConfig(
-                  minScale: 0.9,
-                  animationMinScale: 0.7,
-                  maxScale: 4.0,
-                  animationMaxScale: 4.5,
-                  speed: 1.0,
-                  inertialSpeed: 100.0,
-                  initialScale: 1.0,
-                  inPageView: false,
-                  initialAlignment: InitialAlignment.center,
-                  reverseMousePointerScrollDirection: true,
-                );
-              },
-              enableSlideOutPage: true,
-            );
-          },
-          onPageChanged: (int index) async {
-
-            if(itemProv.fotosByPiezas[index]['id'] != itemProv.idPzaSelect) {
-              itemProv.idPzaSelect = itemProv.fotosByPiezas[index]['id'];
-              _hasFocus.value = false;
-              await Future.delayed(const Duration(milliseconds: 100));
-              _putFocusActions();
-            }
-            currentPage = index;
-            _currentFotoNum.value = currentPage+1;
-          },
-        ),
-        Positioned(
-          child: Container(
-            height: 35,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(10),
-                bottomRight: Radius.circular(10),
-              )
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: ValueListenableBuilder<int>(
-                valueListenable: _currentFotoNum,
-                builder: (_, val, __) {
-                  return Texto(
-                    txt: 'Visualizando la foto $val de ${itemProv.fotosByPiezas.length}',
-                    txtC: Colors.yellow,
-                  );
-                },
-              ),
-            ),
-          )
-        )
-      ]
-    );
-  }
-
-  ///
-  Widget _loading() {
-
-    return const Center(
-      child: SizedBox(
-        height: 40, width: 40,
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-
-  ///
-  Future<void> _hidratarKeysAsFotos() async {
-
-    if(itemProv.fotosByPiezas.isEmpty){ return; }
-
-    gestureKey.clear();
-    for (var i = 0; i < itemProv.fotosByPiezas.length; i++) {
-      gestureKey.add(GlobalKey<ExtendedImageGestureState>());
+    int indexPz = itemProv.piezas.indexWhere((element) => element.id == itemProv.idPzaSelect);
+    indexPz = indexPz-1;
+    indexPz = (indexPz < 0) ? 0 : indexPz;
+    int idPza = -1;
+    if(indexPz <= (itemProv.piezas.length-1)) {
+      idPza = itemProv.piezas[indexPz].id;
+    }else{
+      idPza = itemProv.piezas.last.id;
     }
+    _selectPieza(idPza);
   }
 
   ///
-  void _sigFoto() {
+  void _getNextPieza() {
 
-    if(itemProv.fotosByPiezas.isNotEmpty) {
-      if(_pageCtl.page == itemProv.fotosByPiezas.length -1) {
-        _pageCtl.animateToPage(_pageCtl.initialPage, duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
-      }else{
-        _pageCtl.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+    int indexPz = itemProv.piezas.indexWhere((element) => element.id == itemProv.idPzaSelect);
+    indexPz = indexPz+1;
+    int idPza = -1;
+    if(indexPz <= (itemProv.piezas.length-1)) {
+      idPza = itemProv.piezas[indexPz].id;
+    }else{
+      idPza = itemProv.piezas.first.id;
+    }
+    _selectPieza(idPza);
+  }
+
+  ///
+  void _selectPieza(int idPza) {
+
+    int indexPz = itemProv.fotosByPiezas.indexWhere((element) => element['id'] == idPza);
+    if(_seccView.value == 'fotos') {
+      if(indexPz != -1) {
+        _pageCtl.jumpToPage(indexPz);
       }
-      _putFocusActions();
     }
-  }
-
-  ///
-  void _backFoto() {
-
-    if(itemProv.fotosByPiezas.isNotEmpty) {
-      _pageCtl.previousPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
-      _putFocusActions();
-    }
-  }
-
-  ///
-  void _zoomFoto() {
-
-    if(itemProv.fotosByPiezas.isNotEmpty) {
-      double nt = gestureKey[currentPage].currentState!.gestureDetails!.totalScale! + 0.5;
-      gestureKey[currentPage].currentState!.gestureDetails=GestureDetails(
-        actionType: ActionType.zoom,
-        userOffset: true,
-        offset: _calcularCentros(nt, gestureKey[currentPage].currentState!.gestureDetails!.offset!, true),
-        totalScale: nt
-      );
-      _putFocusActions();
-    }
-  }
-
-  ///
-  void _dismFoto() {
-
-    if(itemProv.fotosByPiezas.isNotEmpty) {
-
-      if(gestureKey[currentPage].currentState!.gestureDetails!.totalScale! < 1) {
-        gestureKey[currentPage].currentState!.reset();
-        return;
-      }
-      double nt = gestureKey[currentPage].currentState!.gestureDetails!.totalScale! - 0.5;       
-      gestureKey[currentPage].currentState!.gestureDetails=GestureDetails(
-        actionType: ActionType.zoom,
-        userOffset: true,
-        offset: _calcularCentros(nt, gestureKey[currentPage].currentState!.gestureDetails!.offset!,false),
-        totalScale: nt
-      );
-      _putFocusActions();
+    if(_seccView.value == 'editar') {
+      itemProv.piezaSelect = itemProv.piezas[indexPz];
+      itemProv.idPzaSelect = idPza;
     }
   }
 
@@ -682,43 +574,6 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
 
     _seccView.value = (_seccView.value == 'editar') ? 'fotos' : 'editar';
     _putFocusActions();
-  }
-
-  ///
-  Offset _calcularCentros(double nt, Offset current, bool isAdd) {
-
-    double difToCW = current.dx;
-    double difToCH = current.dy;
-  
-    if(isAdd) {
-
-      double widthOfResto = winCnf.tamToolBar + winCnf.tamMiddle;
-      double w = (widthOfResto * 100) / MediaQuery.of(context).size.width;
-      double wContainer = MediaQuery.of(context).size.width * ((100 - w) / 100);
-      double hContainer = MediaQuery.of(context).size.height;
-
-      double cContainerW = wContainer / 2;
-      double cContainerH = hContainer / 2;
-
-      double centerImgWO = sIniFotoW / 2;
-      double centerImgHO = sIniFotoW / 2;
-
-      double centerImgW = (sIniFotoW * nt) / 2;
-      double centerImgH = (sIniFotoH * nt) / 2;
-      double difW = centerImgW - centerImgWO;
-      double difH = centerImgH - centerImgHO;
-
-      difToCW = cContainerW - difW;
-      difToCH = cContainerH - difH;
-
-      if(difToCW < -cContainerW) {
-        difToCW = current.dx - (cContainerW * 0.5);
-      }
-      if(difToCH < -cContainerH) {
-        difToCH = current.dy - (cContainerH * 0.5);
-      }
-    }
-    return Offset(difToCW, difToCH);
   }
 
   ///
@@ -884,32 +739,27 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   Stream<String> _sendToCotizar(List<int> idCotizadores) async* {
 
     final scm = ScmEntity();
-    var data = scm.jsonToCotizar(
-      idOrden: itemProv.idOrdenSelect,
-      idOwn: itemProv.ordenEntitySelect!.uId,
-      idAvo: globals.idUser
-    );
+    scm.slugCamp = 'busk_cots';
+    scm.emiterId = itemProv.ordenEntitySelect!.uId;
+    scm.remiterId = globals.idUser;
+    scm.src = {'id':itemProv.idOrdenSelect};
     
-    final version = DateTime.now().millisecondsSinceEpoch;
-    await Future.delayed(const Duration(milliseconds: 2000));
-
     // Guardamos en la base de datos remota el registro de la orden de busqueda
     // para la SCM, solo para que ya este enterada de un nuevo mensaje.
     // NOTA: No es necesario que el registro este en la BD local, ya que solo es
     // utilizado por la SCM para enterarce de una nueva tarea.
     yield 'Enviando al Servidor Principal';
     
-    await _scmEm.setBuscarCotizacionesOrden(data, isLocal: false);
+    await _scmEm.setCampaingInDb(scm.toJson(), isLocal: true);
     if(!_scmEm.result['abort']) {
-
+      final camp = _scmEm.result['body'];
       yield 'Actualizaremos Status de la Orden';
       final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
-      data = {
+      var data = {
         'orden': itemProv.idOrdenSelect,
         'version': 0,
         'est': oStt['est'],
         'stt': oStt['stt'],
-        'rta': oStt['rta']
       };
       
       // Actualizamos el Status de la orden en el archivo centinela tanto en
@@ -917,27 +767,32 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
       await Future.delayed(const Duration(milliseconds: 500));
       yield 'Actualizando Orden en LOCAL';
       await _ordenEm.changeStatusToServer(data, isLocal: true);
-      yield 'Actualizando Orden en REMOTO';
-      await _ordenEm.changeStatusToServer(data, isLocal: false);
+      if(!globals.isLocalConn) {
+        yield 'Actualizando Orden en REMOTO';
+        await _ordenEm.changeStatusToServer(data, isLocal: false);
+      }
       
       if(!_ordenEm.result['abort']) {
 
         yield 'Las Piezas obtendrán un nuevo Status.';
         final pStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
         data = {
-          'version': version,
+          'version': DateTime.now().millisecondsSinceEpoch,
           'orden': itemProv.idOrdenSelect,
+          'idCamp': camp['id'],
+          'target': camp['target'],
           'est': pStt['est'],
           'stt': pStt['stt'],
-          'rta': pStt['rta'],
           'cotz': idCotizadores,
         };
-
+        
         await Future.delayed(const Duration(milliseconds: 500));
         yield 'Actualizando Piezas en LOCAL.';
         await _ordenEm.buildStatusForBuscarPiezas(data, isLocal: true);
-        yield 'Actualizando Piezas en REMOTO.';
-        await _ordenEm.buildStatusForBuscarPiezas(data, isLocal: false);
+        if(!globals.isLocalConn) {
+          yield 'Actualizando Piezas en REMOTO.';
+          await _ordenEm.buildStatusForBuscarPiezas(data, isLocal: false);
+        }
 
         if(!_ordenEm.result['abort']) {
           yield 'ok';

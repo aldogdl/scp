@@ -1,13 +1,13 @@
-import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart' show WindowButtonColors;
 import 'package:flutter/material.dart' show ChangeNotifier, Size, Color;
 
 class WindowCnfProvider extends ChangeNotifier {
 
-  final double tamToolBar = 50;
   final double tamMiddle  = 300;
 
   final sttBarrColorOn = const Color.fromARGB(255, 7, 151, 43);
   final sttBarrColorOff = const Color.fromARGB(255, 31, 81, 245);
+  final sttBarrColorCS = const Color.fromARGB(255, 195, 228, 9);
   final borderColor = const Color.fromARGB(255, 0, 0, 0);
   final sidebarColor = const Color.fromARGB(255, 51, 51, 51);
   final middleColor = const Color.fromARGB(255, 37, 37, 38);
@@ -39,7 +39,7 @@ class WindowCnfProvider extends ChangeNotifier {
   Size _contentSize = const Size(1376.0, 784.0);
   Size get contentSize => _contentSize;
   set contentSize(Size size) {
-    double w = size.width - (tamToolBar+tamMiddle);
+    double w = size.width - (tamMiddle);
     _contentSize = Size(w, size.height);
     notifyListeners();
   }

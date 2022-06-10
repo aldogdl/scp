@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/config/sng_manager.dart';
 
 import 'package:scp/src/pages/content/config_sections/widgets/decoration_field.dart';
 import 'package:scp/src/services/get_content_files.dart';
@@ -8,6 +9,7 @@ import '../../../../entity/contacto_entity.dart';
 import '../../../../providers/socket_conn.dart';
 import '../../../../providers/window_cnf_provider.dart';
 import '../../../../repository/contacts_repository.dart';
+import '../../../../vars/globals.dart';
 import '../../../widgets/texto.dart';
 
 class LstContactos extends StatefulWidget {
@@ -28,13 +30,14 @@ class LstContactos extends StatefulWidget {
 
 class _LstContactosState extends State<LstContactos> {
 
+  final _globals = getSngOf<Globals>();
   final ContactsRepository _contacEm = ContactsRepository();
   final TextEditingController _searchCtrl = TextEditingController();
 
   final ValueNotifier<List<ContactoEntity>> _contacts = ValueNotifier<List<ContactoEntity>>([]);
   List<ContactoEntity> _contactsBack = [];
 
-  String _showTypeContacts = 'cnet';
+  String _showTypeContacts = 'anetc';
   String _titulo = 'LISTA DE CONTACTOS';
   bool _makeBackUp = true;
   bool _creanLst = true;
@@ -130,21 +133,21 @@ class _LstContactosState extends State<LstContactos> {
       children: [
         TextButton(
           onPressed: () => setState(() {
-            _showTypeContacts = 'cnet';
+            _showTypeContacts = 'anetc';
           }),
           child: Texto(
             txt: 'COTIZADORES [$_cantCots]',
-            txtC: (_showTypeContacts == 'cnet') ? Colors.green : Colors.grey.withOpacity(0.5),
+            txtC: (_showTypeContacts == 'anetc') ? Colors.green : Colors.grey.withOpacity(0.5),
             isBold: true
           ),
         ),
         TextButton(
           onPressed: () => setState(() {
-            _showTypeContacts = 'snet';
+            _showTypeContacts = 'anets';
           }),
           child: Texto(
             txt: 'SOLICITANTES [$_cantSols]',
-            txtC: (_showTypeContacts == 'snet') ? Colors.green : Colors.grey.withOpacity(0.5),
+            txtC: (_showTypeContacts == 'anets') ? Colors.green : Colors.grey.withOpacity(0.5),
             isBold: true
           ),
         )
@@ -296,18 +299,22 @@ class _LstContactosState extends State<LstContactos> {
     late ContactoEntity contactDel;
     final ctD = _contacts.value.where((element) => element.id == idContac);
     if(ctD.isNotEmpty) {
+
+      final provi = context.read<SocketConn>();
       contactDel = ctD.first;
       if(_makeBackUp) {
         await _contacEm.backupContact(contactDel.toJson());
       }
-      final provi = context.read<SocketConn>();
+      
       provi.msgErr = 'ELIMINANDO $element REMOTO';
 
-      await _contacEm.deleteContact(idContac, isLocal: false);
-      if(_contacEm.result['abort']) {
-        provi.msgErr = _contacEm.result['body'];
-        debugPrint(_contacEm.result['msg']);
-        return;
+      if(!_globals.isLocalConn) {
+        await _contacEm.deleteContact(idContac, isLocal: false);
+        if(_contacEm.result['abort']) {
+          provi.msgErr = _contacEm.result['body'];
+          debugPrint(_contacEm.result['msg']);
+          return;
+        }
       }
 
       provi.msgErr = 'ELIMINANDO $element LOCAL';
@@ -359,13 +366,14 @@ class _LstContactosState extends State<LstContactos> {
   Future<void> _getAllContacts() async {
 
     List<ContactoEntity> losCon = [];
-    await _contacEm.getAllContacts(tipo: (widget.isAdmin) ? 'anet' : 'noAdmin');
     final provi = context.read<SocketConn>();
+    await _contacEm.getAllContacts(tipo: (widget.isAdmin) ? 'anete' : 'noAdmin');
     String msg =  'RECUPERANDO ${ (widget.isAdmin) ? 'COLABORADORES' : 'CONTACTOS' }';
     provi.msgErr = msg;
     _cantCots = 0;
     _cantSols = 0;
     _showTypeContacts = '';
+    
     if(!_contacEm.result['abort']) {
       if(_contacEm.result['body'].isNotEmpty) {
 
@@ -373,15 +381,15 @@ class _LstContactosState extends State<LstContactos> {
           final ct = ContactoEntity();
           ct.fromServerWidtEmpresa(_contacEm.result['body'][i]);
           if(_showTypeContacts.isEmpty) {
-            if(ct.curc.startsWith('cnet')) {
-              _showTypeContacts = 'cnet';
+            if(ct.curc.startsWith('anetc')) {
+              _showTypeContacts = 'anetc';
             }
           }
 
-          if(ct.curc.startsWith('cnet')) {
+          if(ct.curc.startsWith('anetc')) {
             _cantCots++;
           }
-          if(ct.curc.startsWith('snet')) {
+          if(ct.curc.startsWith('anets')) {
             _cantSols++;
           }
           losCon.add(ct);
@@ -389,7 +397,7 @@ class _LstContactosState extends State<LstContactos> {
       }
     }
     if(losCon.isNotEmpty && _showTypeContacts.isEmpty) {
-      _showTypeContacts = 'snet';
+      _showTypeContacts = 'anets';
     }
     _contacts.value = losCon;
     _contactsBack = losCon;

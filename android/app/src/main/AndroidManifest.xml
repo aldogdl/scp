@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.scp">
+    package="com.autoparnet.scp">
    <application
         android:label="scp"
         android:name="${applicationName}"

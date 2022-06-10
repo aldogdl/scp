@@ -29,19 +29,19 @@ class StatusBarr extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
       height: MediaQuery.of(context).size.height * 0.03,
       color: watchC.isConnectedSocked
-       ? context.read<WindowCnfProvider>().sttBarrColorOn
+       ? (watchC.alertCV)
+          ? context.read<WindowCnfProvider>().sttBarrColorCS
+          : context.read<WindowCnfProvider>().sttBarrColorOn
        : context.read<WindowCnfProvider>().sttBarrColorOff,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _btnIcon(tip: 'Cerrar Sesión', icono: Icons.logout, fnc: () {
-            readC.cerrarConection();
-            readC.isLoged = false;
-            context.read<PageProvider>().resetPage();
+          _btnIcon(tip: 'Menú Principal', icono: Icons.menu, fnc: () {
+            context.read<PageProvider>().page = Paginas.config;
           }),
           const SizedBox(width: 10),
-          Texto(txt: 'SWP de: ${watchC.username} [${_globals.curc}]', sz: 12, txtC: const Color(0xFFFFFFFF)),
+          Texto(txt: 'SWP de: ${watchC.username} [${_globals.curc}]', sz: 11, txtC: const Color(0xFFFFFFFF)),
           const SizedBox(width: 15),
           _btnIconAndTxt(txt: '0', tip: 'Errores', icono: Icons.close, fnc: (){
             context.read<PageProvider>().consola = Consola.errores;
@@ -77,7 +77,7 @@ class StatusBarr extends StatelessWidget {
                   ' ${readC.hasErrWithIpDbLocal} ',
                   textScaleFactor: 1,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Colors.white,
                     backgroundColor: Color.fromARGB(255, 146, 35, 27)
                   ),
@@ -85,7 +85,7 @@ class StatusBarr extends StatelessWidget {
               ),
             ],
           const Spacer(),
-          Texto(txt: 'HARBI. ${watchC.idConn}', sz: 12, txtC: const Color.fromARGB(255, 255, 255, 255)),
+          Texto(txt: 'HARBI. ${watchC.idConn}', sz: 11, txtC: const Color.fromARGB(255, 255, 255, 255)),
           const SizedBox(width: 5),
           if(readC.msgCron == 'X' || readC.msgCron.startsWith('ERROR'))
             _btnTxt(
@@ -94,19 +94,19 @@ class StatusBarr extends StatelessWidget {
             )
           else
             Texto(txt: 'REV. ${watchC.msgCron}', sz: 12, txtC: const Color.fromARGB(255, 255, 255, 255),),
-          if(watchC.alertCV)
-            ...[
-              const SizedBox(width: 10),
-              _btnIcon(
-                icono: Icons.notifications_on_rounded,
-                tip: 'Se realizó una Actualización del Centinela',
-                fnc: (){
-                  readC.alertCV = false;
-                  context.read<PageProvider>().consola = Consola.centinela;
-                  context.read<PageProvider>().closeConsole = false;
-                }
-              )
-            ]
+          const SizedBox(width: 10),
+          _btnIconAndTxt(
+            txt: '${watchC.cantAlert}',
+            tip: 'Se realizó una Actualización del Centinela',
+            icono: Icons.notifications_rounded,
+            icoColor: context.read<WindowCnfProvider>().sttBarrColorOn,
+            isBold: true,
+            icoSize: 17,
+            fnc: (){
+              readC.alertCV = false;
+              context.read<PageProvider>().page = Paginas.solicitudesNon;
+            }
+          ),
         ],
       ),
     );
@@ -118,24 +118,29 @@ class StatusBarr extends StatelessWidget {
     required String txt,
     required String tip,
     required Function fnc,
+    Color icoColor = const Color(0xFFFFFFFF),
+    double icoSize = 13,
+    bool isBold = false
   }) {
 
     return Row(
       children: [
         IconButton(
           onPressed: () => fnc(),
-          icon: Icon(icono),
+          icon: Icon(icono, color:icoColor),
           padding: const EdgeInsets.all(0),
           visualDensity: VisualDensity.compact,
           tooltip: tip,
           alignment: Alignment.center,
           color: const Color(0xFFFFFFFF),
-          iconSize: 15,
-          constraints: const BoxConstraints(
-            maxHeight: 15, minWidth: 25
+          iconSize: icoSize,
+          constraints: BoxConstraints(
+            maxHeight: icoSize, minWidth: 25
           ),
         ),
-        Texto(txt: txt, sz: 12, txtC: const Color(0xFFFFFFFF))
+        Texto(
+          txt: txt, sz: 11, txtC: icoColor, isBold: isBold,
+        )
       ],
     );
   }
@@ -155,9 +160,9 @@ class StatusBarr extends StatelessWidget {
       tooltip: tip,
       alignment: Alignment.center,
       color: const Color(0xFFFFFFFF),
-      iconSize: 15,
+      iconSize: 13,
       constraints: const BoxConstraints(
-        maxHeight: 15, maxWidth: 15
+        maxHeight: 13, maxWidth: 13
       ),
     );
   }
@@ -171,7 +176,7 @@ class StatusBarr extends StatelessWidget {
     return TextButton(
       onPressed: () => fnc(),
       child: Texto(
-        txt: label, sz: 13, txtC: const Color(0xffFFFFFF), 
+        txt: label, sz: 11, txtC: const Color(0xffFFFFFF), 
       )
     );
   }
@@ -179,7 +184,7 @@ class StatusBarr extends StatelessWidget {
   // ---------------------- CONTROLADOR --------------------------------
 
   ///
-  Future<void> _reconectar(BuildContext context, SocketConn _sock) async {
+  Future<void> _reconectar(BuildContext context, SocketConn sock) async {
 
     await WidgetsAndUtils.showAlert(
       context,
@@ -193,23 +198,23 @@ class StatusBarr extends StatelessWidget {
       'username' : _globals.curc,
       'password' : _globals.password
     };
-    await _sock.awaitResponseSocket(
+    await sock.awaitResponseSocket(
       event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
       msgInit: 'Haciendo login en local',
       msgExito: 'Login Autorizado'
     );
 
-    if(!_sock.msgErr.contains('Error')) {
-        _sock.msgCron= 'OK.';
-        _sock.isLoged = true;
+    if(!sock.msgErr.contains('Error')) {
+        sock.msgCron= 'OK.';
+        sock.isLoged = true;
     }else{
-      _sock.msgCron= 'ERROR';
+      sock.msgCron= 'ERROR';
     }
 
   }
 
   ///
-  Future<void> _changeIp(BuildContext context, SocketConn _sock) async {
+  Future<void> _changeIp(BuildContext context, SocketConn sock) async {
 
     String help = 'La IP hacia el servidor LOCAL';
     if(!_globals.isLocalConn) {
@@ -217,7 +222,7 @@ class StatusBarr extends StatelessWidget {
     }
     List<int> ipN = [];
     var regExp = RegExp(r'[0-9]{1,3}');
-    var str = _sock.hasErrWithIpDbLocal;
+    var str = sock.hasErrWithIpDbLocal;
     Iterable<Match> matches = regExp.allMatches(str);
     for (Match m in matches) {
       int? ip = int.tryParse(m[0]!);
@@ -237,7 +242,7 @@ class StatusBarr extends StatelessWidget {
           msgHelp: help,
           onSave: (String ipNew) async {
             await GetContentFile.cambiarIpEnArchivoPath(ipNew);
-            _sock.hasErrWithIpDbLocal = '';
+            sock.hasErrWithIpDbLocal = '';
           }
         ),
       )

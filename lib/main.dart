@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:scp/src/providers/centinela_file_provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/pages/a_main/scp_layout.dart';
 import 'src/config/sng_manager.dart';
 import 'src/pages/login/login_page.dart';
+import 'src/providers/centinela_file_provider.dart';
 import 'src/providers/items_selects_glob.dart';
 import 'src/providers/pages_provider.dart';
 import 'src/providers/socket_conn.dart';

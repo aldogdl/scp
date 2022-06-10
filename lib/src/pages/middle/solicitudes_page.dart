@@ -4,7 +4,6 @@ import '../widgets/loading_middle.dart';
 import '../widgets/lst_ordenes.dart';
 import '../widgets/txt_bsk_orden.dart';
 import '../../config/sng_manager.dart';
-import '../../services/rutas/rutas_cache.dart';
 import '../../vars/globals.dart';
 
 class SolicitudesPage extends StatefulWidget {
@@ -18,10 +17,15 @@ class SolicitudesPage extends StatefulWidget {
 class _SolicitudesPageState extends State<SolicitudesPage> {
 
   final Globals globals = getSngOf<Globals>();
-  final RutasCache rutasCache = getSngOf<RutasCache>();
-
-  bool _isLoading = true;
+  
+  final ValueNotifier<bool> _showLoading = ValueNotifier<bool>(true);
   String _txtLoading = 'Ordenes';
+
+  @override
+  void dispose() {
+    _showLoading.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,20 +49,20 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
               child: LstOrdenes(
                 asignadas: true,
                 onLoading: (Map<String, dynamic> res) {
-                  _isLoading = res['isLoading'];
+                  _showLoading.value = res['isLoading'];
                   _txtLoading = res['msg'];
-                  if(mounted) {
-                    setState(() { });
-                  }
                 },
               ),
             ),
           ],
         ),
-        if(_isLoading)
-          Positioned.fill(
+        ValueListenableBuilder<bool>(
+          valueListenable: _showLoading,
+          builder: (_, val, child) => (val) ? child! : const SizedBox(),
+          child: Positioned.fill(
             child: LoadingMiddle(msg: _txtLoading),
-          )
+          ),
+        )
       ],
     );
   }

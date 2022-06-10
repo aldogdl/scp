@@ -53,13 +53,23 @@ class _ConfigPageState extends State<ConfigPage> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       children: [
-        const Texto(txt: 'MENÚ PRINCIPAL', txtC: Colors.white, isBold: true),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => context.read<PageProvider>().page = Paginas.solicitudes,
+              icon: const Icon(Icons.close, size: 18,)
+            ),
+            const Texto(txt: 'MENÚ PRINCIPAL', txtC: Colors.white, isBold: true),
+          ],
+        ),
         const Divider(color: Colors.grey),
         const Texto(txt: 'ACCIONES Y CONFIGURACIONES', sz: 13),
         s10,
         _iteMenu(context, icon: Icons.home, label: 'Portada', secc: 'home'),
         if(isAdmin)
           ...[
+            _iteMenu(context, icon: Icons.not_listed_location_outlined, label: 'Ordenes sin Asignar', secc: 'soliNon'),
+            _iteMenu(context, icon: Icons.view_list_outlined, label: 'Solicitudes en Proceso', secc: 'soliOk'),
             const Divider(color: Colors.grey),
             const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
             s10,
@@ -165,12 +175,12 @@ class _ConfigPageState extends State<ConfigPage> {
 
     return Scrollbar(
       controller: ctr,
-      isAlwaysShown: true,
+      thumbVisibility: true,
       radius: const Radius.circular(3),
-      showTrackOnHover: true,
       trackVisibility: true,
       child: ListView.builder(
         controller: ctr,
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(right: 10),
         shrinkWrap: true,
         itemCount: items.length,
@@ -251,6 +261,14 @@ class _ConfigPageState extends State<ConfigPage> {
     if(secc == 'dialog_del_reg') {
       _deleteRegUserLogin();
     }else{
+      switch (secc) {
+        case 'soliNon':
+          context.read<PageProvider>().page = Paginas.solicitudesNon;
+          return;
+        case 'soliOk':
+          context.read<PageProvider>().page = Paginas.solicitudes;
+          return;
+      }
       context.read<PageProvider>().confSecction = secc;
       setState(() {});
     }

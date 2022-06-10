@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/entity/piezas_entity.dart';
-import 'package:scp/src/pages/widgets/texto.dart';
-import 'package:scp/src/providers/items_selects_glob.dart';
-import 'package:scp/src/services/rutas/est_stt.dart';
+
+import '../../entity/piezas_entity.dart';
+import '../../pages/widgets/texto.dart';
+import '../../providers/items_selects_glob.dart';
+import '../../services/status/est_stt.dart';
 
 class PiezaTile extends StatelessWidget {
 

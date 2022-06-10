@@ -9,7 +9,6 @@ class PiezasEntity {
   String posicion = '0';
   List<String> fotos = [];
   String obs = '0';
-  String ruta = '0';
   int orden = 0;
 
   ///
@@ -24,7 +23,6 @@ class PiezasEntity {
     posicion = json['posicion'];
     fotos = json['fotos'];
     obs = json['obs'];
-    ruta = json['ruta'];
     orden = json['orden'];
   }
 
@@ -39,7 +37,6 @@ class PiezasEntity {
     posicion = data['p_posicion'];
     fotos = (data['p_fotos'].isNotEmpty) ? List<String>.from(data['p_fotos']) : [];
     obs = data['p_obs'];
-    ruta = data['p_ruta'];
     orden = int.tryParse(data['o_id']) ?? 0;
   }
 
@@ -56,12 +53,11 @@ class PiezasEntity {
       'posicion': posicion,
       'fotos': fotos,
       'obs': obs,
-      'ruta': ruta,
       'orden': orden
     };
   }
 
   ///
-  Map<String, dynamic> status() => {'est': est, 'stt': stt, 'rta': ruta };
+  Map<String, dynamic> status() => {'est': est, 'stt': stt};
 
 }

@@ -36,7 +36,7 @@ class OrdenesRepository {
 
   /// Cambiar el nuevo status en el Servidor remoto asi como el archivo Centinela
   Future<void> changeStatusToServer(Map<String, dynamic> data, {bool isLocal = true}) async {
-
+    
     String uri = await GetPaths.getUri('change_stt_to_orden', isLocal: isLocal);
     await MyHttp.post(uri, data);
     result = MyHttp.result;

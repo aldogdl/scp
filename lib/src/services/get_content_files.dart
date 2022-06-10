@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/services/get_paths.dart';
-import 'package:scp/src/vars/globals.dart';
+import '../config/sng_manager.dart';
+import '../services/get_paths.dart';
+import '../vars/globals.dart';
 
 class GetContentFile {
 
