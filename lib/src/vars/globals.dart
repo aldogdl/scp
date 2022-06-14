@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' show FocusNode;
+import 'package:scp/src/entity/contacto_entity.dart';
 
 class Globals {
 
@@ -8,11 +9,7 @@ class Globals {
   String ipHarbi = '';
   String portHarbi = '';
   Map<String, dynamic> ipDbs = {};
-  String tkServ = '';
-  int idUser = 0;
-  String curc = '';
-  String password = '';
-  List<String> roles = [];
+  ContactoEntity user = ContactoEntity();
   FocusNode focusMain = FocusNode();
   
   List<String> posic = ['DELANTERA', 'TRASERA', 'LATERAL', 'MOTOR', 'SUSPENSION'];

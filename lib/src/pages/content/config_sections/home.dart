@@ -1,16 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/providers/socket_conn.dart';
-import 'package:scp/src/services/get_paths.dart';
-import 'package:scp/src/vars/globals.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../entity/request_event.dart';
-import '../../../providers/pages_provider.dart';
 import '../../widgets/texto.dart';
-import '../../widgets/widgets_utils.dart';
+import '../../../config/sng_manager.dart';
+import '../../../providers/socket_conn.dart';
+import '../../../providers/pages_provider.dart';
+import '../../../vars/globals.dart';
 
 class Home extends StatelessWidget {
 
@@ -37,10 +33,10 @@ class Home extends StatelessWidget {
             decoration: const BoxDecoration(
               color: Colors.black,
             ),
-            child: Image.file(
-              File(GetPaths.getNextPortadas()),
+            child: CachedNetworkImage(
+              imageUrl: 'http://192.168.1.74/autoparnet/public_html/portadas/1.jpg',
               fit: BoxFit.cover,
-            ),
+            )
           ),
           Container(
             padding: const EdgeInsets.only(top: 8),
@@ -54,10 +50,25 @@ class Home extends StatelessWidget {
                 bottomRight: Radius.circular(20)
               )
             ),
-            child: const Texto(
-              txt: 'Bienvenido al Sistema Central de Procesamiento de Piezas',
-              txtC: Colors.green,
-              sz: 18, isCenter: true,
+            child: FutureBuilder<String>(
+              future: sock.makeRegistroUserToHarbi(),
+              builder: (_, AsyncSnapshot snap) {
+
+                if(snap.connectionState == ConnectionState.done) {
+
+                  return Texto(
+                    txt: snap.data,
+                    txtC: Colors.green,
+                    sz: 18, isCenter: true,
+                  );
+                }
+
+                return const Texto(
+                  txt: 'Estamos terminando de Registrar tu Ingreso...',
+                  txtC: Colors.blue,
+                  sz: 18, isCenter: true,
+                );
+              },
             )
           ),
           const SizedBox(height: 20),
@@ -109,9 +120,9 @@ class Home extends StatelessWidget {
       {'c':'Puerto a Servidor:', 'v':portL},
       {'c':'ID de Conexión a HARBI:', 'v':sock.idConn},
       {'c':'MIS DATOS:', 'v':'...'},
-      {'c':'Identificación:', 'v':globals.idUser},
-      {'c':'Usuario:', 'v':sock.username},
-      {'c':'CURC:', 'v':globals.curc},
+      {'c':'Identificación:', 'v':globals.user.id},
+      {'c':'Usuario:', 'v':globals.user.nombre},
+      {'c':'CURC:', 'v':globals.user.curc},
     ];
 
     return Row(
@@ -161,13 +172,14 @@ class Home extends StatelessWidget {
           label: const Texto(txt: 'Desconectar a HARBI')
         ),
         TextButton.icon(
-          onPressed: () => _reconectar(context, sock),
+          onPressed: () {},
           icon: const Icon(Icons.settings_power_outlined),
           label: const Texto(txt: 'Reconectar con HARBI')
         ),
       ],
     );
   }
+  
   ///
   Widget _tileItem(int ind, String clave, dynamic valor) {
 
@@ -187,36 +199,5 @@ class Home extends StatelessWidget {
       )
     );
   }
-
-  ///
-  Future<void> _reconectar(BuildContext context, SocketConn sock) async {
-
-    await WidgetsAndUtils.showAlert(
-      context,
-      titulo: 'RECONECTANDO A HARBI',
-      msg: 'Recuerda antes de reconectar a Harbi, necesitas reiniciarlo, por favor '
-      'realiza primeramente dicha acción y posteriormente presiona el botón de HECHO.',
-      onlyAlert: false, onlyYES: true, msgOnlyYes: 'HECHO'
-    );
-
-    final data = {
-      'username' : globals.curc,
-      'password' : globals.password
-    };
-    await sock.awaitResponseSocket(
-      event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
-      msgInit: 'Haciendo login en local',
-      msgExito: 'Login Autorizado'
-    );
-
-    if(!sock.msgErr.contains('Error')) {
-        sock.msgCron= 'OK.';
-        sock.isLoged = true;
-    }else{
-      sock.msgCron= 'ERROR';
-    }
-
-  }
-
 
 }

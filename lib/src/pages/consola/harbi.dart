@@ -153,7 +153,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
                 _txtCon(label: 'IP Harbi: ${globals.ipHarbi}'),
                 _txtCon(label: 'Puerto: ${globals.portHarbi}'),
                 _txtCon(label: 'ID Harbi: ${socketConn.idConn}'),
-                _txtCon(label: 'Conexión: ${socketConn.username}'),
+                _txtCon(label: 'Conexión: ${globals.user.nombre}'),
               ],
             ),
           ),
@@ -170,7 +170,7 @@ class _HarbiConsolaState extends State<HarbiConsola> {
                     height: MediaQuery.of(context).size.height * 0.13
                   ),
                   child: SelectableText(
-                    globals.tkServ,
+                    globals.user.tkServ,
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.grey

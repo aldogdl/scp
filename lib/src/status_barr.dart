@@ -5,7 +5,6 @@ import 'pages/widgets/change_ip_dialog.dart';
 import 'services/get_content_files.dart';
 import 'pages/widgets/widgets_utils.dart';
 import 'config/sng_manager.dart';
-import 'entity/request_event.dart';
 import 'providers/pages_provider.dart';
 import 'providers/socket_conn.dart';
 import 'providers/window_cnf_provider.dart';
@@ -41,7 +40,7 @@ class StatusBarr extends StatelessWidget {
             context.read<PageProvider>().page = Paginas.config;
           }),
           const SizedBox(width: 10),
-          Texto(txt: 'SWP de: ${watchC.username} [${_globals.curc}]', sz: 11, txtC: const Color(0xFFFFFFFF)),
+          Texto(txt: 'SWP de: ${_globals.user.nombre} [${_globals.user.curc}]', sz: 11, txtC: const Color(0xFFFFFFFF)),
           const SizedBox(width: 15),
           _btnIconAndTxt(txt: '0', tip: 'Errores', icono: Icons.close, fnc: (){
             context.read<PageProvider>().consola = Consola.errores;
@@ -195,14 +194,14 @@ class StatusBarr extends StatelessWidget {
     );
 
     final data = {
-      'username' : _globals.curc,
-      'password' : _globals.password
+      'username' : _globals.user.curc,
+      'password' : _globals.user.password
     };
-    await sock.awaitResponseSocket(
-      event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
-      msgInit: 'Haciendo login en local',
-      msgExito: 'Login Autorizado'
-    );
+    // await sock.awaitResponseSocket(
+    //   event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
+    //   msgInit: 'Haciendo login en local',
+    //   msgExito: 'Login Autorizado'
+    // );
 
     if(!sock.msgErr.contains('Error')) {
         sock.msgCron= 'OK.';

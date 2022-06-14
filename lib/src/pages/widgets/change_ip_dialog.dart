@@ -117,7 +117,7 @@ class _ChangeIpDialogState extends State<ChangeIpDialog> {
       uri = Uri.parse(_globals.ipDbs['base_r']);
     }
     uri = uri.replace(host: _ctlIp.text);
-    String uriPath = 'home-controller/get-data-connection/${_globals.password}/';
+    String uriPath = 'home-controller/get-data-connection/${_globals.user.password}/';
     _msg = 'Probando Conectividad';
     _abosorbing = true;
     setState(() {});

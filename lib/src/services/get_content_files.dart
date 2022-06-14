@@ -31,34 +31,67 @@ class GetContentFile {
     return [];
   }
 
-  ///
-  static Future<List<Map<String, dynamic>>> regOfLogin() async {
+  /// Recuperamos los autos marcas y modelos
+  static Future<List<Map<String, dynamic>>> getAllAuto() async {
 
-    List<Map<String, dynamic>> registros = [];
+    final String pathRoot = await GetPaths.getFileByPath('autos');
+    final regs = File(pathRoot);
+    if(regs.existsSync()) {
+      return List<Map<String, dynamic>>.from( json.decode(regs.readAsStringSync()) );
+    }
+    return [];
+  }
+
+  ///
+  static Future<bool> hidratarUserFromFile(Map<String, dynamic> data) async {
+
+    List<Map<String, dynamic>> users = [];
 
     final pathTo = await GetPaths.getFileByPath('connpass');
-    final pathLog = await GetPaths.getFileByPath('connwho');
     final regs = File(pathTo);
-    final logs = File(pathLog);
     if(regs.existsSync()) {
-
-      final mRegs = Map<String, dynamic>.from( json.decode(regs.readAsStringSync()) );
-      late final List<Map<String, dynamic>> llogs;
-      if(regs.existsSync()) {
-        llogs = List<Map<String, dynamic>>.from( json.decode(logs.readAsStringSync()) );
-      }else{
-        llogs = [];
-      }
-
-      mRegs.forEach((key, value) {
-        var reg = Map<String, dynamic>.from(value);
-        if(llogs.isNotEmpty) {
-          reg['logs'] = llogs.where((element) => element['curc'] == reg['curc']).toList();
+      final txtCont = regs.readAsStringSync();
+      if(txtCont.isNotEmpty) {
+        users = List<Map<String, dynamic>>.from( json.decode(txtCont) );
+        if(users.isNotEmpty) {
+          final hasUser = users.firstWhere((element) => element['curc'] == data['username']);
+          if(hasUser.isNotEmpty) {
+            _globals.user.fromFile(hasUser);
+            return true;
+          }
         }
-        registros.add(reg);
-      });
+      }
     }
-    return registros;
+    
+    return false;
+  }
+
+  ///
+  static Future<void> saveUserValid() async {
+
+    final user = _globals.user.userToJson();
+    final pathTo = await GetPaths.getFileByPath('connpass');
+    final regs = File(pathTo);
+
+    List<Map<String, dynamic>> users = [];
+    
+    if(!regs.existsSync()) {
+      regs.createSync(recursive: true);
+      users.add(user);
+    }else{
+
+      final txtCont = regs.readAsStringSync();
+      if(txtCont.isNotEmpty) {
+        users = List<Map<String, dynamic>>.from( json.decode(txtCont) );
+        final hasUser = users.indexWhere((element) => element['curc'] == _globals.user.curc);
+        if(hasUser != -1) {
+          users[hasUser] = user;
+        }else{
+          users.add(user);
+        }
+      }
+    }
+    regs.writeAsStringSync(json.encode(users));
   }
 
   ///
@@ -116,18 +149,13 @@ class GetContentFile {
         _globals.ipDbs[baseT] = ipG.toString();
       }
     }
-
   }
 
-  /// REcuperamos los autos marcas y modelos
-  static Future<List<Map<String, dynamic>>> getAllAuto() async {
+  /// Recuperamos a todos los usuarios que se han registrado en esta SCP
+  static Future<List<Map<String, dynamic>>> regOfLogin() async {
 
-    
-    final String pathRoot = await GetPaths.getFileByPath('autos');
-    final regs = File(pathRoot);
-    if(regs.existsSync()) {
-      return List<Map<String, dynamic>>.from( json.decode(regs.readAsStringSync()) );
-    }
     return [];
   }
+
+
 }

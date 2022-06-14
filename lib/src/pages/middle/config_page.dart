@@ -29,8 +29,8 @@ class _ConfigPageState extends State<ConfigPage> {
   @override
   void initState() {
 
-    for (var i = 0; i < globals.roles.length; i++) {
-      if(globals.roles[i].contains('ADMIN')) {
+    for (var i = 0; i < globals.user.roles.length; i++) {
+      if(globals.user.roles[i].contains('ADMIN')) {
         isAdmin = true;
       }
     }

@@ -95,7 +95,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
     await sttsCache.hidratar();
 
     provi.ordenes = [];
-    int avo = (widget.asignadas) ? globals.idUser : 0;
+    int avo = (widget.asignadas) ? globals.user.id : 0;
     
     widget.onLoading({'isLoading': true, 'msg': 'Ordenes'});
     await _ordenEm.getAllOrdenesByAvo(avo);

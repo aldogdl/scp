@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'src/pages/a_main/scp_layout.dart';
 import 'src/config/sng_manager.dart';
@@ -51,7 +51,7 @@ class ProvidersConfig extends StatelessWidget {
       ],
       child: MaterialApp(
         scrollBehavior: MyCustomScrollBehavior(),
-        title: 'Material App',
+        title: 'SCP::Sistema de Cotización y Procesamiento',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           brightness: Brightness.dark,

@@ -8,6 +8,7 @@ class ContactoEntity {
   List<String> roles = [];
   String password = '';
   String nombre = '';
+  String tkServ = '';
   bool isCot = false;
   String cargo = '';
   String celular = '';
@@ -55,6 +56,43 @@ class ContactoEntity {
       'isCot': false,
       'cargo': cargo,
       'celular': celular,
+    };
+  }
+
+  /// Este metodo es usado para hidratar la variable de globals es solo para
+  /// los usuarios que estan usando esta app.
+  void fromFile(Map<String, dynamic> user) {
+    id = user['id'];
+    curc = user['curc'];
+    roles = List<String>.from(user['roles']);
+    password = user['password'];
+    nombre = user['nombre'];
+    tkServ = user['tkServ'];
+  }
+
+  Map<String, dynamic> userToJson() {
+    return {
+      'id': id,
+      'curc': curc,
+      'roles': roles,
+      'password': password,
+      'nombre': nombre,
+      'tkServ': tkServ,
+    };
+  }
+
+  Map<String, dynamic> userConectado({
+    required String app, required String ip, required String idCon
+  }) {
+    return {
+      'ip': ip,
+      'app':app,
+      'id': id,
+      'idCon': idCon,
+      'curc': curc,
+      'roles': roles,
+      'name': nombre,
+      'pass': password,
     };
   }
 

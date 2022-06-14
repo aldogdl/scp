@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/pages/widgets/instruc_asignar_orden.dart';
-import 'package:scp/src/providers/socket_conn.dart';
-import 'package:scp/src/repository/ordenes_repository.dart';
-import 'package:scp/src/pages/widgets/widgets_utils.dart';
 
-
+import '../widgets/instruc_asignar_orden.dart';
+import '../widgets/widgets_utils.dart';
 import '../widgets/my_tool_tip.dart';
 import '../widgets/texto.dart';
 import '../../config/sng_manager.dart';
@@ -14,6 +11,7 @@ import '../../entity/orden_entity.dart';
 import '../../providers/centinela_file_provider.dart';
 import '../../providers/items_selects_glob.dart';
 import '../../providers/window_cnf_provider.dart';
+import '../../repository/ordenes_repository.dart';
 import '../../repository/contacts_repository.dart';
 import '../../vars/globals.dart';
 
@@ -51,13 +49,6 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   CPush _cpushOrden = CPush.asignacion;
   String _portadaTipo = 'sin_data';
   String _acc = 'Se Asignaron nuevas Órdenes';
-  final String _msg = 'Al seleccionar un Asesor de Ventas OnLine, podrás enlistar '
-  'todas las ÓRDENES con las que cuenta actualmente.';
-
-  final String _inst = 'Primero selecciona una orden del listado.\n'
-  'Después con doble click, elige al AVO a quien le será asignada la orden '
-  'y presiona el botón de asignar.\n'
-  'Para finalizar presiona el botón de Guardar.';
   
   @override
   void initState() {
@@ -900,14 +891,14 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   Stream<String> _saving() async* {
     
     yield 'Preparando datos...';
-    final sock = context.read<SocketConn>();
+
     await _centiProv.commit(_cpushOrden, _dataSaving);
     _centiProv.updateVersion();
     Future.delayed(const Duration(milliseconds: 500));
     
     _centiProv.setManifest(
-      sendId: globals.idUser,
-      sendFrom: sock.username,
+      sendId: globals.user.id,
+      sendFrom: globals.user.nombre,
       toVersion: int.parse('${_centiProv.centinela['version']}'),
       message: _acc
     );

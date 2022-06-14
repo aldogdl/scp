@@ -17,6 +17,14 @@ enum Consola {
 
 class PageProvider extends ChangeNotifier {
 
+  bool _isSplash = true;
+  bool get isSplash => _isSplash;
+  set isSplash(bool p) {
+    _isSplash = p;
+    notifyListeners();
+  }
+
+  ///
   Paginas _page = Paginas.config;
   Paginas get page => _page;
   set page(Paginas p) {

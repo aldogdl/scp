@@ -741,7 +741,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     final scm = ScmEntity();
     scm.slugCamp = 'busk_cots';
     scm.emiterId = itemProv.ordenEntitySelect!.uId;
-    scm.remiterId = globals.idUser;
+    scm.remiterId = globals.user.id;
     scm.src = {'id':itemProv.idOrdenSelect};
     
     // Guardamos en la base de datos remota el registro de la orden de busqueda

@@ -1,8 +1,5 @@
-import 'dart:io';
-import 'dart:convert';
-
-import 'package:scp/src/services/get_paths.dart';
-import 'package:scp/src/services/my_http.dart';
+import '../services/get_paths.dart';
+import '../services/my_http.dart';
 
 class ContactsRepository {
 
@@ -16,11 +13,12 @@ class ContactsRepository {
   ///
   Future<void> backupContact(Map<String, dynamic> data) async {
     
-    Directory? uri = GetPaths.getPathsFolderTo('udel');
-    if(uri != null) {
-      File contact = File('${uri.path}${GetPaths.getSep()}${data['curc']}.json');
-      contact.writeAsStringSync( json.encode(data) );
-    }
+    print('hacer esto via http hacia harbi');
+    // Directory? uri = GetPaths.getPathsFolderTo('udel');
+    // if(uri != null) {
+    //   File contact = File('${uri.path}${GetPaths.getSep()}${data['curc']}.json');
+    //   contact.writeAsStringSync( json.encode(data) );
+    // }
   }
 
   ///

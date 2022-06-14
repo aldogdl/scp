@@ -365,13 +365,7 @@ class _AdminUsersState extends State<AdminUsers> {
 
     if(_frmKey.currentState!.validate()) {
 
-      final provi = context.read<SocketConn>();      
-      bool isconected = await provi.ping();
-      if(!isconected) {
-        provi.cerrarConection();
-        return;
-      }
-
+      final provi = context.read<SocketConn>();
       provi.msgErr = 'Actualizando datos directamente en el Servidor'; 
       ContactoEntity cont = _hidratarContactoFromScreen();
       final data = cont.toJsonForAdminUser();
