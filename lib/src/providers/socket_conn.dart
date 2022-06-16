@@ -8,6 +8,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 
 import '../entity/contacto_entity.dart';
 import '../config/sng_manager.dart';
+import '../repository/socket_centinela.dart';
 import '../services/my_http.dart';
 import '../services/get_paths.dart';
 import '../vars/globals.dart';
@@ -15,8 +16,8 @@ import '../entity/request_event.dart';
 
 class SocketConn extends ChangeNotifier {
 
-  final Globals globals = getSngOf<Globals>();
-
+  final globals = getSngOf<Globals>();
+  final _sockCenti = SocketCentinela();
   final info = NetworkInfo();
   final String _app = 'SCP';
 
@@ -61,13 +62,14 @@ class SocketConn extends ChangeNotifier {
   }
 
   ///
+  int cantManifest = 0;
+  int cantShows = 0;
   List<Map<String, dynamic>> _manifests = [];
   List<Map<String, dynamic>> get manifests => _manifests;
   set manifests(List<Map<String, dynamic>> msg) {
     _manifests = msg;
     notifyListeners();
   }
-
   void addManifest(Map<String, dynamic> msg) {
     _manifests.insert(0, msg);
     notifyListeners();
@@ -77,8 +79,8 @@ class SocketConn extends ChangeNotifier {
   int cantAlert = 0;
   bool _alertCV = false;
   bool get alertCV => _alertCV;
-  set alertCV(bool msg) {
-    _alertCV = msg;
+  set alertCV(bool show) {
+    _alertCV = show;
     cantAlert++;
     notifyListeners();
   }
@@ -86,10 +88,7 @@ class SocketConn extends ChangeNotifier {
   ///
   String _msgErr = '';
   String get msgErr => _msgErr;
-  void setMsgWithoutNotified(String msg) {
-    _msgErr = msg;
-  }
-
+  void setMsgWithoutNotified(String msg) => _msgErr = msg;
   set msgErr(String msg) {
     _msgErr = msg;
     notifyListeners();
@@ -256,9 +255,7 @@ class SocketConn extends ChangeNotifier {
 
       if (response['event'] == 'ping') {
         if(response['fnc'] == 'returnIdConnection') {
-          final event = RequestEvent(event: 'ping', fnc: 'returnIdConnection', data: {
-            
-          });
+          final event = RequestEvent(event: 'ping', fnc: 'returnIdConnection', data: {});
           send(event);
         }
         _msgErr = (response['fnc'] == 'ok') ? 'ping-ok' : 'ping-er';
@@ -301,24 +298,14 @@ class SocketConn extends ChangeNotifier {
   ///
   Future<void> _determinarFncCentinela(String fnc, Map<String, dynamic> params) async {
     
-    if(params.containsKey('vers')) {
-      if(verOldCentinela.isEmpty) {
-        verOldCentinela = params['vers'];
-      }else{
-        if(params['vers'] != verOldCentinela) {
-          verOldCentinela = params['vers'];
-          alertCV = true;
-        }
-      }
-    }
-
     switch (fnc) {
       case 'update':
-        msgCron = 'CAMBIO DE V: ${params['to_version']}';
-        addManifest(params);
-        msgErr = (params.containsKey('err'))
-          ? params['err']
-          : 'ERROR al Descargar CENTINELA FILE';
+        final manifest = await _sockCenti.buildManifest(globals.ipHarbi, globals.user);
+        if(manifest.isNotEmpty) {
+          cantManifest++;
+          addManifest(manifest);
+          params['vers'] = manifest['ver'];
+        }
         break;
       case 'cron':
         msgCron = '${params['time']} V: ${params['vers']}';
@@ -326,7 +313,22 @@ class SocketConn extends ChangeNotifier {
       default:
         _msgErr = 'Sin Acción';
     }
+
+    if(params.containsKey('vers')) {
+      if(verOldCentinela.isEmpty) {
+        verOldCentinela = '${params['vers']}';
+      }else{
+        if(params['vers'] != verOldCentinela) {
+          verOldCentinela = '${params['vers']}';
+          alertCV = true;
+        }
+      }
+    }
+    sendPing('ping');
   }
+
+  /// Enviando ping a HARBI de Aqui estoy...
+  void sendPing(String fnc) => send(RequestEvent(event: 'connection', fnc: fnc, data: {}));
 
   /// Recuperamos la Ip de Harbi, pero siempre tiene que ser desde el servidor
   /// remoto, ya que no sabemos desde que maquina se esta corriendo la SCP.
@@ -388,7 +390,6 @@ class SocketConn extends ChangeNotifier {
     if(res.isNotEmpty) {
 
       await MyHttp.get('http://${globals.ipHarbi}:${globals.portHarbi}/api_harbi/get_path_prod_ver');
-      print(MyHttp.result);
       if(!MyHttp.result['abort']) {
         if(MyHttp.result['body'] == res) {
           goServer = false;
@@ -422,6 +423,9 @@ class SocketConn extends ChangeNotifier {
     }
     if(folder == 'autos') {
       uri = await GetPaths.getApiHarbi('get_autos', globals.ipHarbi);
+    }
+    if(folder == 'rutas') {
+      uri = await GetPaths.getApiHarbi('get_all_rutas', globals.ipHarbi);
     }
 
     await MyHttp.get(uri);
@@ -485,4 +489,6 @@ class SocketConn extends ChangeNotifier {
     }
     return '[X] Error al registrar tu conección en HARBI';
   }
+
+
 }

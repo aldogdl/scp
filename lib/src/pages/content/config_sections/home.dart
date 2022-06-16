@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../widgets/texto.dart';
 import '../../../config/sng_manager.dart';
 import '../../../providers/socket_conn.dart';
-import '../../../providers/pages_provider.dart';
 import '../../../vars/globals.dart';
 
 class Home extends StatelessWidget {
@@ -74,11 +73,7 @@ class Home extends StatelessWidget {
           const SizedBox(height: 20),
           Expanded(
             child: _datosGenerales(sock),
-          ),
-          SizedBox(
-            height: 40,
-            child: _acciones(context, sock),
-          )
+          )          
         ],
       )
     );
@@ -146,36 +141,6 @@ class Home extends StatelessWidget {
             ),
           )
         )
-      ],
-    );
-  }
-
-  ///
-  Widget _acciones(BuildContext context, SocketConn sock) {
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        TextButton.icon(
-          onPressed: () {
-            sock.cerrarConection();
-            sock.isLoged = false;
-            context.read<PageProvider>().resetPage();
-          },
-          icon: const Icon(Icons.logout),
-          label: const Texto(txt: 'Cerrar Sesión')
-        ),
-        TextButton.icon(
-          onPressed: (){},
-          icon: const Icon(Icons.power_off_rounded),
-          label: const Texto(txt: 'Desconectar a HARBI')
-        ),
-        TextButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.settings_power_outlined),
-          label: const Texto(txt: 'Reconectar con HARBI')
-        ),
       ],
     );
   }

@@ -67,6 +67,7 @@ class WidgetsAndUtils {
             )
           ],
         ),
+        actionsPadding: const EdgeInsets.only(bottom: 15),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: (onlyAlert)
         ? null

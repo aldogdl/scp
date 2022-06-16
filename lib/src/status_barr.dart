@@ -20,46 +20,106 @@ class StatusBarr extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     
-    final readC = context.read<SocketConn>();
+    final console = context.read<PageProvider>();
+    final sock = context.read<SocketConn>();
+
+    return Selector<SocketConn, List<Map<String, dynamic>>>(
+      selector: (_, prov) => prov.manifests,
+      builder: (_, manifest, child) {
+
+        if(sock.cantShows != sock.cantManifest) {
+          sock.cantShows = sock.cantManifest;
+          bool showConcole = false;
+          bool showNotif = false;
+          if(manifest.isNotEmpty) {
+            manifest.map((e) {
+              if(e.containsKey('cambios')) {
+                final cambios = List<String>.from(e['cambios']);
+                for (var i = 0; i < cambios.length; i++) {
+                  if(cambios[i].endsWith('[I]')) {
+                    showConcole = true;
+                    break;
+                  }
+                  if(cambios[i].endsWith('[IN]')) {
+                    showNotif = true;
+                    break;
+                  }
+                }
+              }
+            }).toList();
+          }
+          if(showNotif) {
+            Future.delayed(const Duration(milliseconds: 250), (){
+              sock.alertCV = true;
+            });
+          }
+          if(showConcole && console.closeConsole) {
+            Future.delayed(const Duration(milliseconds: 250), (){
+              console.putValue(Consola.centinela);
+              console.closeConsole = false;
+            });
+          }
+        }
+        return child!;
+      },
+      child: _bodyBar(context),
+    );
+  }
+
+  ///
+  Widget _bodyBar(BuildContext context) {
+
+    final readC  = context.read<SocketConn>();
     final watchC = context.watch<SocketConn>();
-    const String reint = '[Reconectar]';
-    
+    final pageR  = context.read<PageProvider>();
+    final winR   = context.read<WindowCnfProvider>();
+    const wid5   = SizedBox(width: 5);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
       height: MediaQuery.of(context).size.height * 0.03,
       color: watchC.isConnectedSocked
-       ? (watchC.alertCV)
-          ? context.read<WindowCnfProvider>().sttBarrColorCS
-          : context.read<WindowCnfProvider>().sttBarrColorOn
-       : context.read<WindowCnfProvider>().sttBarrColorOff,
+      ? winR.sttBarrColorOn : winR.sttBarrColorOff,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _btnIcon(tip: 'Menú Principal', icono: Icons.menu, fnc: () {
-            context.read<PageProvider>().page = Paginas.config;
+          _btnIcon(tip: 'Menú Principal', icono: Icons.menu, size: 17, fnc: () {
+            pageR.page = Paginas.config;
           }),
           const SizedBox(width: 10),
-          Texto(txt: 'SWP de: ${_globals.user.nombre} [${_globals.user.curc}]', sz: 11, txtC: const Color(0xFFFFFFFF)),
+          Texto(txt: 'SWP de: ${_globals.user.nombre} [${_globals.user.curc}]',
+            sz: 11, txtC: const Color(0xFFFFFFFF)
+          ),
           const SizedBox(width: 15),
+          _btnIconAndTxt(txt: '${watchC.manifests.length}', tip: 'Centinela',
+            icono: Icons.remove_red_eye_outlined,
+            fnc: (){
+              pageR.consola = Consola.centinela;
+              if(pageR.closeConsole) {
+                pageR.closeConsole = false;
+              }
+            }
+          ),
+          wid5,
           _btnIconAndTxt(txt: '0', tip: 'Errores', icono: Icons.close, fnc: (){
-            context.read<PageProvider>().consola = Consola.errores;
-            if(context.read<PageProvider>().closeConsole) {
-              context.read<PageProvider>().closeConsole = false;
+            pageR.consola = Consola.errores;
+            if(pageR.closeConsole) {
+              pageR.closeConsole = false;
             }
           }),
-          const SizedBox(width: 5),
+          wid5,
           _btnIconAndTxt(txt: '0', tip: 'Alertas', icono: Icons.warning_amber_outlined, fnc: (){
-            context.read<PageProvider>().consola = Consola.alertas;
-            if(context.read<PageProvider>().closeConsole) {
-              context.read<PageProvider>().closeConsole = false;
+            pageR.consola = Consola.alertas;
+            if(pageR.closeConsole) {
+              pageR.closeConsole = false;
             }
           }),
-          const SizedBox(width: 5),
+          wid5,
           _btnIconAndTxt(txt: '0', tip: 'SCM', icono: Icons.local_post_office_outlined, fnc: (){
-            context.read<PageProvider>().consola = Consola.scm;
-            if(context.read<PageProvider>().closeConsole) {
-              context.read<PageProvider>().closeConsole = false;
+            pageR.consola = Consola.scm;
+            if(pageR.closeConsole) {
+              pageR.closeConsole = false;
             }
           }),
           if(readC.hasErrWithIpDbLocal.isNotEmpty)
@@ -85,32 +145,38 @@ class StatusBarr extends StatelessWidget {
             ],
           const Spacer(),
           Texto(txt: 'HARBI. ${watchC.idConn}', sz: 11, txtC: const Color.fromARGB(255, 255, 255, 255)),
-          const SizedBox(width: 5),
-          if(readC.msgCron == 'X' || readC.msgCron.startsWith('ERROR'))
-            _btnTxt(
-              label: (readC.msgCron.startsWith('ERROR')) ? 'ERROR $reint' : reint,
-              fnc: () async => await _reconectar(context, readC)
-            )
-          else
-            Texto(txt: 'REV. ${watchC.msgCron}', sz: 12, txtC: const Color.fromARGB(255, 255, 255, 255),),
+          wid5,
+          Texto(txt: 'REV. ${watchC.msgCron}', sz: 12, txtC: const Color.fromARGB(255, 255, 255, 255),),
+          if(watchC.alertCV)
+            ...[
+              wid5,
+              _btnIconAndTxt(
+                txt: '${watchC.cantAlert}',
+                tip: 'Notificacion',
+                icono: Icons.notifications_rounded,
+                icoColor: const Color(0xFFffffff),
+                isBold: true,
+                icoSize: 18,
+                fnc: (){
+                  readC.alertCV = false;
+                  readC.cantAlert = 0;
+                  pageR.putValue(Consola.centinela);
+                  if(pageR.closeConsole) {
+                    pageR.closeConsole = false;
+                  }
+                }
+              )
+            ],
           const SizedBox(width: 10),
-          _btnIconAndTxt(
-            txt: '${watchC.cantAlert}',
-            tip: 'Se realizó una Actualización del Centinela',
-            icono: Icons.notifications_rounded,
-            icoColor: context.read<WindowCnfProvider>().sttBarrColorOn,
-            isBold: true,
-            icoSize: 17,
-            fnc: (){
-              readC.alertCV = false;
-              context.read<PageProvider>().page = Paginas.solicitudesNon;
-            }
-          ),
+          _btnIcon(tip: 'Enviar Ping de Conexión', icono: Icons.social_distance,
+           size: 17, fnc: () {
+            readC.sendPing('reping');
+          }),
         ],
       ),
     );
   }
-
+  
   ///
   Widget _btnIconAndTxt({
     required IconData icono,
@@ -149,6 +215,7 @@ class StatusBarr extends StatelessWidget {
     required IconData icono,
     required String tip,
     required Function fnc,
+    double size = 13
   }) {
 
     return IconButton(
@@ -159,9 +226,9 @@ class StatusBarr extends StatelessWidget {
       tooltip: tip,
       alignment: Alignment.center,
       color: const Color(0xFFFFFFFF),
-      iconSize: 13,
-      constraints: const BoxConstraints(
-        maxHeight: 13, maxWidth: 13
+      iconSize: size,
+      constraints: BoxConstraints(
+        maxHeight: size, maxWidth: size
       ),
     );
   }
@@ -181,36 +248,6 @@ class StatusBarr extends StatelessWidget {
   }
 
   // ---------------------- CONTROLADOR --------------------------------
-
-  ///
-  Future<void> _reconectar(BuildContext context, SocketConn sock) async {
-
-    await WidgetsAndUtils.showAlert(
-      context,
-      titulo: 'RECONECTANDO A HARBI',
-      msg: 'Recuerda antes de reconectar a Harbi, necesitas reiniciarlo, por favor '
-      'realiza primeramente dicha acción y posteriormente presiona el botón de HECHO.',
-      onlyAlert: false, onlyYES: true, msgOnlyYes: 'HECHO'
-    );
-
-    final data = {
-      'username' : _globals.user.curc,
-      'password' : _globals.user.password
-    };
-    // await sock.awaitResponseSocket(
-    //   event: RequestEvent(event: 'connection', fnc: 'exite_user_local', data: data),
-    //   msgInit: 'Haciendo login en local',
-    //   msgExito: 'Login Autorizado'
-    // );
-
-    if(!sock.msgErr.contains('Error')) {
-        sock.msgCron= 'OK.';
-        sock.isLoged = true;
-    }else{
-      sock.msgCron= 'ERROR';
-    }
-
-  }
 
   ///
   Future<void> _changeIp(BuildContext context, SocketConn sock) async {

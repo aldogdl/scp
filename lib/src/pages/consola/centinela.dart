@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/providers/socket_conn.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../widgets/texto.dart';
+import '../../providers/socket_conn.dart';
 
 class CentinelaConsola extends StatefulWidget {
   const CentinelaConsola({Key? key}) : super(key: key);
@@ -25,8 +26,6 @@ class _CentinelaConsolaState extends State<CentinelaConsola> {
   Widget build(BuildContext context) {
 
     final provi = context.read<SocketConn>();
-    const sp5w = SizedBox(width: 5);
-    const sp5h = SizedBox(height: 5);
 
     return Container(
       constraints: BoxConstraints.expand(
@@ -42,41 +41,64 @@ class _CentinelaConsolaState extends State<CentinelaConsola> {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(right: 15),
           itemCount: provi.manifests.length,
-          itemBuilder: (_, index) {
-            
-            final m = provi.manifests[index];
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Texto(txt: '[ ${m['created']} ]', txtC: Colors.grey),
-                    sp5w,
-                    const Texto(txt: 'ENVIADO POR:', txtC: Colors.green),
-                    sp5w,
-                    Texto(txt: '${m['send_from']}', txtC: Colors.white, isBold: true),
-                    const Spacer(),
-                    sp5w,
-                    const Texto(txt: 'UV:', txtC: Colors.green, sz: 12),
-                    sp5w,
-                    Texto(txt: '${m['to_version']}', txtC: Colors.amber, sz: 12),
-                    sp5w,
-                  ],
-                ),
-                sp5h,
-                Texto(txt: '-> ${m['message']}', txtC: Colors.white, sz: 14),
-                sp5h,
-                Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
-                const SizedBox(height: 10),
-              ],
-            );
-          }
+          itemBuilder: (_, index) => _tileManifest(provi, index)
         ),
       )
+    );
+  }
+
+  ///
+  Widget _tileManifest(SocketConn provi, int index) {
+
+    const sp5w = SizedBox(width: 5);
+    const sp5h = SizedBox(height: 5);
+
+    final m = provi.manifests[index];
+    var cambios = <String>[];
+    if(m['cambios'].isNotEmpty) {
+      cambios = List<String>.from(m['cambios']);
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _txt(m['created'], color: const Color.fromARGB(255, 190, 190, 190)),
+            const Spacer(),
+            _txt('Ver: ${m['ver']}', color: const Color.fromARGB(255, 7, 151, 43)),
+            sp5w,
+          ],
+        ),
+        const Divider(height: 10, color: Color.fromARGB(255, 99, 99, 99)),
+        if(m['cambios'].isNotEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: cambios.map(
+              (e) => _txt('[√] $e')
+            ).toList(),
+          ),
+        sp5h,
+      ],
+    );
+  }
+
+  ///
+  Widget _txt(String label,{Color color = const Color(0xFF4d96fe)}) {
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Text(
+        label,
+        textScaleFactor: 1,
+        style: GoogleFonts.inconsolata(
+          fontSize: 15,
+          color: color
+        )
+      ),
     );
   }
 }

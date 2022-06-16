@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/repository/socket_centinela.dart';
 
 import '../widgets/instruc_asignar_orden.dart';
 import '../widgets/widgets_utils.dart';
@@ -36,18 +37,18 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   late final WindowCnfProvider winCnf;
   late final ItemSelectGlobProvider itemProv;
   late final CentinelaFileProvider _centiProv;
+  late final SocketCentinela _sockCenti;
   late final Future _recuperarAvos;
 
+  final Map<String, List<OrdenEntity>> _ordenesAvo = {};
   int _idAvoSelect = 0;
   bool _isInit = false;
   bool _hasErrorSave = false;
   bool _absClickAvo = false;
   bool _isLoad = false;
   int _isValidTarger = 0;
-  Map<String, List<OrdenEntity>> _ordenesAvo = {};
   dynamic _dataSaving;
   CPush _cpushOrden = CPush.asignacion;
-  String _portadaTipo = 'sin_data';
   String _acc = 'Se Asignaron nuevas Órdenes';
   
   @override
@@ -615,19 +616,18 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
   // ----------------------------CONTROLADOR ----------------------------
   
-  void _seleccionandoAvo(int index) {
+  void _seleccionandoAvo(int index) async {
     
     bool resetOrdenToCero = false;
     _idAvoSelect = itemProv.avos[index].id;
+    _absClickAvo = true;
+    if(_idAvoSelect != 0) {
 
-    if(_idAvoSelect == 0) {
-      _portadaTipo = 'sinData';
-    }else{
-
-      _getOrdenesByAvo();
+      await _getOrdenesByAvo();
 
       // primero revisar si tiene ordenes recientes seleccionadas.
       if(itemProv.ordenesAsignadas.containsKey(_idAvoSelect)) {
+
         if(itemProv.idOrdenSelect != 0) {
           if(!itemProv.ordenesAsignadas[_idAvoSelect]!.contains(itemProv.idOrdenSelect)) {
             final idOrdenHas = itemProv.ordenesAsignadas[_idAvoSelect]!.first;
@@ -661,6 +661,8 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
         }
       }
     }
+
+    _absClickAvo = false;
     setState(() {});
   }
 
@@ -672,6 +674,8 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       winCnf = context.read<WindowCnfProvider>();
       itemProv = context.read<ItemSelectGlobProvider>();
       _centiProv = context.read<CentinelaFileProvider>();
+      _sockCenti = SocketCentinela();
+      _sockCenti.init(context);
       itemProv.avos.clear();
     }
 
@@ -692,7 +696,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     }
 
     if(_centiProv.centinela.isEmpty) {
-      await _centiProv.getFromFile();
+      await _sockCenti.getFromFile(globals.ipHarbi);
     }
   }
 
@@ -780,8 +784,26 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     String msg = '';
     if(_centiProv.centinela.isEmpty) {
       msg = 'No existen los datos referenciales acerca de un historial de seguimiento '
-      'de piezas, LOS DATOS DEL CENTINELA ESTÁN BACÍOS';
+      'de piezas, LOS DATOS DEL CENTINELA ESTÁN BACÍOS\n\n¿Deseas que se recuperen '
+      'dichos datos para continuar con el proceso de Guardado?';
+      bool? acc = await _showAlert(
+        titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg,
+        onlyAlert: false, withYesOrNot: true
+      );
+      acc = (acc == null) ? false : acc;
+      if(acc) {
+        msg = 'Espera un momneto, estamos trabajando en ello';
+        _showAlert(
+          titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg,
+          onlyAlert: true, withYesOrNot: false
+        );
+        _sockCenti.getFromApiHarbi(globals.ipHarbi).then((_){
+          _guardarAsignacion();
+        });
+      }
+      return;
     }
+
     if(_cpushOrden != CPush.reasignacion) {
       if(itemProv.ordenesAsignadas.isEmpty) {
         msg = 'No hay ningúna ORDEN actualmente dentro de la lista de asignaciones '
@@ -896,12 +918,6 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     _centiProv.updateVersion();
     Future.delayed(const Duration(milliseconds: 500));
     
-    _centiProv.setManifest(
-      sendId: globals.user.id,
-      sendFrom: globals.user.nombre,
-      toVersion: int.parse('${_centiProv.centinela['version']}'),
-      message: _acc
-    );
     yield 'Guardando datos en Servidor REMOTO';
     await _centiProv.push(_cpushOrden, isLocal: false);
     yield 'Guardando datos en Servidor LOCAL';

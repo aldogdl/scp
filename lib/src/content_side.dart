@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/pages/content/c_config_page.dart';
-import 'package:scp/src/pages/content/c_solicitudes_non_page.dart';
-import 'package:scp/src/pages/widgets/windows_buttons.dart';
-import 'package:scp/src/providers/socket_conn.dart';
-import 'providers/pages_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 
-import 'package:scp/src/consola.dart';
+import 'consola.dart';
+import 'providers/pages_provider.dart';
+import 'pages/content/c_config_page.dart';
+import 'pages/content/c_solicitudes_non_page.dart';
 import 'pages/content/c_cotizadores_page.dart';
 import 'pages/content/c_solicitantes_page.dart';
 import 'pages/content/c_solicitudes_page.dart';
-import 'package:scp/src/providers/window_cnf_provider.dart';
+import 'providers/socket_conn.dart';
+import 'providers/window_cnf_provider.dart';
+import 'pages/widgets/windows_buttons.dart';
 
 class ContentSide extends StatelessWidget {
 

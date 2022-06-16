@@ -167,7 +167,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
         }
       case 'rastreador':
         if(itemProv.fotosByPiezas.isNotEmpty) {
-          return const Text('Aqui la seccion de Rasteador');
+          return const Text('Aqui la sección de Rasteador');
         }else{
           return const SinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
         }

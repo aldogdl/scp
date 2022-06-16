@@ -1,10 +1,6 @@
-import 'dart:io';
-import 'dart:convert';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show ChangeNotifier;
-import 'package:scp/src/services/my_http.dart';
 
+import '../services/my_http.dart';
 import '../services/get_paths.dart';
 
 enum CPush {
@@ -15,6 +11,8 @@ enum CPush {
 class CentinelaFileProvider extends ChangeNotifier {
 
   Map<String, dynamic> result = {'abort': false, 'msg': 'ok', 'body':[]};
+
+  ///
   void clean() { result = {'abort': false, 'msg': 'ok', 'body':[]}; }
 
   ///
@@ -30,26 +28,6 @@ class CentinelaFileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///
-  Map<String, dynamic> _manifest = {};
-  Map<String, dynamic> get manifest => _manifest;
-  void setManifest({
-    required int sendId,
-    required String sendFrom,
-    required int toVersion,
-    required String message
-  }) {
-
-    final hoy = DateTime.now();
-    _manifest = {
-      'send_id'   : sendId,
-      'send_from' : sendFrom,
-      'created'   : '${hoy.day}-${hoy.month}-${hoy.year}',
-      'to_version': toVersion,
-      'message'   : message
-    };
-  }
-  
   /// ->Guardamos los cambios solo en memoria.
   Future<void> commit(CPush msg, dynamic data) async {
 
@@ -66,10 +44,6 @@ class CentinelaFileProvider extends ChangeNotifier {
 
   /// ->Enviamos los cambio realizados a los servidores.
   Future<void> push(CPush to, {bool isLocal = true}) async {
-
-    if(manifest.isEmpty) {
-      result = {'abort': true, 'msg':'manifest', 'body': 'ERROR, Se requiere el Manifest'};
-    }
 
     switch (to) {
       case CPush.asignacion:
@@ -90,16 +64,6 @@ class CentinelaFileProvider extends ChangeNotifier {
       _centinela.putIfAbsent('version', () => v);
     }else{
       _centinela['version'] = v;
-    }
-  }
-
-  /// ->Obtenemos los datos del centinela desde el arcivo.
-  Future<void> getFromFile() async {
-
-    String pathTo = await GetPaths.getFileByPath('centinela');
-    File centi = File(pathTo);
-    if(centi.existsSync()) {
-      _centinela = Map<String, dynamic>.from( json.decode(centi.readAsStringSync()) );
     }
   }
 
@@ -224,7 +188,7 @@ class CentinelaFileProvider extends ChangeNotifier {
     var asig = getAsignaciones();
     
     String pathTo = await GetPaths.getUri('ordenes_asignadas', isLocal: isLocal);
-    await MyHttp.post(pathTo, {'info':asig, 'version':_centinela['version'], 'manifest':manifest});
+    await MyHttp.post(pathTo, {'info':asig, 'version':_centinela['version']});
     result = MyHttp.result;
     MyHttp.clean();
   }

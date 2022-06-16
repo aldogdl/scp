@@ -30,9 +30,9 @@ class ContactsRepository {
   }
 
   ///
-  Future<void> getAllContacts({String tipo = 'noAdmin'}) async {
+  Future<void> getAllContacts({String tipo = 'noAdmin', bool isLocal = true}) async {
     
-    String uri = await GetPaths.getUri('get_all_contactos_by');
+    String uri = await GetPaths.getUri('get_all_contactos_by', isLocal: isLocal);
     await MyHttp.get('$uri$tipo');
     result = MyHttp.result;
   }

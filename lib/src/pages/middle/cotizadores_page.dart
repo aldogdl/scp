@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:scp/src/repository/contacts_repository.dart';
 
-import '../../entity/contacts_entity.dart';
+import '../../repository/contacts_repository.dart';
 
 class CotizadoresPage extends StatefulWidget {
 
@@ -15,7 +14,7 @@ class _CotizadoresPageState extends State<CotizadoresPage> {
 
   final ContactsRepository _contacEm = ContactsRepository();
   late Future _getAllCotizadores;
-  final List<ContacsEntity> _items = [];
+  //final List<ContacsEntity> _items = [];
 
   @override
   void initState() {

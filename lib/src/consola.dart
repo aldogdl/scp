@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/providers/socket_conn.dart';
 
 import 'pages/consola/alertas.dart';
 import 'pages/consola/errores.dart';
@@ -16,7 +17,7 @@ class ConsolaSide extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final winCnf = context.read<WindowCnfProvider>();
-    final pageProv = context.read<PageProvider>();
+    
     double widthOfResto = winCnf.tamMiddle;
     double w = (widthOfResto * 100) / MediaQuery.of(context).size.width;
     double wt = MediaQuery.of(context).size.width * ((100 - w) / 100);
@@ -31,14 +32,14 @@ class ConsolaSide extends StatelessWidget {
       height: MediaQuery.of(context).size.height * 0.25,
       child: Column(
         children: [
-          _pestaniasConsole(pageProv, winCnf),
+          _pestaniasConsole(context),
           const SizedBox(height: 1),
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(10),
               width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                color: winCnf.backgroundStartColor,
+              decoration: const BoxDecoration(
+                color: Color.fromARGB(255, 17, 17, 17),
               ),
               child: Consumer<PageProvider>(
                 builder: (_, PageProvider consola, __) => _determinarWidget(consola.consola),
@@ -51,11 +52,18 @@ class ConsolaSide extends StatelessWidget {
   }
 
   ///
-  Widget _pestaniasConsole(PageProvider pageProvi, WindowCnfProvider winCnf) {
+  Widget _pestaniasConsole(BuildContext context) {
+
+    final winCnf = context.read<WindowCnfProvider>();
+    final pageProvi = context.read<PageProvider>();
+    final sock = context.read<SocketConn>();
 
     return Container(
       decoration: BoxDecoration(
         color: winCnf.backgroundStartColor,
+        border: const Border(
+          top: BorderSide(color: Color.fromARGB(255, 185, 185, 185), width: 0.3)
+        ),
         boxShadow: const [
           BoxShadow(
             offset: Offset(0, 2),
@@ -82,8 +90,9 @@ class ConsolaSide extends StatelessWidget {
           const SizedBox(width: 10),
           _btn(
             label: 'Centinela',
+            isActive: (pageProvi.consola == Consola.centinela) ? true : false,
+            value: '${context.watch<SocketConn>().manifests.length}',
             fnc: () => pageProvi.consola = Consola.centinela,
-            isActive: (pageProvi.consola == Consola.centinela) ? true : false
           ),
           _btn(
             label: 'Alertas',
@@ -102,12 +111,17 @@ class ConsolaSide extends StatelessWidget {
           ),
           const Spacer(),
           IconButton(
-            onPressed: () => pageProvi.closeConsole = true,
+            onPressed: () {
+              sock.cantManifest = 0;
+              sock.cantShows = 0;
+              sock.manifests = [];
+              pageProvi.closeConsole = true;
+            },
             icon: const Icon(Icons.cleaning_services_rounded, color: Colors.white, size: 15)
           ),
           IconButton(
             onPressed: () => pageProvi.closeConsole = true,
-            icon: const Icon(Icons.close, color: Colors.white, size: 20)
+            icon: const Icon(Icons.close, color: Color.fromARGB(255, 238, 111, 111), size: 20)
           )
         ],
       ),
@@ -116,21 +130,50 @@ class ConsolaSide extends StatelessWidget {
 
   ///
   Widget _btn({
-    required Function fnc,
-    required String label,
     required bool isActive,
+    required String label,
+    required Function fnc,
+    String value = '',
   }) {
 
     return TextButton(
       onPressed: () => fnc(),
-      child: Text(
-        label,
-        textScaleFactor: 1,
-        style: TextStyle(
-          color: (isActive)
-          ?const Color.fromARGB(255, 255, 255, 255)
-          :const Color.fromARGB(255, 158, 158, 158)
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            textScaleFactor: 1,
+            style: TextStyle(
+              color: (isActive)
+              ?const Color.fromARGB(255, 255, 255, 255)
+              :const Color.fromARGB(255, 158, 158, 158)
+            ),
+          ),
+          if(value.isNotEmpty && value != '0')
+            ...[
+              const SizedBox(width: 5),
+              Container(
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  color: const Color.fromARGB(255, 82, 82, 82)
+                ),
+                child: Center(
+                  child: Text(
+                    value,
+                    textScaleFactor: 1,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color.fromARGB(255, 255, 255, 255)
+                    ),
+                  ),
+                )
+              )
+            ]
+        ],
       )
     );
   }

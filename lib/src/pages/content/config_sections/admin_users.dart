@@ -76,54 +76,47 @@ class _AdminUsersState extends State<AdminUsers> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Form(
-              key: _frmKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: FocusTraversalGroup(
-                policy: OrderedTraversalPolicy(),
-                child: Column(
+            child: Column(
+              children: [
+                const Texto(txt: 'GESTIONA DATOS DE COLABORADORES', txtC: Colors.white, isBold: true),
+                const SizedBox(height: 26),
+                const Texto(txt: 'CAPTURA LA INFORMACIÓN SOLICITADA', txtC: Colors.green, isBold: true),
+                const Divider(color: Colors.grey),
+                const SizedBox(height: 20),
+                _frm(),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Texto(txt: 'GESTIONA DATOS DE COLABORADORES', txtC: Colors.white, isBold: true),
-                    const SizedBox(height: 26),
-                    const Texto(txt: 'CAPTURA LA INFORMACIÓN SOLICITADA', txtC: Colors.green, isBold: true),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 20),
-                    _frm(),
-                    const SizedBox(height: 15),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _isAdminAndAvo(),
-                        const Spacer(),
-                        _btnSend(),
-                        if(_isAbsorbing)
-                          ...[
-                            const SizedBox(width: 10),
-                            const SizedBox(
-                              width: 20, height: 20,
-                              child: CircularProgressIndicator(),
-                            )
-                          ]
-                        else
-                          const SizedBox(width: 20),
-                      ],
-                    ),
-                    Expanded(
-                      child: SizedBox.expand(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Divider(),
-                            Texto(txt: context.watch<SocketConn>().msgErr),
-                            const Divider(),
-                          ],
-                        ),
-                      ),
-                    )
+                    _isAdminAndAvo(),
+                    const Spacer(),
+                    _btnSend(),
+                    if(_isAbsorbing)
+                      ...[
+                        const SizedBox(width: 10),
+                        const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(),
+                        )
+                      ]
+                    else
+                      const SizedBox(width: 20),
                   ],
                 ),
-              )
+                Expanded(
+                  child: SizedBox.expand(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Divider(),
+                        Texto(txt: context.watch<SocketConn>().msgErr),
+                        const Divider(),
+                      ],
+                    ),
+                  ),
+                )
+              ],
             ),
           )
         ),
@@ -142,129 +135,136 @@ class _AdminUsersState extends State<AdminUsers> {
   ///
   Widget _frm() {
 
-    return Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: Column(
-            children: [
-              DecorationField.fieldBy(
-                orden: 1,
-                ctr: _usernameCtrl,
-                fco: _userFcs, help: 'Nombre Completo',
-                validate: (String? val) {
-                  if(val != null) {
-                    if(val.isNotEmpty) {
-                      if(val.length > 3) {
-                        return null;
-                      }
-                      return 'Mínimo 3 caracteres';
-                    }
-                  }
-                  return 'Éste campo es requerido';
-                },
-                iconoPre: Icons.person_add,
-                isPass: false,
-                onPressed: (val){},
-                showPass: true
-              ),
-              const SizedBox(height: 20),
-              DecorationField.fieldBy(
-                orden: 3,
-                ctr: _passwordCtrl,
-                fco: _passFcs, help: 'Contraseña [Sólo Números]',
-                validate: (String? val) {
-                  if(val != null) {
-                    if(val.isNotEmpty) {
-                      if(val.length > 5) {
-                        if(val != 'same-password') {
-                          int ? soloDig = int.tryParse(val);
-                          if(soloDig != null) {
+    return Form(
+      key: _frmKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: FocusTraversalGroup(
+        policy: OrderedTraversalPolicy(),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  DecorationField.fieldBy(
+                    orden: 1,
+                    ctr: _usernameCtrl,
+                    fco: _userFcs, help: 'Nombre Completo',
+                    validate: (String? val) {
+                      if(val != null) {
+                        if(val.isNotEmpty) {
+                          if(val.length > 3) {
                             return null;
-                          }else{
-                            return 'Coloca sólo números.';
                           }
-                        }else{
-                          return null;
+                          return 'Mínimo 3 caracteres';
                         }
                       }
-                      return 'Mínimo 6 caracteres';
-                    }
-                  }
-                  return 'Éste campo es requerido';
-                },
-                iconoPre: Icons.security,
-                isPass: true,
-                onPressed: (val) => setState(() {
-                  _showPass = val;
-                }),
-                showPass: _showPass
-              )
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          flex: 1,
-          child: Column(
-            children: [
-              DecorationField.fieldBy(
-                orden: 2,
-                ctr: _celCtrl,
-                fco: _celFcs, help: 'Celular',
-                validate: (String? val) {
-                  if(val != null) {
-                    if(val.isNotEmpty) {
-                      if(val.length > 6) {
-                        return null;
-                      }
-                      return 'Mínimo 6 caracteres';
-                    }
-                  }
-                  return 'Éste campo es requerido';
-                },
-                iconoPre: Icons.security,
-                isPass: false,
-                onPressed: (val) {},
-                showPass: true
-              ),
-              const SizedBox(height: 20),
-              FutureBuilder(
-                future: _getMetas,
-                builder: (_, __) {
-                  if(cargos.isNotEmpty) {
-                    return DecorationField.dropBy(
-                      orden: 4,
-                      items: cargos.map<String>((e) => e['tit']).toList(),
-                      fco: _cargoFcs,
-                      help: 'Cargo',
-                      iconoPre: Icons.category,
-                      defaultValue: _cargoSelect,
-                      onChange: (String? val) {
-                        setState(() {
-                          _cargoSelect = val ?? '';
-                        });
-                      },
-                    );
-                  }
-                  return DecorationField.dropBy(
-                    items: ['CARGANDO...'],
-                    fco: _cargoFcs,
-                    help: 'Cargo',
-                    iconoPre: Icons.category,
-                    onChange: (String? val) {
-                      setState(() {
-                        _cargoSelect = val ?? '';
-                      });
+                      return 'Éste campo es requerido';
                     },
-                    orden: 1
-                  );
-                }
-              )
-            ],
-          ),
-        )
-      ],
+                    iconoPre: Icons.person_add,
+                    isPass: false,
+                    onPressed: (val){},
+                    showPass: true
+                  ),
+                  const SizedBox(height: 20),
+                  DecorationField.fieldBy(
+                    orden: 3,
+                    ctr: _passwordCtrl,
+                    fco: _passFcs, help: 'Contraseña [Sólo Números]',
+                    validate: (String? val) {
+                      if(val != null) {
+                        if(val.isNotEmpty) {
+                          if(val.length > 5) {
+                            if(val != 'same-password') {
+                              int ? soloDig = int.tryParse(val);
+                              if(soloDig != null) {
+                                return null;
+                              }else{
+                                return 'Coloca sólo números.';
+                              }
+                            }else{
+                              return null;
+                            }
+                          }
+                          return 'Mínimo 6 caracteres';
+                        }
+                      }
+                      return 'Éste campo es requerido';
+                    },
+                    iconoPre: Icons.security,
+                    isPass: true,
+                    onPressed: (val) => setState(() {
+                      _showPass = val;
+                    }),
+                    showPass: _showPass
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  DecorationField.fieldBy(
+                    orden: 2,
+                    ctr: _celCtrl,
+                    fco: _celFcs, help: 'Celular',
+                    validate: (String? val) {
+                      if(val != null) {
+                        if(val.isNotEmpty) {
+                          if(val.length > 6) {
+                            return null;
+                          }
+                          return 'Mínimo 6 caracteres';
+                        }
+                      }
+                      return 'Éste campo es requerido';
+                    },
+                    iconoPre: Icons.security,
+                    isPass: false,
+                    onPressed: (val) {},
+                    showPass: true
+                  ),
+                  const SizedBox(height: 20),
+                  FutureBuilder(
+                    future: _getMetas,
+                    builder: (_, __) {
+                      if(cargos.isNotEmpty) {
+                        return DecorationField.dropBy(
+                          orden: 4,
+                          items: cargos.map<String>((e) => e['tit']).toList(),
+                          fco: _cargoFcs,
+                          help: 'Cargo',
+                          iconoPre: Icons.category,
+                          defaultValue: _cargoSelect,
+                          onChange: (String? val) {
+                            setState(() {
+                              _cargoSelect = val ?? '';
+                            });
+                          },
+                        );
+                      }
+                      return DecorationField.dropBy(
+                        items: ['CARGANDO...'],
+                        fco: _cargoFcs,
+                        help: 'Cargo',
+                        iconoPre: Icons.category,
+                        onChange: (String? val) {
+                          setState(() {
+                            _cargoSelect = val ?? '';
+                          });
+                        },
+                        orden: 1
+                      );
+                    }
+                  )
+                ],
+              ),
+            )
+          ],
+        ),
+      )
     );
   }
 
@@ -324,6 +324,10 @@ class _AdminUsersState extends State<AdminUsers> {
     );
   }
 
+
+  // ------------------------- CONTROLADOR -------------------------------
+
+
   ///
   void _accContactos(ContactoEntity contac, String acc) {
 
@@ -372,20 +376,20 @@ class _AdminUsersState extends State<AdminUsers> {
       
       setState(() { _isAbsorbing = true; });
 
-      if(!globals.isLocalConn) {
-        await _contacEm.safeDataContact(data, isLocal: false);
-        if(_contacEm.result['abort']) {
-          provi.msgErr = _contacEm.result['body'];
-          debugPrint(_contacEm.result['msg']);
-        }
+      await _contacEm.safeDataContact(data, isLocal: false);
+      if(_contacEm.result['abort']) {
+        provi.msgErr = _contacEm.result['body'];
+        debugPrint(_contacEm.result['msg']);
       }
 
       provi.msgErr = 'Actualizando Servidor Local';
+      data['local'] = true;
       await _contacEm.safeDataContact(data, isLocal: true);
       if(_contacEm.result['abort']) {
         provi.msgErr = _contacEm.result['body'];
         debugPrint(_contacEm.result['msg']);
       }else{
+        provi.msgErr = 'Datos guardados con éxito';
         cont.id  = _contacEm.result['body']['c'];
         cont.curc= _contacEm.result['body']['curc'];
         _idContac= cont.id;
@@ -399,37 +403,25 @@ class _AdminUsersState extends State<AdminUsers> {
   Future<void> _updateDataBaseLocal(Map<String, dynamic> data) async {
 
     final provi = context.read<SocketConn>();
-    data['local'] = true;
-    
-    await _contacEm.safeDataContact(data, isLocal: true);
+    final ct = ContactoEntity();
+    ct.fromFrmToList(data);
 
-    if(_contacEm.result['abort']) {
-      provi.msgErr = _contacEm.result['body'];
-      debugPrint(_contacEm.result['msg']);
-    }else{
-
-      provi.msgErr = 'Datos guardados con éxito';
-      Future.delayed(const Duration(milliseconds: 2000), (){
-        provi.msgErr = '';
-      });
-
-      final ct = ContactoEntity();
-      ct.fromFrmToList(data);
-
-      var dataUpdate = ct.toJsonForUpdateHarbi();
-      provi.msgErr = 'Espera..., estamos terminando de actualiza los datos';
-      provi.send(
-        RequestEvent(event: 'connection', fnc: 'edit_user', data: dataUpdate)
-      );
-      _refreshList.value = !_refreshList.value;
-      _resetScreen();
-    }
+    var dataUpdate = ct.toJsonForUpdateHarbi();
+    provi.msgErr = 'Espera..., estamos terminando de actualiza los datos';
+    provi.send(
+      RequestEvent(event: 'connection', fnc: 'edit_user', data: dataUpdate)
+    );
+    _refreshList.value = !_refreshList.value;
+    _resetScreen();
     
     if(mounted) {
       setState(() { _isAbsorbing = false; });
     }else{
       _isAbsorbing = false;
     }
+    Future.delayed(const Duration(milliseconds: 2000), (){
+      provi.msgErr = '';
+    });
   }
 
   ///

@@ -37,12 +37,15 @@ class _LstContactosState extends State<LstContactos> {
   final ValueNotifier<List<ContactoEntity>> _contacts = ValueNotifier<List<ContactoEntity>>([]);
   List<ContactoEntity> _contactsBack = [];
 
+  late final SocketConn provi;
+  bool _isInit = false;
   String _showTypeContacts = 'anetc';
   String _titulo = 'LISTA DE CONTACTOS';
   bool _makeBackUp = true;
   bool _creanLst = true;
   int _cantCots = 0;
   int _cantSols = 0;
+  String msg = 'Cargando...';
 
   @override
   void initState() {
@@ -51,7 +54,9 @@ class _LstContactosState extends State<LstContactos> {
     if(widget.isAdmin) {
       _titulo = 'LISTA DE COLABORADORES';
     }
-    _getAllContacts();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getAllContacts();
+    });
     super.initState();
   }
 
@@ -64,6 +69,11 @@ class _LstContactosState extends State<LstContactos> {
   @override
   Widget build(BuildContext context) {
     
+    if(!_isInit) {
+      _isInit = true;
+      provi = context.read<SocketConn>();
+    }
+
     if(widget.refresh != _creanLst) {
       _creanLst = widget.refresh;
       _contactsBack.clear();
@@ -107,14 +117,24 @@ class _LstContactosState extends State<LstContactos> {
                     }
                   );
                 }else{
-                  return Column(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(Icons.people_alt_outlined, size: 100, color: Colors.white.withOpacity(0.1)),
-                      const Texto(txt: 'No hay Elementos')
-                    ],
+
+                  if(msg.isEmpty && lst.isEmpty) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.people_alt_outlined, size: 100, color: Colors.white.withOpacity(0.1)),
+                        const Texto(txt: 'No hay Elementos')
+                      ],
+                    );
+                  }
+
+                  return const Center(
+                    child: SizedBox(
+                      width: 40, height: 40,
+                      child: CircularProgressIndicator(),
+                    ),
                   );
                 }
               }
@@ -366,10 +386,13 @@ class _LstContactosState extends State<LstContactos> {
   Future<void> _getAllContacts() async {
 
     List<ContactoEntity> losCon = [];
-    final provi = context.read<SocketConn>();
-    await _contacEm.getAllContacts(tipo: (widget.isAdmin) ? 'anete' : 'noAdmin');
-    String msg =  'RECUPERANDO ${ (widget.isAdmin) ? 'COLABORADORES' : 'CONTACTOS' }';
+    await _contacEm.getAllContacts(
+      tipo: (widget.isAdmin) ? 'anete' : 'noAdmin',
+      isLocal: _globals.isLocalConn
+    );
+    msg =  'RECUPERANDO ${ (widget.isAdmin) ? 'COLABORADORES' : 'CONTACTOS' }';
     provi.msgErr = msg;
+    
     _cantCots = 0;
     _cantSols = 0;
     _showTypeContacts = '';
@@ -405,6 +428,7 @@ class _LstContactosState extends State<LstContactos> {
     provi.msgErr = 'Lista Recuperada...';
     Future.delayed(const Duration(milliseconds: 1000), () {
       provi.msgErr = '';
+      msg = '';
     });
     if(mounted) {
       setState(() {});

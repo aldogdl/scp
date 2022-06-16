@@ -5,22 +5,35 @@ import '../../providers/socket_conn.dart';
 import '../../services/get_paths.dart';
 import '../../providers/pages_provider.dart';
 
-class SplasPage extends StatelessWidget {
+class SplasPage extends StatefulWidget {
 
   const SplasPage({Key? key}) : super(key: key);
 
   @override
+  State<SplasPage> createState() => _SplasPageState();
+}
+
+class _SplasPageState extends State<SplasPage> {
+
+  late PageProvider prov;
+  late SocketConn conn;
+  bool _isInit = false;
+
+  @override
   Widget build(BuildContext context) {
 
-    final prov = context.read<PageProvider>();
-    final conn = context.read<SocketConn>();
+    if(!_isInit) {
+      _isInit = true;
+      prov = context.read<PageProvider>();
+      conn = context.read<SocketConn>();
+    }
 
     return Scaffold(
       body: Center(
         child: StreamBuilder<String>(
-          stream: _initialization(prov, conn),
+          stream: _initialization(),
           initialData: 'Iniciando tu SCP',
-          builder: (_, AsyncSnapshot snap) {
+          builder: (_, AsyncSnapshot<String> snap) {
 
             return SizedBox.expand(
               child: Column(
@@ -38,13 +51,19 @@ class SplasPage extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    snap.data,
+                    snap.data ?? 'Configurando...',
                     textScaleFactor: 1,
                     style: TextStyle(
                       fontSize: 15,
                       color: Colors.white.withOpacity(0.7)
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  if(snap.data != null && snap.data!.startsWith('ERR'))
+                    IconButton(
+                      onPressed: () => setState(() {}),
+                      icon: Icon(Icons.refresh, size: 35, color: Colors.white.withOpacity(0.5))
+                    )
                 ],
               ),
             );
@@ -55,7 +74,7 @@ class SplasPage extends StatelessWidget {
   }
 
   ///
-  Stream<String> _initialization(PageProvider prov, SocketConn conn) async* {
+  Stream<String> _initialization() async* {
 
     String response = '';
     yield 'Recuperando datos de Conexión';
@@ -84,10 +103,12 @@ class SplasPage extends StatelessWidget {
 
     yield 'Recuperando Datos [AUTOS]';
     await conn.getDataFixed('autos');
+    
+    yield 'Recuperando Datos [RUTAS]';
+    await conn.getDataFixed('rutas');
 
     yield 'Comencemos...';
     await Future.delayed(const Duration(milliseconds: 1000));
     prov.isSplash = false;
   }
-
 }

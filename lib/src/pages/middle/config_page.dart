@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/providers/socket_conn.dart';
 
 import '../widgets/texto.dart';
 import '../../config/sng_manager.dart';
@@ -66,12 +67,13 @@ class _ConfigPageState extends State<ConfigPage> {
         const Texto(txt: 'ACCIONES Y CONFIGURACIONES', sz: 13),
         s10,
         _iteMenu(context, icon: Icons.home, label: 'Portada', secc: 'home'),
+        _iteMenu(context, icon: Icons.view_list_outlined, label: 'Solicitudes en Proceso', secc: 'soliOk'),
+        const Divider(color: Colors.grey),
+        const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
         if(isAdmin)
           ...[
+            s10,
             _iteMenu(context, icon: Icons.not_listed_location_outlined, label: 'Ordenes sin Asignar', secc: 'soliNon'),
-            _iteMenu(context, icon: Icons.view_list_outlined, label: 'Solicitudes en Proceso', secc: 'soliOk'),
-            const Divider(color: Colors.grey),
-            const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
             s10,
             _iteMenu(context, icon: Icons.business, label: 'Empresas y Miembros', secc: 'empresas'),
             s10,
@@ -80,6 +82,8 @@ class _ConfigPageState extends State<ConfigPage> {
             _iteMenu(context, icon: Icons.clear_all, label: 'Borrar Registro de Login', secc: 'dialog_del_reg'),
             s10,
             const Divider(),
+            s10,
+            _iteMenu(context, icon: Icons.logout, label: 'Cerrar Sesión', secc: 'cerrar_sesion'),
           ]
       ],
     );
@@ -262,6 +266,12 @@ class _ConfigPageState extends State<ConfigPage> {
       _deleteRegUserLogin();
     }else{
       switch (secc) {
+        case 'cerrar_sesion':
+        final sock = context.read<SocketConn>();
+          sock.cerrarConection();
+          sock.isLoged = false;
+          context.read<PageProvider>().resetPage();
+          return;
         case 'soliNon':
           context.read<PageProvider>().page = Paginas.solicitudesNon;
           return;

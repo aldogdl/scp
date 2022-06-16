@@ -46,6 +46,7 @@ class PageProvider extends ChangeNotifier {
 
   Consola _consola = Consola.alertas;
   Consola get consola => _consola;
+  void putValue(Consola val) => _consola = val;
   set consola(Consola p) {
     _consola = p;
     notifyListeners();

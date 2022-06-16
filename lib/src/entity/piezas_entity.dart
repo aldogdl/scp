@@ -37,7 +37,12 @@ class PiezasEntity {
     posicion = data['p_posicion'];
     fotos = (data['p_fotos'].isNotEmpty) ? List<String>.from(data['p_fotos']) : [];
     obs = data['p_obs'];
-    orden = int.tryParse(data['o_id']) ?? 0;
+    var ordenN = data['o_id'];
+    if(ordenN.runtimeType == String) {
+      orden = int.tryParse(data['o_id']) ?? 0;
+    }else{
+      orden = data['o_id'];
+    }
   }
 
   ///

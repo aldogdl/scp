@@ -98,7 +98,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
     int avo = (widget.asignadas) ? globals.user.id : 0;
     
     widget.onLoading({'isLoading': true, 'msg': 'Ordenes'});
-    await _ordenEm.getAllOrdenesByAvo(avo);
+    await _ordenEm.getAllOrdenesByAvo(avo, isLocal: globals.isLocalConn);
 
     List<OrdenEntity> recSer = [];
     if(_ordenEm.result['abort']) {
