@@ -14,8 +14,10 @@ const Color clrSelec = Color.fromARGB(255, 19, 84, 138);
 class OrdenTile extends StatelessWidget {
 
   final OrdenEntity orden;
+  final int cantPzas;
   const OrdenTile({
     required this.orden,
+    this.cantPzas = 0,
     Key? key
   }) : super(key: key);
 
@@ -99,9 +101,9 @@ class OrdenTile extends StatelessWidget {
         Row(
           children: [
             Row(
-              children: const [
-                Icon(Icons.list),
-                Texto(txt: '5', sz: 11),
+              children: [
+                const Icon(Icons.extension, size: 13, color: Colors.grey),
+                Texto(txt: ' ${cantPzas}Pza(s).', sz: 14),
               ],
             ),
             const Spacer(),

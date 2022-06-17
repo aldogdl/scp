@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/providers/centinela_file_provider.dart';
 import 'package:scp/src/providers/socket_conn.dart';
+import 'package:scp/src/repository/socket_centinela.dart';
 
 import 'orden_tile.dart';
 import '../../config/sng_manager.dart';
@@ -34,8 +36,9 @@ class _LstOrdenesState extends State<LstOrdenes> {
   final OrdenesRepository _ordenEm = OrdenesRepository();
   final PiezasRepository _pzasEm = PiezasRepository();
   final SttsCache sttsCache = getSngOf<SttsCache>();
-
   final ScrollController _scrollCtr = ScrollController();
+  final _sockCenti = SocketCentinela();
+  late final CentinelaFileProvider _centiProv;
   late ItemSelectGlobProvider provi;
 
   bool _isInit = false;
@@ -70,10 +73,19 @@ class _LstOrdenesState extends State<LstOrdenes> {
             physics: const BouncingScrollPhysics(),
             itemBuilder: (_, index) {
               
+              int cantPzas = 0;
+              try {
+                if(_centiProv.centinela.isNotEmpty) {
+                  if(_centiProv.centinela['piezas'].containsKey('${ords[index].id}')) {
+                    cantPzas = _centiProv.centinela['piezas']['${ords[index].id}'].length;
+                  }
+                }
+              } catch (_) {}
+
               return GestureDetector(
                 onTap: () => _selectedOrden(index),
                 child: Center(
-                  child: OrdenTile(orden: ords[index]),
+                  child: OrdenTile(orden: ords[index], cantPzas: cantPzas),
                 ),
               );
             }
@@ -91,9 +103,13 @@ class _LstOrdenesState extends State<LstOrdenes> {
       _isInit = true;
       provi = context.read<ItemSelectGlobProvider>();
       sock = context.read<SocketConn>();
+      _centiProv = context.read<CentinelaFileProvider>();
+      _sockCenti.init(context);
     }
     await sttsCache.hidratar();
-
+    if(_centiProv.centinela.isEmpty) {
+      await _sockCenti.getFromFile(globals.ipHarbi);
+    }
     provi.ordenes = [];
     int avo = (widget.asignadas) ? globals.user.id : 0;
     
@@ -177,10 +193,8 @@ class _LstOrdenesState extends State<LstOrdenes> {
         provi.ordenes[index].stt = nStt['stt'];
         nStt['orden'] = provi.ordenes[index].id;
         nStt['version'] = DateTime.now().millisecondsSinceEpoch;
+        _ordenEm.changeStatusToServer(nStt, isLocal: false);
         _ordenEm.changeStatusToServer(nStt, isLocal: true);
-        if(!globals.isLocalConn) {
-          _ordenEm.changeStatusToServer(nStt, isLocal: false);
-        }
       }
     }
   }
@@ -193,7 +207,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
 
     widget.onLoading({'isLoading': true, 'msg': 'Piezas'});
 
-    await _pzasEm.getPiezasByOrden(provi.ordenes[inxOrd].id);
+    await _pzasEm.getPiezasByOrden(provi.ordenes[inxOrd].id, isLocal: globals.isLocalConn);
     if(_pzasEm.result['body'].isNotEmpty) {
 
       List<PiezasEntity> pzas = [];

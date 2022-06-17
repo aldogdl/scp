@@ -11,9 +11,9 @@ class PiezasRepository {
   }
 
   ///
-  Future<void> getPiezasByOrden(int id) async {
+  Future<void> getPiezasByOrden(int id, {bool isLocal = true}) async {
 
-    String uri = await GetPaths.getUri('get_piezas_by_orden');
+    String uri = await GetPaths.getUri('get_piezas_by_orden', isLocal: isLocal);
     await MyHttp.get('$uri$id/');
     result = MyHttp.result;
   }

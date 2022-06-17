@@ -280,9 +280,10 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
                 child: (_isLoad)
                 ? _loading()
                 : _lstOrdsShare(
-                  ctr: _scrollCtrAsig,
-                  items: (_ordenesAvo.containsKey('$_idAvoSelect')) ? _ordenesAvo['$_idAvoSelect']! : []
-                )
+                    ctr: _scrollCtrAsig,
+                    items: (_ordenesAvo.containsKey('$_idAvoSelect'))
+                      ? _ordenesAvo['$_idAvoSelect']! : []
+                  )
               )
             ],
           )
@@ -463,7 +464,16 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     Widget sp10 = const SizedBox(width: 10);
     double op = (itemProv.idOrdenSelect == orden.id) ? 0 : 0.05;
     Color cb = (itemProv.idOrdenSelect == orden.id) ? const Color.fromARGB(255, 30, 154, 255) : Colors.grey.withOpacity(0.5);
-
+    int cantPzas = 0;
+    try {
+      if(_centiProv.centinela.isNotEmpty) {
+        if(_centiProv.centinela['piezas'].containsKey('${orden.id}')) {
+          cantPzas = _centiProv.centinela['piezas']['${orden.id}'].length;
+        }
+      }
+    } catch (_) {}
+    
+    
     return Container(
       padding: const EdgeInsets.all(8),
       margin: const EdgeInsets.all(10),
@@ -535,7 +545,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
               _chip(label: '${orden.id}', bg: Colors.white.withOpacity(0.1)),
               const SizedBox(width: 10),
               const Texto(txt: 'Pzs: ', sz: 12),
-              _chip(label: '12', bg: Colors.purple),
+              _chip(label: '$cantPzas', bg: Colors.purple),
               const Spacer(),
               const Texto(txt: 'El status actual'),
             ],
@@ -980,7 +990,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     if(okGo) {
       if(!_ordsEm.result['abort']) {
 
-        List<OrdenEntity> misOrd = [];
+        final misOrd = <OrdenEntity>[];
         for (var i = 0; i < _ordsEm.result['body'].length; i++) {
           final o = OrdenEntity();
           o.fromServer(_ordsEm.result['body'][i]);

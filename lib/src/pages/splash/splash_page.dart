@@ -100,15 +100,18 @@ class _SplasPageState extends State<SplasPage> {
 
     yield 'Recuperando Datos [ROLES]';
     await conn.getDataFixed('roles');
-
-    yield 'Recuperando Datos [AUTOS]';
-    await conn.getDataFixed('autos');
     
     yield 'Recuperando Datos [RUTAS]';
     await conn.getDataFixed('rutas');
 
+    yield 'Recuperando Datos [AUTOS]';
+    await conn.getDataFixed('autos');
+
+    yield 'Recuperando Datos [CENTINELA]';
+    await conn.getDataFixed('centinela');
+
     yield 'Comencemos...';
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(milliseconds: 500));
     prov.isSplash = false;
   }
 }

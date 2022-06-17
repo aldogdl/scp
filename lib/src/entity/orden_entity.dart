@@ -7,7 +7,6 @@ class OrdenEntity {
   int eId = 0;
   String est = '';
   String stt = '';
-  String ruta = '';
   int anio = 0;
   String mkLogo = '';
   String marca = '';
@@ -30,7 +29,6 @@ class OrdenEntity {
     eId = data['e_id'];
     est = data['o_est'];
     stt = data['o_stt'];
-    //ruta = data['o_ruta'];
     anio = data['o_anio'];
     mkLogo = data['mk_logo'];
     marca = data['mk_nombre'];
@@ -55,7 +53,6 @@ class OrdenEntity {
       'e_id': eId,
       'o_est': est,
       'o_stt': stt,
-      'o_ruta': ruta,
       'o_anio': anio,
       'mk_logo': mkLogo,
       'mk_nombre': marca,
@@ -71,5 +68,5 @@ class OrdenEntity {
   }
 
   ///
-  Map<String, dynamic> status() => {'est': est, 'stt':stt, 'rta':ruta};
+  Map<String, dynamic> status() => {'est': est, 'stt':stt};
 }

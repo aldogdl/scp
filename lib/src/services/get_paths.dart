@@ -182,8 +182,12 @@ class GetPaths {
 
   ///
   static Future<String> getFileByPath(String path) async {
+    
     final paths = await _getFromFilePathsProd(path);
-    return paths['uri'];
+    if(paths.containsKey('uri')) {
+      return paths['uri'];
+    }
+    return '';
   }
 
   ///

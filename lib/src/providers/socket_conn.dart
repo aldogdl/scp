@@ -415,24 +415,24 @@ class SocketConn extends ChangeNotifier {
   Future<String> getDataFixed(String folder) async {
 
     String uri = '';
-    if(folder == 'cargos') {
-      uri = await GetPaths.getApiHarbi('get_cargos', globals.ipHarbi);
-    }
-    if(folder == 'roles') {
-      uri = await GetPaths.getApiHarbi('get_roles', globals.ipHarbi);
-    }
-    if(folder == 'autos') {
-      uri = await GetPaths.getApiHarbi('get_autos', globals.ipHarbi);
-    }
-    if(folder == 'rutas') {
-      uri = await GetPaths.getApiHarbi('get_all_rutas', globals.ipHarbi);
-    }
+    MyHttp.clean();
 
-    await MyHttp.get(uri);
-    if(!MyHttp.result['abort']) {
-      await GetPaths.setDataFixed(folder, MyHttp.result['body']);
-    }else{
-      return MyHttp.result['body'];
+    if(folder == 'cargos') { uri = 'get_cargos'; }
+    if(folder == 'roles') { uri = 'get_roles'; }
+    if(folder == 'rutas') { uri = 'get_all_rutas'; }
+    if(folder == 'autos') { uri = 'get_autos'; }
+    if(folder == 'centinela') { uri = 'get_centinela'; }
+
+    uri = await GetPaths.getApiHarbi(uri, globals.ipHarbi);
+    if(uri.isNotEmpty) {
+
+      await MyHttp.get(uri);
+      if(!MyHttp.result['abort']) {
+        await GetPaths.setDataFixed(folder, MyHttp.result['body']);
+        return 'ok';
+      }else{
+        return MyHttp.result['body'];
+      }
     }
 
     return 'ERROR, Comunicate con Sistemas';

@@ -262,6 +262,8 @@ class _LoginPageState extends State<LoginPage> {
 
     await _sock.getNameRed();
     String uri = await GetPaths.getFileByPath('connpass');
+    if(uri.isEmpty){ return; }
+    
     File filepass = File(uri);
     if (filepass.existsSync()) {
       final data = filepass.readAsStringSync();

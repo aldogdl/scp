@@ -522,7 +522,12 @@ class _FrmOrdenState extends State<FrmOrden> {
         // mode: Mode.MENU,
         // showSelectedItems: false,
         // showSearchBox: true,
-
+        dropdownDecoratorProps: DropDownDecoratorProps(
+          dropdownSearchDecoration: InputDecoration(
+            prefixIcon: Icon(icono, size: 15, color: Colors.white.withOpacity(0.2)),
+            helperText: help
+          )
+        ),
         items: items,
         selectedItem: itemSelected,
         itemAsString: (Map<String, dynamic>? u) =>  u!['nombre'],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'pages/widgets/change_ip_dialog.dart';
 import 'services/get_content_files.dart';
@@ -88,9 +89,7 @@ class StatusBarr extends StatelessWidget {
             pageR.page = Paginas.config;
           }),
           const SizedBox(width: 10),
-          Texto(txt: 'SWP de: ${_globals.user.nombre} [${_globals.user.curc}]',
-            sz: 11, txtC: const Color(0xFFFFFFFF)
-          ),
+          _text('SWP de: ${_globals.user.nombre} [${_globals.user.curc}]'),
           const SizedBox(width: 15),
           _btnIconAndTxt(txt: '${watchC.manifests.length}', tip: 'Centinela',
             icono: Icons.remove_red_eye_outlined,
@@ -144,9 +143,9 @@ class StatusBarr extends StatelessWidget {
               ),
             ],
           const Spacer(),
-          Texto(txt: 'HARBI. ${watchC.idConn}', sz: 11, txtC: const Color.fromARGB(255, 255, 255, 255)),
+          _text('HARBI. ${watchC.idConn}'),
           wid5,
-          Texto(txt: 'REV. ${watchC.msgCron}', sz: 12, txtC: const Color.fromARGB(255, 255, 255, 255),),
+          _text('REV. ${watchC.msgCron}'),
           if(watchC.alertCV)
             ...[
               wid5,
@@ -177,6 +176,18 @@ class StatusBarr extends StatelessWidget {
     );
   }
   
+  ///
+  Widget _text(String label) {
+
+    return Text(
+      label,
+      style: GoogleFonts.inconsolata(
+        fontSize: 12,
+        color: const Color(0xFFFFFFFF)
+      )
+    );
+  }
+
   ///
   Widget _btnIconAndTxt({
     required IconData icono,
@@ -230,20 +241,6 @@ class StatusBarr extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: size, maxWidth: size
       ),
-    );
-  }
-
-  ///
-  Widget _btnTxt({
-    required String label,
-    required Function fnc,
-  }) {
-
-    return TextButton(
-      onPressed: () => fnc(),
-      child: Texto(
-        txt: label, sz: 11, txtC: const Color(0xffFFFFFF), 
-      )
     );
   }
 
