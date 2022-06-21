@@ -68,10 +68,14 @@ class _ConfigPageState extends State<ConfigPage> {
         s10,
         _iteMenu(context, icon: Icons.home, label: 'Portada', secc: 'home'),
         _iteMenu(context, icon: Icons.view_list_outlined, label: 'Solicitudes en Proceso', secc: 'soliOk'),
-        const Divider(color: Colors.grey),
-        const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
+        const Divider(),
+        s10,
+        _iteMenu(context, icon: Icons.logout, label: 'Cerrar Sesión', secc: 'cerrar_sesion'),
         if(isAdmin)
           ...[
+            const Divider(color: Colors.grey),
+            s10,
+            const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
             s10,
             _iteMenu(context, icon: Icons.not_listed_location_outlined, label: 'Ordenes sin Asignar', secc: 'soliNon'),
             s10,
@@ -80,10 +84,6 @@ class _ConfigPageState extends State<ConfigPage> {
             _iteMenu(context, icon: Icons.account_circle_outlined, label: 'Miembros Administrativos', secc: 'admin_user'),
             s10,
             _iteMenu(context, icon: Icons.clear_all, label: 'Borrar Registro de Login', secc: 'dialog_del_reg'),
-            s10,
-            const Divider(),
-            s10,
-            _iteMenu(context, icon: Icons.logout, label: 'Cerrar Sesión', secc: 'cerrar_sesion'),
           ]
       ],
     );

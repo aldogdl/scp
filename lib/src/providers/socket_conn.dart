@@ -444,7 +444,8 @@ class SocketConn extends ChangeNotifier {
   ///
   Future<bool> hacerLoginFromServer(Map<String, dynamic> data) async {
 
-    String domi = await GetPaths.getDominio(isLocal: globals.isLocalConn);
+    String domi = await GetPaths.getDominio(isLocal: false);
+
     final isToken = await MyHttp.makeLogin(domi, data);
     if(isToken.isNotEmpty) {
       final existe = await GetContentFile.hidratarUserFromFile(data);
@@ -463,9 +464,7 @@ class SocketConn extends ChangeNotifier {
   ///
   Future<bool> getDataUserByCampo(String curc) async {
 
-    String domi = await GetPaths.getUri(
-      'get_user_by_campo', isLocal: globals.isLocalConn
-    );
+    String domi = await GetPaths.getUri('get_user_by_campo', isLocal: false);
     await MyHttp.get('$domi?campo=curc&valor=$curc');
     if(!MyHttp.result['abort']) {
 

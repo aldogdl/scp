@@ -54,7 +54,9 @@ class GetContentFile {
       if(txtCont.isNotEmpty) {
         users = List<Map<String, dynamic>>.from( json.decode(txtCont) );
         if(users.isNotEmpty) {
-          final hasUser = users.firstWhere((element) => element['curc'] == data['username']);
+          final hasUser = users.firstWhere(
+            (element) => element['curc'] == data['username'], orElse: () => {}
+          );
           if(hasUser.isNotEmpty) {
             _globals.user.fromFile(hasUser);
             return true;
