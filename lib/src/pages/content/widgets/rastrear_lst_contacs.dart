@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:scp/src/entity/contacts_entity.dart';
-import 'package:scp/src/pages/widgets/texto.dart';
-import 'package:scp/src/providers/items_selects_glob.dart';
-import 'package:scp/src/repository/contacts_repository.dart';
+import '../../widgets/texto.dart';
+import '../../../entity/contacts_entity.dart';
+import '../../../providers/items_selects_glob.dart';
+import '../../../repository/contacts_repository.dart';
 
 class RastrearLstContacs extends StatefulWidget {
 

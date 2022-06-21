@@ -212,7 +212,7 @@ class GetPaths {
   static Future<String> getApiHarbi(String uri, String ipHarbi) async {
 
     Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
-    return 'http://$ipHarbi${uriPath['uri']}/';
+    return 'http://$ipHarbi${uriPath['uri']}';
   }
 
   ///

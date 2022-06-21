@@ -95,6 +95,9 @@ class SocketConn extends ChangeNotifier {
   }
 
   ///
+  bool makeRegToHarbi = false;
+
+  ///
   int _idConn = 0;
   int get idConn => _idConn;
   set idConn(int conn) {
@@ -339,7 +342,7 @@ class SocketConn extends ChangeNotifier {
     try {
       await MyHttp.get(url);
     } catch (e) {
-      return 'ERROR, Revisa tu conesión a Internet';
+      return 'ERROR, Revisa tu conexión a Internet';
     }
 
     final tipoR = MyHttp.result['body'].runtimeType;
@@ -478,16 +481,22 @@ class SocketConn extends ChangeNotifier {
   ///
   Future<String> makeRegistroUserToHarbi() async {
 
-    String uri = await GetPaths.getApiHarbi('set_conection', globals.ipHarbi);
-    final data = globals.user.userConectado(
-      app: _app, idCon: '$idConn', ip: globals.myIp
-    );
+    const String txtC = 'Bienvenido al Sistema de Cotización y Procesamiento';
 
-    await MyHttp.postHarbi(uri, data);
-    if(!MyHttp.result['abort']) {
-      return 'Bienvenido al Sistema de Cotización y Procesamiento';
+    if(!makeRegToHarbi) {
+      String uri = await GetPaths.getApiHarbi('set_conection', globals.ipHarbi);
+      final data = globals.user.userConectado(
+        app: _app, idCon: '$idConn', ip: globals.myIp
+      );
+      await MyHttp.postHarbi(uri, data);
+      if(!MyHttp.result['abort']) {
+        makeRegToHarbi = true;
+        return txtC;
+      }
+      return '[X] Error al registrar tu conexión en HARBI';
+    }else{
+      return txtC;
     }
-    return '[X] Error al registrar tu conección en HARBI';
   }
 
 

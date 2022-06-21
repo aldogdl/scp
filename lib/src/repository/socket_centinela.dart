@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart' show BuildContext;
 import 'package:provider/provider.dart';
-import 'package:scp/src/entity/contacto_entity.dart';
 
+import '../entity/contacto_entity.dart';
 import '../providers/centinela_file_provider.dart';
 import '../services/get_paths.dart';
 import '../services/my_http.dart';

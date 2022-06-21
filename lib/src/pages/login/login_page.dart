@@ -37,6 +37,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _showPass = true;
   bool _otroUser = false;
   bool _isInit = false;
+  bool _absorbing = false;
   String _defaultUser = 'Cargando';
   List<String> items = ['Cargando'];
   final _users = ValueNotifier<List<Map<String, dynamic>>>([]);
@@ -131,14 +132,18 @@ class _LoginPageState extends State<LoginPage> {
           ),
           width: MediaQuery.of(context).size.width * 0.25,
           height: 35,
-          child: ElevatedButton(
-          style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all(Colors.green),
-          ),
-          onPressed: () => _autenticar(),
-          child: const Texto(
-            txt: 'AUTENTICARME', txtC: Colors.black, isBold: true)
-          ),
+          child: AbsorbPointer(
+            absorbing: _absorbing,
+            child: ElevatedButton(
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(Colors.green),
+              ),
+              onPressed: () => _autenticar(),
+              child: const Texto(
+                txt: 'AUTENTICARME', txtC: Colors.black, isBold: true
+              )
+            ),
+          )
         ),
         const Spacer(),
         Row(
@@ -289,6 +294,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _autenticar() async {
 
     if (_frmKey.currentState!.validate()) {
+
+      setState(() { _absorbing = true; });
+      await Future.delayed(const Duration(milliseconds: 300));
+
       _sock.isLoged = false;
       _sock.msgErr = 'Validando Credenciales';
       final data = {
@@ -299,6 +308,7 @@ class _LoginPageState extends State<LoginPage> {
       bool isValid = await _sock.hacerLoginFromServer(data);
       if (!isValid) {
         _sock.msgErr = '[X] Credenciales Invalidas.';
+        setState(() { _absorbing = false; });
         return;
       }
 
@@ -309,6 +319,7 @@ class _LoginPageState extends State<LoginPage> {
         await _sock.makeFirstConnection();
         _sock.isLoged = true;
       }
+      setState(() { _absorbing = false; });
     }
   }
 

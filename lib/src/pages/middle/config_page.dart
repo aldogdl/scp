@@ -270,6 +270,7 @@ class _ConfigPageState extends State<ConfigPage> {
         final sock = context.read<SocketConn>();
           sock.cerrarConection();
           sock.isLoged = false;
+          sock.makeRegToHarbi = false;
           context.read<PageProvider>().resetPage();
           return;
         case 'soliNon':
