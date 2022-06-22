@@ -185,7 +185,7 @@ class GetPaths {
     
     final paths = await _getFromFilePathsProd(path);
     if(paths.containsKey('uri')) {
-      return paths['uri'];
+      return '${paths['uri']}';
     }
     return '';
   }

@@ -6,7 +6,7 @@ class GetPathImages {
   static Future<String> getPathPzaTmp(String foto) async {
 
     const carpeta = 'to_orden_tmp/';
-    final dom = await GetPaths.getDominio();
+    final dom = await GetPaths.getDominio(isLocal: false);
     return '$dom$carpeta$foto';
   }
   

@@ -372,10 +372,10 @@ class _AdminUsersState extends State<AdminUsers> {
       final provi = context.read<SocketConn>();
       provi.msgErr = 'Actualizando datos directamente en el Servidor'; 
       ContactoEntity cont = _hidratarContactoFromScreen();
-      final data = cont.toJsonForAdminUser();
+      var data = cont.toJsonForAdminUser();
       
       setState(() { _isAbsorbing = true; });
-
+      
       await _contacEm.safeDataContact(data, isLocal: false);
       if(_contacEm.result['abort']) {
         provi.msgErr = _contacEm.result['body'];
@@ -384,23 +384,26 @@ class _AdminUsersState extends State<AdminUsers> {
 
       provi.msgErr = 'Actualizando Servidor Local';
       data['local'] = true;
+      cont.empresaId= _contacEm.result['body']['e'];
+      cont.id  = _contacEm.result['body']['c'];
+      cont.curc= _contacEm.result['body']['curc'];
+      data = cont.toJsonForAdminUser();
+
       await _contacEm.safeDataContact(data, isLocal: true);
       if(_contacEm.result['abort']) {
         provi.msgErr = _contacEm.result['body'];
         debugPrint(_contacEm.result['msg']);
       }else{
         provi.msgErr = 'Datos guardados con éxito';
-        cont.id  = _contacEm.result['body']['c'];
-        cont.curc= _contacEm.result['body']['curc'];
         _idContac= cont.id;
-        await _updateDataBaseLocal(cont.toJsonForAdminUser());
+        await _updateDataToHarbi(cont.toJsonForAdminUser());
       }
       setState(() { _isAbsorbing = false; });
     }
   }
 
   ///
-  Future<void> _updateDataBaseLocal(Map<String, dynamic> data) async {
+  Future<void> _updateDataToHarbi(Map<String, dynamic> data) async {
 
     final provi = context.read<SocketConn>();
     final ct = ContactoEntity();

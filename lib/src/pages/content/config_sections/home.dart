@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:scp/src/services/get_paths.dart';
 
 import '../../widgets/texto.dart';
 import '../../../config/sng_manager.dart';
@@ -17,6 +20,7 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final sock = context.read<SocketConn>();
+    final pathInitPortada = 'http://${globals.ipHarbi}/autoparnet/public_html/portadas/1.jpg';
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -32,9 +36,20 @@ class Home extends StatelessWidget {
             decoration: const BoxDecoration(
               color: Colors.black,
             ),
-            child: CachedNetworkImage(
-              imageUrl: 'http://192.168.1.74/autoparnet/public_html/portadas/1.jpg',
-              fit: BoxFit.cover,
+            child: FutureBuilder<String?>(
+              future: _getPathPortada(),
+              initialData: pathInitPortada,
+              builder: (_, AsyncSnapshot snap) {
+                if(snap.connectionState == ConnectionState.done) {
+                  return CachedNetworkImage(
+                    imageUrl: (snap.hasData) ? snap.data : pathInitPortada,
+                    fit: BoxFit.cover,
+                  );
+                }
+                return const SizedBox.expand(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              },
             )
           ),
           Container(
@@ -165,4 +180,17 @@ class Home extends StatelessWidget {
     );
   }
 
+  ///
+  Future<String?> _getPathPortada() async {
+
+    final res = await GetPaths.getFileByPath('portadas');
+    int? cant = int.tryParse(res);
+    if(cant != null) {
+      final ran = Random();
+      int azar = ran.nextInt(cant);
+      azar = (azar == 0) ? 1 : azar;
+      return 'http://${globals.ipHarbi}/autoparnet/public_html/portadas/$azar.jpg';
+    }
+    return null;
+  }
 }
