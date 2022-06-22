@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:window_manager/window_manager.dart';
@@ -26,16 +27,22 @@ class _ScpLayoutState extends State<ScpLayout> with WindowListener {
 
   bool _isInit = false;
   late WindowCnfProvider winCnf;
+  late AudioPlayer player;
 
   @override
   void initState() {
     windowManager.addListener(this);
+    player = AudioPlayer();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await player.setAsset('assets/audio/cotizaciones.mp3');
+    });
     super.initState();
   }
 
   @override
   void dispose() {
     windowManager.removeListener(this);
+    player.dispose();
     super.dispose();
   }
   
@@ -78,7 +85,9 @@ class _ScpLayoutState extends State<ScpLayout> with WindowListener {
                   ]
                 ),
               ),
-              StatusBarr()
+              StatusBarr(
+                player: player
+              )
             ],
           )
         ),

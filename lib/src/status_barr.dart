@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -14,7 +15,11 @@ import 'pages/widgets/texto.dart';
 
 class StatusBarr extends StatelessWidget {
 
-  StatusBarr({Key? key}) : super(key: key);
+  final AudioPlayer player;
+  StatusBarr({
+    Key? key,
+    required this.player
+  }) : super(key: key);
 
   final Globals _globals = getSngOf<Globals>();
   
@@ -23,7 +28,7 @@ class StatusBarr extends StatelessWidget {
     
     final console = context.read<PageProvider>();
     final sock = context.read<SocketConn>();
-
+    
     return Selector<SocketConn, List<Map<String, dynamic>>>(
       selector: (_, prov) => prov.manifests,
       builder: (_, manifest, child) {
@@ -34,11 +39,13 @@ class StatusBarr extends StatelessWidget {
           bool showNotif = false;
           if(manifest.isNotEmpty) {
             manifest.map((e) {
+
               if(e.containsKey('cambios')) {
                 final cambios = List<String>.from(e['cambios']);
                 for (var i = 0; i < cambios.length; i++) {
                   if(cambios[i].endsWith('[I]')) {
                     showConcole = true;
+                    player.play();
                     break;
                   }
                   if(cambios[i].endsWith('[IN]')) {
@@ -63,7 +70,7 @@ class StatusBarr extends StatelessWidget {
         }
         return child!;
       },
-      child: _bodyBar(context),
+      child: _bodyBar(context)
     );
   }
 
