@@ -6,7 +6,6 @@ import 'package:scp/src/pages/content/widgets/visor_fotos.dart';
 
 
 import '../../services/status/est_stt.dart';
-import 'widgets/rastrear_lst_contacs.dart';
 import '../widgets/frm_orden.dart';
 import '../widgets/my_tool_tip.dart';
 import '../widgets/pieza_tile.dart';
@@ -50,6 +49,11 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   final double minScale = 0.03;
   final double defScale = 0.1;
   final double maxScale = 0.6;
+
+  /// Filtros basicos de rastreo
+  bool _sendAll = true;
+  bool _sendOLocal = false;
+  bool _sendOForan = false;
 
   int calls = 0;
   bool _isInit = false;
@@ -156,21 +160,6 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
             _currentFotoNum.value = itemProv.currentPage+1;
           },
         );
-
-      case 'rastrear':
-        if(itemProv.fotosByPiezas.isNotEmpty) {
-          return RastrearLstContacs(
-            toSend: (List<int> idCotizadores) async => await _buscarCotizacion(idCotizadores),
-          );
-        }else{
-          return const SinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
-        }
-      case 'rastreador':
-        if(itemProv.fotosByPiezas.isNotEmpty) {
-          return const Text('Aqui la sección de Rasteador');
-        }else{
-          return const SinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
-        }
       default:
         return FrmOrden(
           onFinish: (acc) {
@@ -422,21 +411,10 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     return Row(
       children: [
         _icoAction(
-          icono: (_seccView.value == 'rastrear') ? Icons.image : Icons.slow_motion_video_sharp,
-          icolor: const Color.fromARGB(255, 221, 221, 221),
-          tip: (_seccView.value == 'rastrear') ? 'Ver Fotos' : 'Rastrear Orden [Ctr+Alt+R]',
-          fnc: () {
-            String newSecc = _seccView.value;
-            newSecc = (_seccView.value == 'rastrear') ? 'fotos' : 'rastrear';
-            if(newSecc == 'rastrear') {
-              int? status = int.tryParse(itemProv.ordenEntitySelect!.stt) ?? 0;
-              if(status > 2) {
-                newSecc = 'rastreador';
-              }
-            }
-            _seccView.value = newSecc;
-            setState(() {});
-          },
+          icono: Icons.slow_motion_video_sharp,
+          icolor: const Color.fromRGBO(221, 221, 221, 1),
+          tip: 'Enviar a Cotizar Orden [Ctr+Alt+R]',
+          fnc: () async => await _buscarCotizacion()
         ),
         _icoAction(
           icono: Icons.not_interested_outlined,
@@ -593,13 +571,13 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   }
 
   ///
-  Future<void> _buscarCotizacion(List<int> idCotizadores) async {
+  Future<void> _buscarCotizacion() async {
 
     int codeStatus = 1;
 
     await WidgetsAndUtils.showAlertBody(
       context,
-      titulo: 'Buscar Cotizaciones',
+      titulo: 'RASTREAR Cotizaciones',
       dismissible: false,
       body: StatefulBuilder(
         builder: (BuildContext context, StateSetter setStateIn) {
@@ -613,14 +591,16 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 if(codeStatus == 1)
-                  ..._dialogBskOkTask((value) {
+                  ..._dialogBskOkTask(
+                    onTap: (value) {
                       setStateIn((){
                         codeStatus = 2;
                       });
                     },
+                    onState: (_) => setStateIn((){})
                   ),
                 if(codeStatus == 2)
-                  ..._dialogBskLoading(idCotizadores)
+                  ..._dialogBskLoading()
               ]
             ),
           );
@@ -630,21 +610,76 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   }
 
   ///
-  List<Widget> _dialogBskOkTask(ValueChanged<void> onTap) {
+  List<Widget> _dialogBskOkTask({
+    required ValueChanged<void> onTap,
+    required ValueChanged<void> onState,
+  }) {
 
     String msg = 'Estás a punto de enviar esta solicitud '
     'al Servidor Central de Mensajería con el objetivo '
-    'de encontrar entre los cotizadores seleccionados '
-    'el mejor precio.';
+    'de encontrar entre los cotizadores el mejor costo.';
 
     return [
-      Texto(txt: msg, isCenter: true),
+      Texto(txt: msg, isCenter: true, sz: 16,),
       const SizedBox(height: 8),
       const Texto(
         txt: '¿Estás segur@ de continuar?',
         txtC: Colors.white, isCenter: true
       ),
       const SizedBox(height: 15),
+      const Divider(color: Colors.grey),
+      const Texto(
+        txt: 'FILTROS DE RASTREO BÁSICOS',
+        txtC: Colors.amber, isCenter: true, isBold: true,
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Checkbox(
+            value: _sendAll,
+            checkColor: Colors.black,
+            onChanged: (val) {
+              _sendOForan = false;
+              _sendOLocal = false;
+              _sendAll = val ?? false;
+              onState(null);
+            }
+          ),
+          const Texto(
+            txt: 'Enviar a Todos',
+            txtC: Colors.white, isCenter: true, isBold: false,
+          ),
+          const SizedBox(width: 15),
+          Checkbox(
+            value: _sendOLocal,
+            onChanged: (val) {
+              _sendAll = false;
+              _sendOForan = false;
+              _sendOLocal = val ?? false;
+              onState(null);
+            }
+          ),
+          const Texto(
+            txt: 'Sólo a Locales',
+            txtC: Colors.white, isCenter: true, isBold: false,
+          ),
+          const SizedBox(width: 15),
+          Checkbox(
+            value: _sendOForan,
+            onChanged: (val) {
+              _sendAll = false;
+              _sendOLocal = false;
+              _sendOForan = val ?? false;
+              onState(null);
+            }
+          ),
+          const Texto(
+            txt: 'Sólo a Foraneos',
+            txtC: Colors.white, isCenter: true, isBold: false,
+          ),
+        ]
+      ),
+      const Divider(color: Colors.grey),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -663,12 +698,13 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
             child: const Texto(txt: 'SI ENVIAR', txtC: Colors.white)
           ),
         ],
-      )
+      ),
+      const SizedBox(height: 10),
     ];
   }
 
   ///
-  List<Widget> _dialogBskLoading(List<int> idCotizadores) {
+  List<Widget> _dialogBskLoading() {
 
     return [
       const Texto(
@@ -678,14 +714,11 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
       const SizedBox(height: 10),
       StreamBuilder<String>(
         initialData: 'Iniciando',
-        stream: _sendToCotizar(idCotizadores),
+        stream: _sendToCotizar(),
         builder: (_, AsyncSnapshot<String> snap) {
 
           if(snap.data!.contains('ok')) {
             Navigator.of(context).pop();
-            Future.delayed(const Duration(milliseconds: 1000), (){
-              _seccView.value = 'rastreador';
-            });
           }
           if(snap.data!.contains('ERROR') || snap.data!.isEmpty) {
             return _dialogBskHasError(snap.data);
@@ -736,72 +769,32 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   }
 
   ///
-  Stream<String> _sendToCotizar(List<int> idCotizadores) async* {
+  Stream<String> _sendToCotizar() async* {
 
     final scm = ScmEntity();
     scm.slugCamp = 'busk_cots';
     scm.emiterId = itemProv.ordenEntitySelect!.uId;
     scm.remiterId = globals.user.id;
+    scm.target = 'orden';
     scm.src = {'id':itemProv.idOrdenSelect};
+    scm.filter['zona'] = _sendAll;
+    scm.filter['zona'] = (_sendOLocal) ? _sendOLocal : scm.filter['zona'];
+    scm.filter['zona'] = (_sendOForan) ? _sendOForan : scm.filter['zona'];
     
-    // Guardamos en la base de datos remota el registro de la orden de busqueda
-    // para la SCM, solo para que ya este enterada de un nuevo mensaje.
-    // NOTA: No es necesario que el registro este en la BD local, ya que solo es
-    // utilizado por la SCM para enterarce de una nueva tarea.
-    yield 'Enviando al Servidor Principal';
-    
-    await _scmEm.setCampaingInDb(scm.toJson(), isLocal: true);
+    yield 'Enviando y Actualizando datos...';
+    final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
+    final pStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
+
+    Map<String, dynamic> toSendData = {
+      'verC': DateTime.now().millisecondsSinceEpoch,
+      'camp': scm.toJson(),  
+      'ordS': {'est': oStt['est'], 'stt': oStt['stt']},
+      'pzS' : {'est': pStt['est'],'stt': pStt['stt']}
+    };
+  
+    await _scmEm.setCampaingInDb(toSendData, isLocal: false);
     if(!_scmEm.result['abort']) {
-      final camp = _scmEm.result['body'];
-      yield 'Actualizaremos Status de la Orden';
-      final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
-      var data = {
-        'orden': itemProv.idOrdenSelect,
-        'version': 0,
-        'est': oStt['est'],
-        'stt': oStt['stt'],
-      };
-      
-      // Actualizamos el Status de la orden en el archivo centinela tanto en
-      // remoto como en local para que HARBI actualice las aplicaciones.
-      await Future.delayed(const Duration(milliseconds: 500));
-      yield 'Actualizando Orden en LOCAL';
-      await _ordenEm.changeStatusToServer(data, isLocal: true);
-      if(!globals.isLocalConn) {
-        yield 'Actualizando Orden en REMOTO';
-        await _ordenEm.changeStatusToServer(data, isLocal: false);
-      }
-      
-      if(!_ordenEm.result['abort']) {
-
-        yield 'Las Piezas obtendrán un nuevo Status.';
-        final pStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
-        data = {
-          'version': DateTime.now().millisecondsSinceEpoch,
-          'orden': itemProv.idOrdenSelect,
-          'idCamp': camp['id'],
-          'target': camp['target'],
-          'est': pStt['est'],
-          'stt': pStt['stt'],
-          'cotz': idCotizadores,
-        };
-        
-        await Future.delayed(const Duration(milliseconds: 500));
-        yield 'Actualizando Piezas en LOCAL.';
-        await _ordenEm.buildStatusForBuscarPiezas(data, isLocal: true);
-        if(!globals.isLocalConn) {
-          yield 'Actualizando Piezas en REMOTO.';
-          await _ordenEm.buildStatusForBuscarPiezas(data, isLocal: false);
-        }
-
-        if(!_ordenEm.result['abort']) {
-          yield 'ok';
-        }else{
-          yield '${_scmEm.result['body']}';
-        }
-      }else{
-        yield '${_scmEm.result['body']}';
-      }
+      yield 'ok';
     }else{
       yield '${_scmEm.result['body']}';
     }

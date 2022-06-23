@@ -42,14 +42,4 @@ class OrdenesRepository {
     result = MyHttp.result;
   }
 
-  /// Construimos en el Archivo del centinela la seccion de busqueda o 
-  /// rastreo de contizaciones entre los Cotizadores seleccionados.
-  Future<void> buildStatusForBuscarPiezas(
-    Map<String, dynamic> data, {bool isLocal = true}
-  ) async {
-
-    String uri = await GetPaths.getUri('build_status_bskpzas', isLocal: isLocal);
-    await MyHttp.post(uri, data);
-    result = MyHttp.result;
-  }
 }

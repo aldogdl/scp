@@ -17,7 +17,7 @@ class ScmRepository {
   }
 
   ///
-  Future<void> setCampaingInDb(Map<String, dynamic> data, {bool isLocal = false}) async {
+  Future<void> setCampaingInDb(Map<String, dynamic> data, {bool isLocal = true}) async {
 
     await ScmHttp.post(
       ScmPaths.getUri('newCampaing', isLocal: isLocal), data

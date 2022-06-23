@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/pages/content/config_sections/gest_cotizadores.dart';
 
 import 'config_sections/admin_users.dart';
 import 'config_sections/empresas.dart';
@@ -37,6 +38,9 @@ class CConfigPage extends StatelessWidget {
         break;
       case 'admin_user':
         child = const AdminUsers();
+        break;
+      case 'gestCotz':
+        child = const GestCotizadores();
         break;
       default:
         child = Home();

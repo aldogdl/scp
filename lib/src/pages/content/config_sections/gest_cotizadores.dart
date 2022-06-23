@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../widgets/texto.dart';
 import '../../../entity/contacts_entity.dart';
 import '../../../providers/items_selects_glob.dart';
 import '../../../repository/contacts_repository.dart';
+import '../../widgets/texto.dart';
 
-class RastrearLstContacs extends StatefulWidget {
+class GestCotizadores extends StatefulWidget {
 
-  final ValueChanged<List<int>> toSend;
-  const RastrearLstContacs({
-    Key? key,
-    required this.toSend
-  }) : super(key: key);
+  const GestCotizadores({Key? key}) : super(key: key);
 
   @override
-  State<RastrearLstContacs> createState() => _RastrearLstContacsState();
+  State<GestCotizadores> createState() => _GestCotizadoresState();
 }
 
-class _RastrearLstContacsState extends State<RastrearLstContacs> {
+class _GestCotizadoresState extends State<GestCotizadores> {
 
   final ContactsRepository _contacEm = ContactsRepository();
   final ScrollController _scrollCtr = ScrollController();
@@ -56,7 +52,6 @@ class _RastrearLstContacsState extends State<RastrearLstContacs> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
 
@@ -77,6 +72,7 @@ class _RastrearLstContacsState extends State<RastrearLstContacs> {
       ),
     );
   }
+
 
   ///
   Widget _barra() {
@@ -153,15 +149,6 @@ class _RastrearLstContacsState extends State<RastrearLstContacs> {
             label: const Texto(txt: 'Recargar Lista', sz: 12,)
           ),
           const SizedBox(width: 20),
-          TextButton.icon(
-            style: ButtonStyle(
-              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
-              visualDensity: VisualDensity.compact
-            ),
-            onPressed: () => widget.toSend(_idsSelected),
-            icon: const Icon(Icons.send),
-            label: const Texto(txt: 'RASTREAR', sz: 12, txtC: Color.fromARGB(255, 64, 137, 245))
-          )
         ],
       ),
     );
@@ -403,6 +390,5 @@ class _RastrearLstContacsState extends State<RastrearLstContacs> {
       });
     });
   }
-
 
 }
