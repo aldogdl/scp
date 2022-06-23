@@ -779,9 +779,10 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     scm.remiterId = globals.user.id;
     scm.target = 'orden';
     scm.src = {'id':itemProv.idOrdenSelect};
-    scm.filter['zona'] = _sendAll;
-    scm.filter['zona'] = (_sendOLocal) ? _sendOLocal : scm.filter['zona'];
-    scm.filter['zona'] = (_sendOForan) ? _sendOForan : scm.filter['zona'];
+
+    scm.filter['zona'] = 'all';
+    scm.filter['zona'] = (_sendOLocal) ? 'loc' : scm.filter['zona'];
+    scm.filter['zona'] = (_sendOForan) ? 'for' : scm.filter['zona'];
 
     yield 'Enviando y Actualizando datos...';
     final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
