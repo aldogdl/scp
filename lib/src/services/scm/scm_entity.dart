@@ -14,6 +14,8 @@ class ScmEntity {
   ///
   Map<String, dynamic> toJson() {
 
+    src['filter'] = filter;
+    
     return {
       'id': id,
       'camp': campaingId,
@@ -22,8 +24,7 @@ class ScmEntity {
       'target': target,
       'src': src,
       'slug_camp': slugCamp,
-      'sendAt': sendAt,
-      'filter': filter
+      'sendAt': sendAt
     };
   }
 

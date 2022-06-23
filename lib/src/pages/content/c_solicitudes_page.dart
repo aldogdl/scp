@@ -652,6 +652,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           const SizedBox(width: 15),
           Checkbox(
             value: _sendOLocal,
+            checkColor: Colors.black,
             onChanged: (val) {
               _sendAll = false;
               _sendOForan = false;
@@ -666,6 +667,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           const SizedBox(width: 15),
           Checkbox(
             value: _sendOForan,
+            checkColor: Colors.black,
             onChanged: (val) {
               _sendAll = false;
               _sendOLocal = false;
@@ -780,7 +782,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     scm.filter['zona'] = _sendAll;
     scm.filter['zona'] = (_sendOLocal) ? _sendOLocal : scm.filter['zona'];
     scm.filter['zona'] = (_sendOForan) ? _sendOForan : scm.filter['zona'];
-    
+
     yield 'Enviando y Actualizando datos...';
     final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
     final pStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
