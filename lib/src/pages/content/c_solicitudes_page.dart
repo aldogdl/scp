@@ -783,6 +783,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     scm.filter['zona'] = 'all';
     scm.filter['zona'] = (_sendOLocal) ? 'loc' : scm.filter['zona'];
     scm.filter['zona'] = (_sendOForan) ? 'for' : scm.filter['zona'];
+    scm.filter['receivers'] = [];
 
     yield 'Enviando y Actualizando datos...';
     final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
@@ -795,8 +796,9 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
       'pzS' : {'est': pStt['est'],'stt': pStt['stt']}
     };
   
-    await _scmEm.setCampaingInDb(toSendData, isLocal: false);
+    await _scmEm.setCampaingInDb(toSendData, isLocal: true);
     if(!_scmEm.result['abort']) {
+      await _scmEm.setCampaingInDb(toSendData, isLocal: false);
       yield 'ok';
     }else{
       yield '${_scmEm.result['body']}';
