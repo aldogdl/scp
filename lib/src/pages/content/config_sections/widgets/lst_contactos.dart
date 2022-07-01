@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:scp/src/config/sng_manager.dart';
 
 import 'package:scp/src/pages/content/config_sections/widgets/decoration_field.dart';
+import 'package:scp/src/pages/widgets/my_tool_tip.dart';
 import 'package:scp/src/services/get_content_files.dart';
 
 import '../../../../entity/contacto_entity.dart';
@@ -200,7 +201,14 @@ class _LstContactosState extends State<LstContactos> {
         children: [
           Texto(txt: _contacts.value[index].nombre, isBold: true),
           const Spacer(),
-          _chipId(id: '${_contacts.value[index].id}')
+          if(_contacts.value[index].roles.contains('ROLE_ADMIN'))
+            const MyToolTip(msg: 'Administrador', child: Icon(Icons.star, size: 15, color: Colors.amber)),
+          const SizedBox(width: 5),
+          if(_contacts.value[index].roles.contains('ROLE_AVO'))
+            const MyToolTip(msg: 'AVO', child: Icon(Icons.note_alt_rounded, size: 15, color: Colors.green)),
+          const SizedBox(width: 5),
+          if(_contacts.value[index].roles.contains('ROLE_EVAL'))
+            const MyToolTip(msg: 'Evaluador', child: Icon(Icons.monetization_on, size: 15, color: Colors.blue))
         ],
       ),
       subtitle: Row(
@@ -242,9 +250,9 @@ class _LstContactosState extends State<LstContactos> {
   }
 
   ///
-  Widget _chipId({
-    required String id
-  }) => Texto(txt: 'id: $id', sz: 12, isBold: true, txtC: Colors.orange);
+  Widget _chipId({required String id}) => Texto(
+    txt: 'id: $id', sz: 12, isBold: true, txtC: Colors.orange
+  );
 
   ///
   Future<bool?> _isShuredeleteContact() async {
