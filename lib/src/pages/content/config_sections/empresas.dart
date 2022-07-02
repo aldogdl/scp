@@ -89,6 +89,8 @@ class _EmpresasState extends State<Empresas> {
   @override
   Widget build(BuildContext context) {
 
+    print(_globals.ipDbs);
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,

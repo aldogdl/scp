@@ -1,7 +1,26 @@
+import 'dart:math';
+
 import 'package:scp/src/services/get_paths.dart';
+
+import '../config/sng_manager.dart';
+import '../vars/globals.dart';
 
 class GetPathImages {
   
+  static final Globals _globals = getSngOf<Globals>();
+
+  ///
+  static String getBase() {
+
+    var base = 'http://${_globals.ipHarbi}/autoparnet/public_html/';
+    if(_globals.ipDbs.isNotEmpty) {
+      if(_globals.ipDbs.containsKey('base_l')) {
+        base = _globals.ipDbs['base_l'];
+      }
+    }
+    return base;
+  }
+
   ///
   static Future<String> getPathPzaTmp(String foto) async {
 
@@ -14,9 +33,21 @@ class GetPathImages {
   static Future<String> getPathToLogoMarcaOf(String marca) async {
 
     const carpeta = 'mrks_logos/';
-    final dom = await GetPaths.getDominio();
-    return '$dom$carpeta$marca';
+    return '${getBase()}$carpeta$marca';
   }
 
+  ///
+  static Future<String?> getPathPortada() async {
 
+    final res = await GetPaths.getFileByPath('portadas');
+    int? cant = int.tryParse(res);
+    final base = '${getBase()}portadas/';
+    if(cant != null) {
+      final ran = Random();
+      int azar = ran.nextInt(cant);
+      azar = (azar == 0) ? 1 : azar;
+      return '$base$azar.jpg';
+    }
+    return '$base/1.jpg';
+  }
 }
