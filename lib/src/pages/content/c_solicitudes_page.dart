@@ -786,7 +786,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     scm.filter['receivers'] = [];
 
     yield 'Enviando y Actualizando datos...';
-    final oStt = await EstStt.getNextSttByEst(itemProv.ordenEntitySelect!.status());
+    final oStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
     final pStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
 
     Map<String, dynamic> toSendData = {
@@ -795,9 +795,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
       'ordS': {'est': oStt['est'], 'stt': oStt['stt']},
       'pzS' : {'est': pStt['est'],'stt': pStt['stt']}
     };
-    
-    print(toSendData);
-    return;
+
     await _scmEm.setCampaingInDb(toSendData, isLocal: true);
     if(!_scmEm.result['abort']) {
       await _scmEm.setCampaingInDb(toSendData, isLocal: false);

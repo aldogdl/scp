@@ -50,7 +50,7 @@ class _ConfigPageState extends State<ConfigPage> {
   Widget build(BuildContext context) {
 
     Widget s10 = const SizedBox(height: 10);
-
+    
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       children: [
