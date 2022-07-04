@@ -1,7 +1,6 @@
 import 'dart:math';
 
-import 'package:scp/src/services/get_paths.dart';
-
+import '../services/get_paths.dart';
 import '../config/sng_manager.dart';
 import '../vars/globals.dart';
 

@@ -360,6 +360,7 @@ class SocketConn extends ChangeNotifier {
       }
 
       ipH = utf8.decode(base64Decode(MyHttp.result['body']));
+      
       if(ipH.contains(':')) {
         final partes = List<String>.from(ipH.split(':'));
         globals.ipHarbi = partes.first;
@@ -376,13 +377,14 @@ class SocketConn extends ChangeNotifier {
 
     await MyHttp.get('http://${globals.ipHarbi}:${globals.portHarbi}/api_harbi/get_ipdb');
 
-    if(MyHttp.result.containsKey('base_r')) {
-      globals.ipDbs = Map<String, dynamic>.from(MyHttp.result);
-      MyHttp.clean();
-      return 'Conexión via API exitosa';
-    }else{
-     return 'ERROR, No hay conexión con HARBI';
+    if(!MyHttp.result['abort']) {
+      if(MyHttp.result['body'].containsKey('base_r')) {
+        globals.ipDbs = Map<String, dynamic>.from(MyHttp.result['body']);
+        MyHttp.clean();
+        return 'Conexión via API exitosa';
+      }
     }
+    return 'ERROR, No hay conexión con HARBI';
   }
 
   ///
