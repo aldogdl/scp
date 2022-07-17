@@ -94,16 +94,20 @@ class CentinelaFileProvider extends ChangeNotifier {
   String getCantDePiezasDelAvo(int idAvo) {
 
     int cantT = 0;
+
     if(_centinela.isNotEmpty) {
       if(_centinela.containsKey('avo')) {
         if(_centinela['avo'].containsKey('$idAvo')) {
           for (var i = 0; i < _centinela['avo']['$idAvo'].length; i++) {
-            final lst = List.from(_centinela['piezas'][ '${_centinela['avo']['$idAvo'][i]}' ]);
-            cantT = cantT + (lst.length);
+            if(_centinela['piezas'].containsKey('${ _centinela['avo']['$idAvo'][i] }')) {
+              final lst = List.from(_centinela['piezas'][ '${_centinela['avo']['$idAvo'][i]}' ]);
+              cantT = cantT + (lst.length);
+            }
           }
         }
       }
     }
+    
     return '$cantT';
   }
 
