@@ -60,4 +60,11 @@ class PageProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _refreshLsts = false;
+  bool get refreshLsts => _refreshLsts;
+  set refreshLsts(bool isR) {
+    _refreshLsts = isR;
+    notifyListeners();
+  }
+
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:scp/src/providers/pages_provider.dart';
 
 import '../widgets/loading_middle.dart';
 import '../widgets/lst_ordenes.dart';
@@ -41,8 +43,11 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
               onSearch: (String val) {
                 _txtLoading = val;
               },
-              onDowload: (String val) {
+              onRefresh: (String val) {
                 _txtLoading = val;
+                _showLoading.value = true;
+                final pagePro = context.read<PageProvider>();
+                pagePro.refreshLsts = true;
               }
             ),
             Expanded(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/pages_provider.dart';
 import '../widgets/loading_middle.dart';
 import '../widgets/lst_ordenes.dart';
 import '../widgets/txt_bsk_orden.dart';
@@ -36,18 +38,23 @@ class _SolicitudesNonPageState extends State<SolicitudesNonPage> {
               onSearch: (String val) {
                 _txtLoading = val;
               },
-              onDowload: (String val) {
+              onRefresh: (String val) {
                 _txtLoading = val;
+                _isLoading = true;
+                final pagePro = context.read<PageProvider>();
+                pagePro.refreshLsts = true;
               }
             ),
             Expanded(
               child: LstOrdenes(
                 asignadas: false,
                 onLoading: (Map<String, dynamic> res) {
-                  setState(() {
-                    _isLoading = res['isLoading'];
-                    _txtLoading = res['msg'];
-                  });
+                  if(mounted) {
+                    setState(() {
+                      _isLoading = res['isLoading'];
+                      _txtLoading = res['msg'];
+                    });
+                  }
                 },
               ),
             ),

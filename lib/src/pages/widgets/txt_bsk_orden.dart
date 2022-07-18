@@ -10,11 +10,11 @@ import 'texto.dart';
 class TxtBskOrden extends StatefulWidget {
 
   final ValueChanged<String> onSearch;
-  final ValueChanged<String> onDowload;
+  final ValueChanged<String> onRefresh;
   const TxtBskOrden({
     Key? key,
     required this.onSearch,
-    required this.onDowload
+    required this.onRefresh
   }) : super(key: key);
 
   @override
@@ -104,11 +104,11 @@ class _TxtBskOrdenState extends State<TxtBskOrden> {
                   ),
                 ),
                 MyToolTip(
-                  msg: 'Descargar [ctrl-alt-d]',
+                  msg: 'Refrezcar [ctrl-alt-d]',
                   child: IconButton(
-                    onPressed: () async => await _searchOrDown('down'),
+                    onPressed: () => widget.onRefresh('Refrescando...'),
                     icon: Icon(
-                      Icons.download,
+                      Icons.refresh,
                       color: (_accTxt == 'down') ? Colors.blue : Colors.grey,
                     )
                   )
@@ -157,7 +157,7 @@ class _TxtBskOrdenState extends State<TxtBskOrden> {
       if(idOrden == null) {
         _msg.value = 'El Id no es valido';
       }else{
-        widget.onDowload('Ordenes');
+        
         _msg.value = 'Descargando, espera por favor';
         await _ordenEm.getOrdenById(idOrden);
         if(_ordenEm.result['body'].isNotEmpty) {

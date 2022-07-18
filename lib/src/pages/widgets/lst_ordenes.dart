@@ -4,6 +4,7 @@ import 'package:scp/src/providers/centinela_file_provider.dart';
 import 'package:scp/src/providers/socket_conn.dart';
 import 'package:scp/src/repository/socket_centinela.dart';
 
+import '../../providers/pages_provider.dart';
 import 'orden_tile.dart';
 import '../../config/sng_manager.dart';
 import '../../vars/globals.dart';
@@ -39,12 +40,14 @@ class _LstOrdenesState extends State<LstOrdenes> {
   final ScrollController _scrollCtr = ScrollController();
   final _sockCenti = SocketCentinela();
   late final CentinelaFileProvider _centiProv;
+  late final PageProvider pageProv;
   late ItemSelectGlobProvider provi;
 
   bool _isInit = false;
 
   @override
   void initState() {
+
     _recuperarTodasLasOrdenes();
     super.initState();
   }
@@ -57,6 +60,23 @@ class _LstOrdenesState extends State<LstOrdenes> {
   
   @override
   Widget build(BuildContext context) {
+
+    return Selector<PageProvider, bool>(
+      selector: (_, prov) => prov.refreshLsts,
+      builder: (_, isR, __) {
+
+        if(isR) {
+          _recuperarTodasLasOrdenes();
+          return const SizedBox();
+        }
+
+        return _body();
+      },
+    );
+  }
+
+  ///
+  Widget _body() {
 
     return Scrollbar(
       controller: _scrollCtr,
@@ -99,13 +119,16 @@ class _LstOrdenesState extends State<LstOrdenes> {
   Future<void> _recuperarTodasLasOrdenes() async {
 
     late final SocketConn sock;
+
     if(!_isInit) {
       _isInit = true;
       provi = context.read<ItemSelectGlobProvider>();
       sock = context.read<SocketConn>();
       _centiProv = context.read<CentinelaFileProvider>();
       _sockCenti.init(context);
+      pageProv = context.read<PageProvider>();
     }
+
     await sttsCache.hidratar();
     if(_centiProv.centinela.isEmpty) {
       await _sockCenti.getFromFile(globals.ipHarbi);
@@ -132,6 +155,11 @@ class _LstOrdenesState extends State<LstOrdenes> {
       }
       provi.ordenes = recSer;
     }
+
+    if(pageProv.refreshLsts) {
+      pageProv.refreshLsts = false;
+    }
+
     widget.onLoading({'isLoading': false, 'msg': 'Ordenes'});
   }
 
