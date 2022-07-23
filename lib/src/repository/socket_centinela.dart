@@ -85,6 +85,7 @@ class SocketCentinela {
     bool save = false;
     role= 'ROLE_ADMIN';
     msg = 'Nueva Orden de Cotización [I]';
+
     // Analizamos si hay nuevas ordenes.
     if(user.roles.contains(role)) {
 
@@ -110,6 +111,7 @@ class SocketCentinela {
       save = false;
       role = 'ROLE_AVO';
       msg = 'Cuentas con ordenes Asignadas [I]';
+      
       if(user.roles.contains(role)) {
 
         if(oldCenti.containsKey('avo')) {

@@ -1,18 +1,18 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show ChangeNotifier;
-import 'package:scp/src/services/get_content_files.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:network_info_plus/network_info_plus.dart';
 
-import '../entity/contacto_entity.dart';
 import '../config/sng_manager.dart';
+import '../entity/contacto_entity.dart';
+import '../entity/request_event.dart';
 import '../repository/socket_centinela.dart';
 import '../services/my_http.dart';
 import '../services/get_paths.dart';
+import '../services/get_content_files.dart';
 import '../vars/globals.dart';
-import '../entity/request_event.dart';
 
 class SocketConn extends ChangeNotifier {
 
@@ -71,8 +71,11 @@ class SocketConn extends ChangeNotifier {
     notifyListeners();
   }
   void addManifest(Map<String, dynamic> msg) {
-    _manifests.insert(0, msg);
-    notifyListeners();
+    var tmp = List<Map<String, dynamic>>.from(_manifests);
+    _manifests = [];
+    tmp.insert(0, msg);
+    manifests = List<Map<String, dynamic>>.from(tmp);
+    tmp = [];
   }
 
   /// Usado para notificar en el status bar un cambio de version del centinela

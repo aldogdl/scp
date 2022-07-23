@@ -56,6 +56,7 @@ class StatusBarr extends StatelessWidget {
               }
             }).toList();
           }
+          
           if(showNotif) {
             Future.delayed(const Duration(milliseconds: 250), (){
               sock.alertCV = true;
