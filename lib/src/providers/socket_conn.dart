@@ -394,29 +394,11 @@ class SocketConn extends ChangeNotifier {
   ///
   Future<String> hasFilePathProduction() async {
 
-    bool goServer = true;
-    String res = await GetPaths.existFilePathsProd();
-    if(res.isNotEmpty) {
-
-      await MyHttp.get('http://${globals.ipHarbi}:${globals.portHarbi}/api_harbi/get_path_prod_ver');
-      if(!MyHttp.result['abort']) {
-        if(MyHttp.result['body'] == res) {
-          goServer = false;
-        }
-      }else{
-        return MyHttp.result['body'];
-      }
-    }
-
-    if(goServer) {
-      await MyHttp.get('http://${globals.ipHarbi}:${globals.portHarbi}/api_harbi/get_path_prod');
-      if(!MyHttp.result['abort']) {
-        return await GetPaths.setPathsProduction(Map<String, dynamic>.from(MyHttp.result['body']));
-      }else{
-        return MyHttp.result['body'];
-      }
+    await MyHttp.get('http://${globals.ipHarbi}:${globals.portHarbi}/api_harbi/get_path_prod');
+    if(!MyHttp.result['abort']) {
+      return await GetPaths.setPathsProduction(Map<String, dynamic>.from(MyHttp.result['body']));
     }else{
-      return 'Checando data URIS';
+      return MyHttp.result['body'];
     }
   }
 
