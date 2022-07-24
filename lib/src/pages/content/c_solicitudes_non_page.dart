@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/repository/socket_centinela.dart';
 
 import '../widgets/instruc_asignar_orden.dart';
 import '../widgets/widgets_utils.dart';
@@ -14,6 +13,7 @@ import '../../providers/items_selects_glob.dart';
 import '../../providers/window_cnf_provider.dart';
 import '../../repository/ordenes_repository.dart';
 import '../../repository/contacts_repository.dart';
+import '../../repository/socket_centinela.dart';
 import '../../vars/globals.dart';
 
 class CSolicitudesNonPage extends StatefulWidget {

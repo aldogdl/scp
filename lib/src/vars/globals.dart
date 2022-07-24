@@ -3,6 +3,7 @@ import 'package:scp/src/entity/contacto_entity.dart';
 
 class Globals {
 
+  String verApp = '1.0.1';
   bool isLocalConn = true;
   String wifiName = '';
   String myIp = '';

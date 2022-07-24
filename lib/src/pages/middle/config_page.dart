@@ -68,7 +68,7 @@ class _ConfigPageState extends State<ConfigPage> {
         s10,
         _iteMenu(context, icon: Icons.home, label: 'Portada', secc: 'home'),
         _iteMenu(context, icon: Icons.fact_check_outlined, label: 'Ordenes en Revisión', secc: 'soliOk'),
-        _iteMenu(context, icon: Icons.view_list_outlined, label: 'Ordenes en Revisión', secc: 'soliOk'),
+        _iteMenu(context, icon: Icons.shopify_outlined, label: 'Inventario Virtual', secc: 'invirt'),
         const Divider(),
         s10,
         _iteMenu(context, icon: Icons.logout, label: 'Cerrar Sesión', secc: 'cerrar_sesion'),
@@ -281,6 +281,9 @@ class _ConfigPageState extends State<ConfigPage> {
           return;
         case 'soliOk':
           context.read<PageProvider>().page = Paginas.solicitudes;
+          return;
+        case 'invirt':
+          context.read<PageProvider>().page = Paginas.inventVirtual;
           return;
       }
       context.read<PageProvider>().confSecction = secc;

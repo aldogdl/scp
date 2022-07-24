@@ -83,6 +83,7 @@ class StatusBarr extends StatelessWidget {
     final pageR  = context.read<PageProvider>();
     final winR   = context.read<WindowCnfProvider>();
     const wid5   = SizedBox(width: 5);
+    const wid10   = SizedBox(width: 10);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
@@ -96,9 +97,10 @@ class StatusBarr extends StatelessWidget {
           _btnIcon(tip: 'Menú Principal', icono: Icons.menu, size: 17, fnc: () {
             pageR.page = Paginas.config;
           }),
-          const SizedBox(width: 10),
+          wid10,
           _text('SWP de: ${_globals.user.nombre} [${_globals.user.curc}]'),
-          const SizedBox(width: 15),
+          wid10,
+          wid5,
           _btnIconAndTxt(txt: '${watchC.manifests.length}', tip: 'Centinela',
             icono: Icons.remove_red_eye_outlined,
             fnc: (){
@@ -151,8 +153,10 @@ class StatusBarr extends StatelessWidget {
               ),
             ],
           const Spacer(),
-          _text('HARBI. ${watchC.idConn}'),
-          wid5,
+          _text('HARBI. Ver.: ${_globals.verApp}'),
+          wid10,
+          _text('Socket. ${watchC.idConn}'),
+          wid10,
           _text('REV. ${watchC.msgCron}'),
           if(watchC.alertCV)
             ...[

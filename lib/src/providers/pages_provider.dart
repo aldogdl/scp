@@ -5,6 +5,7 @@ enum Paginas {
   solicitudes,
   cotizadores,
   solicitantes,
+  inventVirtual,
   config
 }
 

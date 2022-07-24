@@ -171,6 +171,9 @@ class GetPaths {
       Map mapa = json.decode(paths.readAsStringSync());
       if (mapa.containsKey(key)) {
         return {
+          'port_harbi': mapa['portHarbi'],
+          'port_server': mapa['portServer'],
+          'ip_harbi': mapa['ip_harbi'],
           'base_r': mapa['server_remote'],
           'base_l': mapa['server_local'],
           'uri': mapa[key],
@@ -212,7 +215,7 @@ class GetPaths {
   static Future<String> getApiHarbi(String uri, String ipHarbi) async {
 
     Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
-    return 'http://$ipHarbi${uriPath['uri']}';
+    return 'http://$ipHarbi:${uriPath['port_harbi']}/${uriPath['uri']}';
   }
 
   ///
@@ -225,4 +228,6 @@ class GetPaths {
     }
     file.writeAsStringSync(json.encode(data));
   }
+
+
 }

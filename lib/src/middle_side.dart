@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:scp/src/pages/middle/invent_virtual.dart';
 
 import 'pages/middle/config_page.dart';
 import 'pages/middle/cotizadores_page.dart';
@@ -80,6 +81,9 @@ class MiddleSide extends StatelessWidget {
         break;
       case Paginas.solicitudes:
         child = const SolicitudesPage();
+        break;
+      case Paginas.inventVirtual:
+        child = const InventVirtual();
         break;
       case Paginas.solicitantes:
         child = SolicitantesPage();

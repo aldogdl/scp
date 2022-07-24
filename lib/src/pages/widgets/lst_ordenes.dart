@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/providers/centinela_file_provider.dart';
-import 'package:scp/src/providers/socket_conn.dart';
-import 'package:scp/src/repository/socket_centinela.dart';
 
-import '../../providers/pages_provider.dart';
 import 'orden_tile.dart';
 import '../../config/sng_manager.dart';
-import '../../vars/globals.dart';
 import '../../entity/orden_entity.dart';
 import '../../entity/piezas_entity.dart';
+import '../../providers/pages_provider.dart';
 import '../../providers/items_selects_glob.dart';
+import '../../providers/centinela_file_provider.dart';
+import '../../providers/socket_conn.dart';
+import '../../repository/socket_centinela.dart';
 import '../../repository/ordenes_repository.dart';
 import '../../repository/piezas_repository.dart';
 import '../../services/get_path_images.dart';
 import '../../services/status/est_stt.dart';
 import '../../services/status/stts_cache.dart';
+import '../../vars/globals.dart';
 
 class LstOrdenes extends StatefulWidget {
 

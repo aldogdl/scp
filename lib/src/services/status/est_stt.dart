@@ -41,7 +41,6 @@ class EstStt {
     return r.status['est'][data['est']].first;
   }
 
-  
   /// Obtenemos el primer estatus de la pieza estacion busqueda
   static Future<Map<String, dynamic>> getFirstSttByEstBusqueda(Map<String, dynamic> data) async {
 

@@ -303,9 +303,10 @@ class SocketConn extends ChangeNotifier {
 
   ///
   Future<void> _determinarFncCentinela(String fnc, Map<String, dynamic> params) async {
-    
+
     switch (fnc) {
       case 'update':
+
         final manifest = await _sockCenti.buildManifest(globals.ipHarbi, globals.user);
         if(manifest.isNotEmpty) {
           cantManifest++;
@@ -314,7 +315,7 @@ class SocketConn extends ChangeNotifier {
         }
         break;
       case 'cron':
-        msgCron = '${params['time']} V: ${params['vers']}';
+        msgCron = '${params['time']} VC: ${params['vers']}';
         break;
       default:
         _msgErr = 'Sin Acción';

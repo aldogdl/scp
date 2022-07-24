@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 
 import 'consola.dart';
+import 'pages/content/c_invent_virtual.dart';
 import 'providers/pages_provider.dart';
 import 'pages/content/c_config_page.dart';
 import 'pages/content/c_solicitudes_non_page.dart';
@@ -149,6 +150,9 @@ class ContentSide extends StatelessWidget {
         break;
       case Paginas.solicitantes:
         child = const CSolicitantesPage();
+        break;
+      case Paginas.inventVirtual:
+        child = const CInventVirtualPage();
         break;
       case Paginas.cotizadores:
         child = const CCotizadoresPage();
