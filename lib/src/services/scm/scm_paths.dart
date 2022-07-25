@@ -20,8 +20,8 @@ class ScmPaths {
 
   ///
   static const Map<String, String> _paths = {
-      'newCampaing':'scp/solicitudes/set-new-campaing/',
-      'getIdCamp':'scp/get-id-campaing-by-slug/',
+    'newCampaing':'scp/solicitudes/set-new-campaing/',
+    'getIdCamp':'scp/get-id-campaing-by-slug/',
   };
 
 }

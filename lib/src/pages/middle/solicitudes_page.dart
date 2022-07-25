@@ -54,8 +54,8 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
               child: LstOrdenes(
                 asignadas: true,
                 onLoading: (Map<String, dynamic> res) {
-                  _showLoading.value = res['isLoading'];
                   _txtLoading = res['msg'];
+                  _showLoading.value = res['isLoading'];
                 },
               ),
             ),
