@@ -90,15 +90,6 @@ class ItemSelectGlobProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ALERT Ver de donde y como se usa
-  set ordenInsertT(Map<String, dynamic> ordenlst) {
-    final ord = OrdenEntity();
-    ord.fromServer(ordenlst);
-    _ordenes.insert(0, ord.toJson());
-    notifyListeners();
-  }
-
-
   // ------------------ SECCION DE GENERAL -------------------------
 
   ///

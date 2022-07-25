@@ -308,7 +308,7 @@ class SocketConn extends ChangeNotifier {
       case 'update':
 
         final manifest = await _sockCenti.buildManifest(globals.user);
-        
+        print(manifest);
         if(manifest.isNotEmpty) {
           cantManifest++;
           addManifest(manifest);

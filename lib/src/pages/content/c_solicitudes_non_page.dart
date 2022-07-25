@@ -50,7 +50,6 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   int _isValidTarger = 0;
   dynamic _dataSaving;
   CPush _cpushOrden = CPush.asignacion;
-  String _acc = 'Se Asignaron nuevas Órdenes';
   
   @override
   void initState() {
@@ -126,7 +125,6 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
             isActive: isActive,
             icono: Icons.save, bg: const Color.fromARGB(255, 60, 47, 97),
             fnc: () async {
-              _acc = 'Se Asignaron nuevas Ordenes';
               _cpushOrden = CPush.asignacion;
               _dataSaving = itemProv.ordenesAsignadas;
               await _guardarAsignacion();
@@ -802,7 +800,6 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       return;
     }
 
-    _acc = 'Se Reasignó la Orden $idOrden al AVO con el ID: $idAvo';
     _dataSaving = [idAvo, idOrden];
     _cpushOrden = CPush.reasignacion;
     await _guardarAsignacion();

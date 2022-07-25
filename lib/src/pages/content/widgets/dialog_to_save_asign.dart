@@ -122,6 +122,8 @@ class DialogToSaveAsign extends StatelessWidget {
     centiProv.updateVersion();
     Future.delayed(const Duration(milliseconds: 250));
     
+    yield 'Guardando datos en Servidor LOCAL';
+    await centiProv.push(cpushOrden, isLocal: true);
     yield 'Guardando datos en Servidor REMOTO';
     await centiProv.push(cpushOrden, isLocal: false);
     
@@ -142,7 +144,7 @@ class DialogToSaveAsign extends StatelessWidget {
     
     yield '${centiProv.result['body']}';
   }
-  
+
   /// Enviamos las ordenes asignadas a la parte inferior de la pantalla
   Future<void> _enviarAbajoLasOrdenesAsignadas() async {
 

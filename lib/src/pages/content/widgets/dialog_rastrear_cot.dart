@@ -15,7 +15,9 @@ import '../../widgets/widgets_utils.dart';
 
 class DialogRastrearCot extends StatefulWidget {
 
-  const DialogRastrearCot({Key? key}) : super(key: key);
+  const DialogRastrearCot({
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<DialogRastrearCot> createState() => _DialogRastrearCotState();
@@ -300,12 +302,22 @@ class _DialogRastrearCotState extends State<DialogRastrearCot> {
         await _ordenEm.changeSttToServers(stt);
         // Descargamos nuevamente la orden para actualizar datos en archivo local.
         await _ordenEm.setOrdenAsignadas(['${stt['orden']}'], globals.user.id);
+        await _limpiandoCache(inxOrd);
       }
-
+      
       yield 'ok';
     }else{
       yield '${_scmEm.result['body']}';
     }
   }
 
+  /// Eliminamos las ordenes asignadas tambien en la variable _ordenes.
+  Future<void> _limpiandoCache(int indexOrd) async {
+
+    List<Map<String, dynamic>> ordenes = List<Map<String, dynamic>>.from(itemProv.ordenes);
+    itemProv.ordenes.clear();
+    ordenes.removeAt(indexOrd);
+    itemProv.disposeMy();
+    itemProv.ordenes = ordenes;
+  }
 }

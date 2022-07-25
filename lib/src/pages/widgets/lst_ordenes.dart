@@ -121,7 +121,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
     centi = {};
     provi.ordenes = [];
     widget.onLoading({'isLoading': true, 'msg': 'Ordenes'});
-
+    
     if(widget.asignadas) {
       await _getAsignadas();
     }else{
@@ -131,8 +131,8 @@ class _LstOrdenesState extends State<LstOrdenes> {
     if(pageProv.refreshLsts) {
       pageProv.refreshLsts = false;
     }
-
     widget.onLoading({'isLoading': false, 'msg': 'Ordenes'});
+    return;
   }
 
   ///
@@ -189,10 +189,21 @@ class _LstOrdenesState extends State<LstOrdenes> {
     if(centi.isNotEmpty) {
       if(centi.containsKey('avo')) {
         if(centi['avo'].containsKey('${globals.user.id}')) {
-          integridad = List<String>.from(centi['avo']['${globals.user.id}']);
+          var tmp = List<String>.from(centi['avo']['${globals.user.id}']);
+          if(est != null) {
+            for (var i = 0; i < tmp.length; i++) {
+              if(centi['stt'].containsKey(tmp[i])) {
+                if(centi['stt'][tmp[i]]['e'] == est) {
+                  integridad.add(tmp[i]);
+                }
+              }
+            }
+          }
+          tmp = [];
         }
       }
     }
+    
     centi = null;
     provi.ordenes = await _ordenEm.getAllOrdenesByAvo(globals.user.id, est: est);
     if(provi.ordenes.isNotEmpty) {
@@ -210,7 +221,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
     
     if(integridad.isNotEmpty) {
       await _ordenEm.setOrdenAsignadas(integridad, globals.user.id);
-      await _getAsignadas();
+      provi.ordenes = await _ordenEm.getAllOrdenesByAvo(globals.user.id, est: est);
     }
   }
 

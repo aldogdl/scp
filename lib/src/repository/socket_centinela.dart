@@ -86,7 +86,9 @@ class SocketCentinela {
   Future<Map<String, dynamic>> buildManifest(ContactoEntity user) async {
 
     final oldCenti = await getContentFile();
+    print(oldCenti);
     final centi = await getFromApiHarbi();
+    print(centi);
     if(centi.isEmpty){ return {}; }
     
     final t = DateTime.now();
@@ -167,6 +169,9 @@ class SocketCentinela {
     List<String> asignsOlds, List<String> asignsNuevas
   ) async {
 
+    print('si llego');
+    print(asignsOlds);
+    print(asignsNuevas);
     List<String> ordAsign = [];
     List<String> ordDelete = [];
     

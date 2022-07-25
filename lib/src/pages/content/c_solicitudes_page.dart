@@ -40,6 +40,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   
   late final WindowCnfProvider winCnf;
   late final ItemSelectGlobProvider itemProv;
+
   final double minScale = 0.03;
   final double defScale = 0.1;
   final double maxScale = 0.6;
@@ -381,9 +382,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           icono: Icons.not_interested_outlined,
           icolor: const Color.fromARGB(255, 255, 81, 81),
           tip: 'Rechazar Orden [Ctr+Alt+X]',
-          fnc: () {
-            
-          },
+          fnc: () { },
         ),
         _icoAction(
           icono: Icons.edit,

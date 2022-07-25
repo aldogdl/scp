@@ -20,8 +20,9 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
 
   final Globals globals = getSngOf<Globals>();
   
-  final ValueNotifier<bool> _showLoading = ValueNotifier<bool>(true);
-  String _txtLoading = 'Ordenes';
+  final _showLoading = ValueNotifier<Map<String, dynamic>>(
+    {'txt':'Ordenes', 'make':false}
+  );
 
   @override
   void dispose() {
@@ -41,11 +42,10 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
             const SizedBox(height: 10),
             TxtBskOrden(
               onSearch: (String val) {
-                _txtLoading = val;
+                
               },
               onRefresh: (String val) {
-                _txtLoading = val;
-                _showLoading.value = true;
+                _showLoading.value = {'txt':val, 'make':true};
                 final pagePro = context.read<PageProvider>();
                 pagePro.refreshLsts = true;
               }
@@ -53,19 +53,22 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
             Expanded(
               child: LstOrdenes(
                 asignadas: true,
-                onLoading: (Map<String, dynamic> res) {
-                  _txtLoading = res['msg'];
-                  _showLoading.value = res['isLoading'];
+                onLoading: (Map<String, dynamic> res) async {
+                  if(mounted) {
+                    try {
+                      _showLoading.value = {'txt':res['msg'], 'make':res['isLoading']};
+                    } catch (_) {}
+                  }
                 },
               ),
             ),
           ],
         ),
-        ValueListenableBuilder<bool>(
+        ValueListenableBuilder<Map<String, dynamic>>(
           valueListenable: _showLoading,
-          builder: (_, val, child) => (val) ? child! : const SizedBox(),
+          builder: (_, val, child) => (val['make']) ? child! : const SizedBox(),
           child: Positioned.fill(
-            child: LoadingMiddle(msg: _txtLoading),
+            child: LoadingMiddle(msg: _showLoading.value['txt']),
           ),
         )
       ],

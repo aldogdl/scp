@@ -162,9 +162,8 @@ class OrdenesRepository {
   }) {
 
     return {
-      OrdCamp.emisor.name: emisor, OrdCamp.isVista.name: isVista,
-      OrdCamp.orden.name: orden, OrdCamp.piezas.name: pzas,
-      OrdCamp.resps.name: resps,
+      OrdCamp.emisor.name: emisor, OrdCamp.orden.name: orden,
+      OrdCamp.piezas.name: pzas, OrdCamp.resps.name: resps,
       OrdCamp.respToSolz.name: respToSolz
     };
   }
