@@ -15,9 +15,6 @@ class SocketCentinela {
   CentinelaFileProvider? _centiProv;
 
   ///
-  Future<void> sendPushAsignaciones() async => await _centiProv!.sendPushAsignaciones();
-  
-  ///
   Map<String, dynamic> getContenCentinela() {
 
     if(_centiProv != null) {
@@ -69,7 +66,8 @@ class SocketCentinela {
     if(!MyHttp.result['abort']) {
 
       final content = Map<String, dynamic>.from(MyHttp.result['body']);
-
+      print('aca en el get');
+      print(content);
       String pathTo = await GetPaths.getFileByPath('centinela');
       File centi = File(pathTo);
       centi.writeAsStringSync(json.encode(content));
@@ -86,9 +84,7 @@ class SocketCentinela {
   Future<Map<String, dynamic>> buildManifest(ContactoEntity user) async {
 
     final oldCenti = await getContentFile();
-    print(oldCenti);
     final centi = await getFromApiHarbi();
-    print(centi);
     if(centi.isEmpty){ return {}; }
     
     final t = DateTime.now();
@@ -169,9 +165,6 @@ class SocketCentinela {
     List<String> asignsOlds, List<String> asignsNuevas
   ) async {
 
-    print('si llego');
-    print(asignsOlds);
-    print(asignsNuevas);
     List<String> ordAsign = [];
     List<String> ordDelete = [];
     

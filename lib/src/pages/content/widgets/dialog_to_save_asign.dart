@@ -129,7 +129,6 @@ class DialogToSaveAsign extends StatelessWidget {
     
     if(!centiProv.result['abort']) {
 
-      await centiProv.sendPushAsignaciones();
       if(cpushOrden == CPush.asignacion) {
         await _enviarAbajoLasOrdenesAsignadas();
         yield 'Limpiando Cache';

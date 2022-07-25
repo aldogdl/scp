@@ -193,23 +193,9 @@ class CentinelaFileProvider extends ChangeNotifier {
 
     var asig = getAsignaciones();
     String pathTo = await GetPaths.getUri('ordenes_asignadas', isLocal: isLocal);
-    await MyHttp.post(pathTo, {'info':asig, 'version':_centinela['version']});
+    await MyHttp.post(pathTo, {'info':asig, 'isLoc': isLocal, 'version':_centinela['version']});
     result = MyHttp.result;
     MyHttp.clean();
   }
-
-  ///
-  Future<void> sendPushAsignaciones() async {
-
-    const query = 'event%self-fnc%notifAll_UpdateData-data%'
-    'acc=recovery';
-
-    final pathTo = await GetPaths.getUriApiHarbi('push', query);
-    await MyHttp.getHarbi(pathTo);
-    
-    result = MyHttp.result;
-    MyHttp.clean();
-  }
-
 
 }

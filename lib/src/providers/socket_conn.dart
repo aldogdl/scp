@@ -308,7 +308,6 @@ class SocketConn extends ChangeNotifier {
       case 'update':
 
         final manifest = await _sockCenti.buildManifest(globals.user);
-        print(manifest);
         if(manifest.isNotEmpty) {
           cantManifest++;
           addManifest(manifest);
@@ -325,11 +324,14 @@ class SocketConn extends ChangeNotifier {
     if(params.containsKey('vers')) {
       if(verOldCentinela.isEmpty) {
         verOldCentinela = '${params['vers']}';
+        globals.currentVersion = verOldCentinela;
       }else{
         if(params['vers'] != verOldCentinela) {
           verOldCentinela = '${params['vers']}';
           globals.currentVersion = verOldCentinela;
-          alertCV = true;
+          if(manifests.isNotEmpty) {
+            alertCV = true;
+          }
         }
       }
     }
