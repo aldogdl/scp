@@ -653,7 +653,9 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     }
 
     if(_centiProv.centinela.isEmpty) {
-      await _sockCenti.getFromFile(globals.ipHarbi);
+      var centi = await _sockCenti.getFromFile(globals.currentVersion);
+      globals.currentVersion = '${centi['version']}';
+      centi = {};
     }
 
     Future.delayed(const Duration(milliseconds: 250), (){
@@ -825,7 +827,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
           titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg,
           onlyAlert: true, withYesOrNot: false
         );
-        _sockCenti.getFromApiHarbi(globals.ipHarbi).then((_){
+        _sockCenti.getFromApiHarbi().then((_){
           _guardarAsignacion();
         });
       }

@@ -9,6 +9,8 @@ class Globals {
   String myIp = '';
   String ipHarbi = '';
   String portHarbi = '';
+  // La ultima version del centinela
+  String currentVersion = '0';
   Map<String, dynamic> ipDbs = {};
   ContactoEntity user = ContactoEntity();
   FocusNode focusMain = FocusNode();

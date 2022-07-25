@@ -124,8 +124,6 @@ class DialogToSaveAsign extends StatelessWidget {
     
     yield 'Guardando datos en Servidor REMOTO';
     await centiProv.push(cpushOrden, isLocal: false);
-    yield 'Guardando datos en Servidor LOCAL';
-    await centiProv.push(cpushOrden, isLocal: true);
     
     if(!centiProv.result['abort']) {
 

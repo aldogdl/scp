@@ -12,9 +12,11 @@ import '../services/my_http.dart';
 class SocketCentinela {
 
   final _ordenEm = OrdenesRepository();
-
   CentinelaFileProvider? _centiProv;
 
+  ///
+  Future<void> sendPushAsignaciones() async => await _centiProv!.sendPushAsignaciones();
+  
   ///
   Map<String, dynamic> getContenCentinela() {
 
@@ -24,6 +26,7 @@ class SocketCentinela {
     return {};
   }
 
+  ///
   void init(BuildContext context) {
     _centiProv = context.read<CentinelaFileProvider>();
   }
@@ -40,23 +43,26 @@ class SocketCentinela {
   }
 
   /// ->Obtenemos los datos del centinela desde el arcivo.
-  Future<Map<String, dynamic>> getFromFile(String ipHarbi) async {
+  Future<Map<String, dynamic>> getFromFile(String currentVersion) async {
 
     Map<String, dynamic> centi = await getContentFile();
     if(centi.isEmpty) {
-      centi = await getFromApiHarbi(ipHarbi);
+      centi = await getFromApiHarbi();
     }else{
-      if(centi.isNotEmpty) {
-        if(_centiProv != null) {
-          _centiProv!.centinela = centi;
+      if(centi.containsKey('version')) {
+        if('${centi['version']}' != currentVersion) {
+          centi = await getFromApiHarbi();
         }
+      }
+      if(_centiProv != null) {
+        _centiProv!.centinela = centi;
       }
     }
     return centi;
   }
 
   ///
-  Future<Map<String, dynamic>> getFromApiHarbi(String ipHarbi) async {
+  Future<Map<String, dynamic>> getFromApiHarbi() async {
 
     Uri uri = await GetPaths.getUriApiHarbi('get_centinela', '');
     await MyHttp.getHarbi(uri);
@@ -77,10 +83,10 @@ class SocketCentinela {
 
   /// Revisamos si hay cambios relacionados al usuario que esta usando esta SCP
   /// centi son los datos del nuevo centinela el user es el que usa esta app.
-  Future<Map<String, dynamic>> buildManifest(String ipHarbi, ContactoEntity user) async {
+  Future<Map<String, dynamic>> buildManifest(ContactoEntity user) async {
 
     final oldCenti = await getContentFile();
-    final centi = await getFromApiHarbi(ipHarbi);
+    final centi = await getFromApiHarbi();
     if(centi.isEmpty){ return {}; }
     
     final t = DateTime.now();
@@ -165,8 +171,7 @@ class SocketCentinela {
     List<String> ordDelete = [];
     
     bool save = false;
-    String msg = 'Cuentas con ordenes Asignadas [IN]';
-
+    
     // Revisamos si hay ordenes que no tenga con anterioridad
     if(asignsNuevas.isNotEmpty) {
 
@@ -181,7 +186,6 @@ class SocketCentinela {
       }
     }
 
-    msg = 'Se han Reasignado orden(es) [NT]';
     // Revisamos si hay ordenes que han sido desasignadas
     if(asignsOlds.isNotEmpty) {
 
@@ -198,13 +202,15 @@ class SocketCentinela {
 
     if(save) {
 
-      if(ordAsign.isNotEmpty) {
-        await _ordenEm.setOrdenAsignadas(ordAsign, idUser);
-      }
       if(ordDelete.isNotEmpty) {
         await _ordenEm.delOrdenAsignadas(ordDelete, idUser);
+        manifest['cambios'].add('Se han Reasignado orden(es) [NT]');
       }
-      manifest['cambios'].add(msg);
+
+      if(ordAsign.isNotEmpty) {
+        await _ordenEm.setOrdenAsignadas(ordAsign, idUser);
+        manifest['cambios'].add('Cuentas con ordenes Asignadas [IN]');
+      }
     }
 
     return manifest;

@@ -114,10 +114,11 @@ class _LstOrdenesState extends State<LstOrdenes> {
       _sockCenti.init(context);
       pageProv = context.read<PageProvider>();
     }
-
+    
     await sttsCache.hidratar();
-    await _sockCenti.getFromFile(globals.ipHarbi);
-
+    var centi = await _sockCenti.getFromFile(globals.currentVersion);
+    globals.currentVersion = '${centi['version']}';
+    centi = {};
     provi.ordenes = [];
     widget.onLoading({'isLoading': true, 'msg': 'Ordenes'});
 
@@ -182,55 +183,36 @@ class _LstOrdenesState extends State<LstOrdenes> {
     if(pageProv.page == Paginas.solicitudes) {
       est = '2';
     }
+    List<String> ids = [];
+    List<String> integridad = [];
+    Map<String, dynamic>? centi = _sockCenti.getContenCentinela();
+    if(centi.isNotEmpty) {
+      if(centi.containsKey('avo')) {
+        if(centi['avo'].containsKey('${globals.user.id}')) {
+          integridad = List<String>.from(centi['avo']['${globals.user.id}']);
+        }
+      }
+    }
+    centi = null;
     provi.ordenes = await _ordenEm.getAllOrdenesByAvo(globals.user.id, est: est);
-  }
+    if(provi.ordenes.isNotEmpty) {
+      for (var i = 0; i < provi.ordenes.length; i++) {
+        ids.add('${provi.ordenes[i][OrdCamp.orden.name]['o_id']}');
+      }
+    }
 
-  // ///
-  // Future<void> _recuperarTodasLasOrdenes() async {
-
-  //   late final SocketConn sock;
-
-  //   if(!_isInit) {
-  //     _isInit = true;
-  //     provi = context.read<ItemSelectGlobProvider>();
-  //     sock = context.read<SocketConn>();
-  //     _centiProv = context.read<CentinelaFileProvider>();
-  //     _sockCenti.init(context);
-  //     pageProv = context.read<PageProvider>();
-  //   }
-
-  //   await sttsCache.hidratar();
-  //   await _sockCenti.getFromFile(globals.ipHarbi);
-
-  //   provi.ordenes = [];
-  //   int avo = (widget.asignadas) ? globals.user.id : 0;
+    // Checamos que todas las ordenes coincidan con el centinela
+    for (var i = 0; i < ids.length; i++) {
+      if(integridad.contains(ids[i])) {
+        integridad.remove(ids[i]);
+      }
+    }
     
-  //   widget.onLoading({'isLoading': true, 'msg': 'Ordenes'});
-  //   await _ordenEm.getAllOrdenesByAvo(avo, isLocal: globals.isLocalConn);
-
-  //   List<OrdenEntity> recSer = [];
-  //   if(_ordenEm.result['abort']) {
-  //     if(_ordenEm.result['body'].contains('Host')) {
-  //       sock.hasErrWithIpDbLocal = _ordenEm.result['body'];
-  //       _ordenEm.result['body'] = '';
-  //     }
-  //   }
-
-  //   if(_ordenEm.result['body'].isNotEmpty) {
-  //     for (var i = 0; i < _ordenEm.result['body'].length; i++) {
-  //       OrdenEntity ent = OrdenEntity();
-  //       ent.fromServer(_ordenEm.result['body'][i]);
-  //       recSer.add(ent);
-  //     }
-  //     provi.ordenes = recSer;
-  //   }
-
-  //   if(pageProv.refreshLsts) {
-  //     pageProv.refreshLsts = false;
-  //   }
-
-  //   widget.onLoading({'isLoading': false, 'msg': 'Ordenes'});
-  // }
+    if(integridad.isNotEmpty) {
+      await _ordenEm.setOrdenAsignadas(integridad, globals.user.id);
+      await _getAsignadas();
+    }
+  }
 
   ///
   Future<void> _selectedOrden(int indexOrden) async {

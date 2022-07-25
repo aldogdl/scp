@@ -76,24 +76,29 @@ class OrdenesRepository {
   Future<List<Map<String, dynamic>>> getAllOrdenesByAvo(int avo, {String? est}) async {
 
     List<Map<String, dynamic>> ordenes = [];
+
     String root = GetPaths.getPathRoot();
     final dir = Directory('$root/$myAsigns');
     if(dir.existsSync()) {
+
       dir.listSync().map((filename) {
+
         if(filename.path.endsWith('$avo.json')) {
           final file = File(filename.path);
+          final cnt  = Map<String, dynamic>.from(json.decode(file.readAsStringSync()));
           if(est != null) {
-            // Requiere un filtro de estacion
-            final cnt  = Map<String, dynamic>.from(json.decode(file.readAsStringSync()));
+            // entra si Requiere un filtro de estacion
             if(cnt[OrdCamp.orden.name]['o_est'] == est) {
               ordenes.add(cnt);
             }
           }else{
-            ordenes.add(json.decode(file.readAsStringSync()));
+            ordenes.add(cnt);
           }
         }
+
       }).toList();
     }
+
     return ordenes;
   }
 

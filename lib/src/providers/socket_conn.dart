@@ -307,7 +307,8 @@ class SocketConn extends ChangeNotifier {
     switch (fnc) {
       case 'update':
 
-        final manifest = await _sockCenti.buildManifest(globals.ipHarbi, globals.user);
+        final manifest = await _sockCenti.buildManifest(globals.user);
+        
         if(manifest.isNotEmpty) {
           cantManifest++;
           addManifest(manifest);
@@ -327,6 +328,7 @@ class SocketConn extends ChangeNotifier {
       }else{
         if(params['vers'] != verOldCentinela) {
           verOldCentinela = '${params['vers']}';
+          globals.currentVersion = verOldCentinela;
           alertCV = true;
         }
       }
