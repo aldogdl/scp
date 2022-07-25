@@ -58,8 +58,8 @@ class SocketCentinela {
   ///
   Future<Map<String, dynamic>> getFromApiHarbi(String ipHarbi) async {
 
-    String uri = await GetPaths.getApiHarbi('get_centinela', ipHarbi);
-    await MyHttp.get(uri);
+    Uri uri = await GetPaths.getUriApiHarbi('get_centinela', '');
+    await MyHttp.getHarbi(uri);
     if(!MyHttp.result['abort']) {
 
       final content = Map<String, dynamic>.from(MyHttp.result['body']);

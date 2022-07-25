@@ -113,13 +113,13 @@ class MyHttp {
   }
 
   ///
-  static Future<void> postHarbi(String uri, Map<String, dynamic> data) async {
+  static Future<void> postHarbi(Uri uri, Map<String, dynamic> data) async {
 
     Map<String, String> headers = {
       'Content-type': 'application/json',
       'Accept': 'application/json',
     };
-    var req = http.MultipartRequest('POST', Uri.parse(uri));
+    var req = http.MultipartRequest('POST', uri);
 
     req.headers.addAll(headers);
     req.fields['data'] = '${utf8.encode(json.encode(data))}';

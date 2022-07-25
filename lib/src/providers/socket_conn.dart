@@ -414,10 +414,10 @@ class SocketConn extends ChangeNotifier {
     if(folder == 'autos') { uri = 'get_autos'; }
     if(folder == 'centinela') { uri = 'get_centinela'; }
 
-    uri = await GetPaths.getApiHarbi(uri, globals.ipHarbi);
-    if(uri.isNotEmpty) {
+    Uri url = await GetPaths.getUriApiHarbi(uri, '');
+    if(url.host.isNotEmpty) {
 
-      await MyHttp.get(uri);
+      await MyHttp.getHarbi(url);
       if(!MyHttp.result['abort']) {
         await GetPaths.setDataFixed(folder, MyHttp.result['body']);
         return 'ok';
@@ -471,7 +471,7 @@ class SocketConn extends ChangeNotifier {
     const String txtC = 'Bienvenido al Sistema de Cotización y Procesamiento';
 
     if(!makeRegToHarbi) {
-      String uri = await GetPaths.getApiHarbi('set_conection', globals.ipHarbi);
+      Uri uri = await GetPaths.getUriApiHarbi('set_conection', '');
       final data = globals.user.userConectado(
         app: _app, idCon: '$idConn', ip: globals.myIp
       );
