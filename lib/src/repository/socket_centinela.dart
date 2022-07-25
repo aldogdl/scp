@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart' show BuildContext;
 import 'package:provider/provider.dart';
 
+import 'ordenes_repository.dart';
 import '../entity/contacto_entity.dart';
 import '../providers/centinela_file_provider.dart';
 import '../services/get_paths.dart';
@@ -10,7 +11,18 @@ import '../services/my_http.dart';
 
 class SocketCentinela {
 
+  final _ordenEm = OrdenesRepository();
+
   CentinelaFileProvider? _centiProv;
+
+  ///
+  Map<String, dynamic> getContenCentinela() {
+
+    if(_centiProv != null) {
+      return _centiProv!.centinela;
+    }
+    return {};
+  }
 
   void init(BuildContext context) {
     _centiProv = context.read<CentinelaFileProvider>();
@@ -30,17 +42,17 @@ class SocketCentinela {
   /// ->Obtenemos los datos del centinela desde el arcivo.
   Future<Map<String, dynamic>> getFromFile(String ipHarbi) async {
 
-    final centi = await getContentFile();
-    if(centi.isNotEmpty) {
-      if(_centiProv != null) {
-        _centiProv!.centinela = centi;
-      }else{
-        return centi;
-      }
+    Map<String, dynamic> centi = await getContentFile();
+    if(centi.isEmpty) {
+      centi = await getFromApiHarbi(ipHarbi);
     }else{
-      return await getFromApiHarbi(ipHarbi);
+      if(centi.isNotEmpty) {
+        if(_centiProv != null) {
+          _centiProv!.centinela = centi;
+        }
+      }
     }
-    return {};
+    return centi;
   }
 
   ///
@@ -57,9 +69,8 @@ class SocketCentinela {
       centi.writeAsStringSync(json.encode(content));
       if(_centiProv != null) {
         _centiProv!.centinela = content;
-      }else{
-        return content;
       }
+      return content;
     }
     return {};
   }
@@ -72,87 +83,131 @@ class SocketCentinela {
     final centi = await getFromApiHarbi(ipHarbi);
     if(centi.isEmpty){ return {}; }
     
-    String role = '';
-    String msg = '';
     final t = DateTime.now();
     final created = '[${t.day}-${t.month}-${t.year}  ${t.hour}-${t.minute}-${t.second}]';
     Map<String, dynamic> manifest = {
-      'created': created,
-      'ver'    : '0',
-      'cambios': <String>[],
+      'created': created, 'ver' : '0', 'cambios': <String>[],
     };
 
-    bool save = false;
-    role= 'ROLE_ADMIN';
-    msg = 'Nueva Orden de Cotización [I]';
-
     // Analizamos si hay nuevas ordenes.
-    if(user.roles.contains(role)) {
+    if(user.roles.contains('ROLE_ADMIN')) {
+      manifest = await _checkOnlyAdmin(centi, oldCenti, manifest);
+    }
 
-      if(centi.containsKey('ordenes')) {
-        save = true;
-        if(oldCenti.isNotEmpty) {
-          if(oldCenti.containsKey('ordenes')) {
-            if(centi['ordenes'].length <= oldCenti['ordenes'].length) {
-              save = false;
+    // Analizamos las asignaciones.
+    if(user.roles.contains('ROLE_AVO')) {
+      if(centi.containsKey('avo')) {
+        if(centi['avo'].containsKey('${user.id}')) {
+
+          List<String> asignsOlds = [];
+          if(oldCenti.containsKey('avo')) {
+            if(oldCenti['avo'].containsKey('${user.id}')) {
+              asignsOlds = List<String>.from(oldCenti['avo']['${user.id}']);
             }
           }
-        }
 
-        if(save) {
-          manifest['ver'] = centi['version'];
-          manifest['cambios'].add(msg);
+          List<String> asignsNuevas = [];
+          if(centi.containsKey('avo')) {
+            if(centi['avo'].containsKey('${user.id}')) {
+              asignsNuevas = List<String>.from(centi['avo']['${user.id}']);
+            }
+          }
+
+          manifest = await _checkOnlyAvo(
+            user.id, manifest, asignsOlds, asignsNuevas
+          );
         }
       }
     }
 
-    // Analizamos si hay nuevas asignaciones.
-    if(centi.containsKey('avo')) {
-      save = false;
-      role = 'ROLE_AVO';
-      msg = 'Cuentas con ordenes Asignadas [I]';
-      
-      if(user.roles.contains(role)) {
-
-        if(oldCenti.containsKey('avo')) {
-
-          if(centi['avo'].containsKey('${user.id}')) {
-
-            // si el viejo centinela no contiene mi ID, es que me asignaron nueva orden 
-            if(!oldCenti['avo'].containsKey('${user.id}')) {
-              save = true;
-            }else{
-              
-              final asigns = List<String>.from(centi['avo']['${user.id}']);
-              for (var i = 0; i < asigns.length; i++) {
-                // Revisamos cada orden nueva para ver si hay algo nuevo
-                if(!oldCenti['avo']['${user.id}'].contains(asigns[i])) {
-                  save = true;
-                  break;
-                }
-              }
-
-              // Si save sigue siendo false y las ordenes son diferentes es que
-              // me quitaron algunas.
-              if(!save && oldCenti['avo']['${user.id}'].length > asigns.length) {
-                msg = 'Se han Reasignado orden(es) [IN]';
-                save = true;
-              }
-            }
-          }
-
-        }else{
-          if(centi['avo'].containsKey('${user.id}')) { save = true; }
-        }
-
-        if(save) {
-          manifest['ver'] = centi['version'];
-          manifest['cambios'].add(msg);
-        }
-      }
+    if(manifest['cambios'].isNotEmpty) {
+      manifest['ver'] = centi['version'];
     }
     
     return (manifest['ver'] == '0') ? {} : manifest;
+  }
+
+  /// parte del analisis de la creacion del manifiesto [ADMIN]
+  Future<Map<String, dynamic>> _checkOnlyAdmin(
+    Map<String, dynamic> centi, Map<String, dynamic> oldCenti,
+    Map<String, dynamic> manifest
+  ) async {
+
+    bool save = false;
+    String msg = 'Nueva Orden de Cotización [IN]';
+
+    if(centi.containsKey('ordenes')) {
+      save = true;
+      if(oldCenti.isNotEmpty) {
+        if(oldCenti.containsKey('ordenes')) {
+          if(centi['ordenes'].length <= oldCenti['ordenes'].length) {
+            save = false;
+          }
+        }
+      }
+
+      if(save) {
+        manifest['ver'] = centi['version'];
+        manifest['cambios'].add(msg);
+      }
+    }
+
+    return manifest;
+  }
+
+  /// parte del analisis de la creacion del manifiesto [AVO]
+  Future<Map<String, dynamic>> _checkOnlyAvo(
+    int idUser, Map<String, dynamic> manifest,
+    List<String> asignsOlds, List<String> asignsNuevas
+  ) async {
+
+    List<String> ordAsign = [];
+    List<String> ordDelete = [];
+    
+    bool save = false;
+    String msg = 'Cuentas con ordenes Asignadas [IN]';
+
+    // Revisamos si hay ordenes que no tenga con anterioridad
+    if(asignsNuevas.isNotEmpty) {
+
+      for (var i = 0; i < asignsNuevas.length; i++) {
+        if(!asignsOlds.contains(asignsNuevas[i])) {
+          ordAsign.add(asignsNuevas[i]);
+        }
+      }
+
+      if(ordAsign.isNotEmpty) {
+        save = true;
+      }
+    }
+
+    msg = 'Se han Reasignado orden(es) [NT]';
+    // Revisamos si hay ordenes que han sido desasignadas
+    if(asignsOlds.isNotEmpty) {
+
+      for (var i = 0; i < asignsOlds.length; i++) {
+        if(!asignsNuevas.contains(asignsOlds[i])) {
+          ordDelete.add(asignsOlds[i]);
+        }
+      }
+
+      if(ordDelete.isNotEmpty) {
+        save = true;
+      }
+    }
+
+    if(save) {
+
+      if(ordAsign.isNotEmpty) {
+        await _ordenEm.setOrdenAsignadas(ordAsign, idUser);
+      }
+      if(ordDelete.isNotEmpty) {
+        await _ordenEm.delOrdenAsignadas(ordDelete, idUser);
+      }
+      manifest['cambios'].add(msg);
+    }
+
+    return manifest;
   }
 
 }

@@ -140,7 +140,7 @@ class CentinelaFileProvider extends ChangeNotifier {
 
         if(_centinela['avo'].containsKey('$idAvo')) {
           for (var i = 0; i < ordenes.length; i++) {
-            if(!_centinela['avo']['$idAvo'].contains(ordenes[i])) {
+            if(!_centinela['avo']['$idAvo'].contains('${ordenes[i]}')) {
               _centinela['avo']['$idAvo'].add('${ordenes[i]}');
             }
           }
@@ -148,11 +148,13 @@ class CentinelaFileProvider extends ChangeNotifier {
           _centinela['avo'].putIfAbsent('$idAvo', () => ordenes.map((e) => '$e').toList());
         }
 
+        var non = List<String>.from(_centinela['non']);
         for (var i = 0; i < ordenes.length; i++) {
-          if(!_centinela['non'].contains(ordenes[i])) {
-            _centinela['non'].remove(ordenes[i]);
+          if(non.contains('${ordenes[i]}')) {
+            non.remove('${ordenes[i]}');
           }
         }
+        _centinela['non'] = non;
       }
     });
   }
@@ -187,13 +189,27 @@ class CentinelaFileProvider extends ChangeNotifier {
   }
 
   ///
-  Future<void> _saveToServerAsignaciones(isLocal) async {
+  Future<void> _saveToServerAsignaciones(bool isLocal) async {
 
     var asig = getAsignaciones();
-    
     String pathTo = await GetPaths.getUri('ordenes_asignadas', isLocal: isLocal);
     await MyHttp.post(pathTo, {'info':asig, 'version':_centinela['version']});
     result = MyHttp.result;
     MyHttp.clean();
   }
+
+  ///
+  Future<void> sendPushAsignaciones() async {
+
+    const query = 'event%self-fnc%notifAll_UpdateData-data%'
+    'acc=recovery';
+
+    final pathTo = await GetPaths.getUriApiHarbi('push', query);
+    await MyHttp.getHarbi(pathTo);
+    
+    result = MyHttp.result;
+    MyHttp.clean();
+  }
+
+
 }

@@ -304,7 +304,7 @@ class _FrmOrdenState extends State<FrmOrden> {
             ..._div(),
             Expanded(
               child: Selector<ItemSelectGlobProvider, PiezasEntity>(
-                selector: (_, prov) => prov.piezaSelect,
+                selector: (_, prov) => prov.piezaSelect!,
                 builder: (_, pza, __) {
 
                   if(mounted) {
@@ -685,7 +685,7 @@ class _FrmOrdenState extends State<FrmOrden> {
 
     if(_fotosCurrents.isEmpty) {
       _fotosCurrents = _items.fotosByPiezas.where(
-        (element) => element['id'] == _items.piezaSelect.id
+        (element) => element['id'] == _items.piezaSelect!.id
       ).toList();
 
       // Colocamos un campo para marcar como borrada en caso de requerirlo
@@ -712,7 +712,7 @@ class _FrmOrdenState extends State<FrmOrden> {
     final has = _items.piezas.where((element) => element.id == _items.idPzaSelect);
     if(has.isNotEmpty) {
       _items.piezaSelect = has.first;
-      _ctrPieza.text = _items.piezaSelect.piezaName;
+      _ctrPieza.text = _items.piezaSelect!.piezaName;
       return true;
     }
     return false;
@@ -743,8 +743,8 @@ class _FrmOrdenState extends State<FrmOrden> {
     PiezasEntity? piezaData = PiezasEntity();
     if(acc == 'add') {
       piezaData.orden = _items.idOrdenSelect;
-      piezaData.est = (_items.piezaSelect.est == '0') ? '3' : _items.piezaSelect.est;
-      piezaData.stt = (_items.piezaSelect.stt == '0') ? '1' : _items.piezaSelect.stt;
+      piezaData.est = (_items.piezaSelect!.est == '0') ? '3' : _items.piezaSelect!.est;
+      piezaData.stt = (_items.piezaSelect!.stt == '0') ? '1' : _items.piezaSelect!.stt;
       _fotosCurrents = [];
       _items.piezaSelect = piezaData;
     }
@@ -811,9 +811,9 @@ class _FrmOrdenState extends State<FrmOrden> {
     }).toList();
     
     return {
-      'id': _items.piezaSelect.id,
-      'est': _items.piezaSelect.est,
-      'stt': _items.piezaSelect.stt,
+      'id': _items.piezaSelect!.id,
+      'est': _items.piezaSelect!.est,
+      'stt': _items.piezaSelect!.stt,
       'piezaName': _ctrPieza.text.toUpperCase().trim(),
       'origen': _ctrOri.text,
       'lado': _ctrLad.text,
@@ -822,7 +822,7 @@ class _FrmOrdenState extends State<FrmOrden> {
       'fotosD': fotosD,
       'pathF': pathF,
       'obs': deta.replaceFirst(deta[0], deta[0].toUpperCase()),
-      'orden': _items.piezaSelect.orden
+      'orden': _items.piezaSelect!.orden
     };
   }
 

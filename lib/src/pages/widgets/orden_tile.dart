@@ -109,7 +109,9 @@ class OrdenTile extends StatelessWidget {
             const Spacer(),
             MyToolTip(
               msg: EstStt.getEst(orden.status()),
-              child: Texto(txt: EstStt.getSttByEst(orden.status()), sz: 11),
+              child: Texto(
+                txt: EstStt.getSttByEst(orden.status()), sz: 11, txtC: Colors.blue,
+              ),
             )
           ],
         )

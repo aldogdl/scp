@@ -15,7 +15,11 @@ class ItemSelectGlobProvider extends ChangeNotifier {
     _piezas = [];
     _fotosByPiezas = [];
     _ordenesAsignadas = {};
+    _ordenEntitySelect = null;
+    _piezaSelect = null;
   }
+
+  // ------------------ SECCION DE ASIGNACION -------------------------
 
   ///
   int _idOrdenSelect = -1;
@@ -27,7 +31,7 @@ class ItemSelectGlobProvider extends ChangeNotifier {
 
   OrdenEntity? _ordenEntitySelect;
   OrdenEntity? get ordenEntitySelect => _ordenEntitySelect;
-  void setOrdenEntitySelect(OrdenEntity orden) => _ordenEntitySelect = orden;
+  void setOrdenEntitySelect(OrdenEntity? orden) => _ordenEntitySelect = orden;
 
   ///
   int _idPzaSelect = -1;
@@ -86,19 +90,27 @@ class ItemSelectGlobProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///
-  List<OrdenEntity> _ordenes = [];
-  List<OrdenEntity> get ordenes => _ordenes;
-  set ordenes(List<OrdenEntity> ordenlst) {
-    _ordenes = ordenlst;
+  /// ALERT Ver de donde y como se usa
+  set ordenInsertT(Map<String, dynamic> ordenlst) {
+    final ord = OrdenEntity();
+    ord.fromServer(ordenlst);
+    _ordenes.insert(0, ord.toJson());
     notifyListeners();
   }
 
+
+  // ------------------ SECCION DE GENERAL -------------------------
+
   ///
-  set ordenInsert(Map<String, dynamic> ordenlst) {
-    final ord = OrdenEntity();
-    ord.fromServer(ordenlst);
-    _ordenes.insert(0, ord);
+  List<Map<String, dynamic>> _ordenes = [];
+  List<Map<String, dynamic>> get ordenes => _ordenes;
+  OrdenEntity getOrden(int i) {
+    OrdenEntity o = OrdenEntity();
+    o.fromFile(ordenes[i][OrdCamp.orden.name]);
+    return o;
+  }
+  set ordenes(List<Map<String, dynamic>> ordenlst) {
+    _ordenes = ordenlst;
     notifyListeners();
   }
 
@@ -111,9 +123,9 @@ class ItemSelectGlobProvider extends ChangeNotifier {
   }
 
   /// Usada para refrescar el FRM de edicion de la orden y sus piezas
-  PiezasEntity _piezaSelect = PiezasEntity();
-  PiezasEntity get piezaSelect => _piezaSelect;
-  set piezaSelect(PiezasEntity pzas) {
+  PiezasEntity? _piezaSelect;
+  PiezasEntity? get piezaSelect => _piezaSelect;
+  set piezaSelect(PiezasEntity? pzas) {
     _piezaSelect = pzas;
     notifyListeners();
   }

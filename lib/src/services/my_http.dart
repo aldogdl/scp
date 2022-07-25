@@ -63,6 +63,29 @@ class MyHttp {
   }
 
   ///
+  static Future<void> getHarbi(Uri uri) async {
+
+    late http.Response response;
+    try {
+      response = await http.get(uri);
+    } catch (e) {
+      // 
+      if(e.toString().contains('SocketException')) {
+        result['abort'] = true;
+        result['body'] = 'ERROR, El Host ${ uri.host } está sin conexión.';
+      }
+      return;
+    }
+
+    if(response.statusCode == 200) {
+      clean();
+      result = Map<String, dynamic>.from(json.decode(response.body));
+    }else{
+      _drawErrorInConsole(response);
+    }
+  }
+
+  ///
   static Future<void> post(String uri, Map<String, dynamic> data) async {
 
     Map<String, String> headers = {

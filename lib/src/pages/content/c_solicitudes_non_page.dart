@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'widgets/dialog_to_save_asign.dart';
 import '../widgets/instruc_asignar_orden.dart';
 import '../widgets/widgets_utils.dart';
 import '../widgets/my_tool_tip.dart';
@@ -73,7 +74,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     return Row(
       children: [
         _actionsBar(),
-        _lstAvos(),
+        _seccionAvos(),
         Expanded(
           child: Container(
             constraints: BoxConstraints.expand(
@@ -103,10 +104,11 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
         color: const Color.fromARGB(255, 22, 22, 22),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
         children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.1),
           _iconAcc(
             msg: 'Asignar',
             isActive: isActive,
@@ -114,10 +116,10 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
             fnc: () async => await _asignarOrdenTo()
           ),
           _iconAcc(
-            msg: 'Desasiganar',
+            msg: 'Desasignar',
             isActive: isActive,
             icono: Icons.cut_outlined, bg: const Color.fromARGB(255, 117, 8, 0),
-            fnc: () async => await _desasignarOrden(itemProv.idOrdenSelect)
+            fnc: () async => await _desasignarOrden(-1)
           ),
           _iconAcc(
             msg: 'Guardar Cambios',
@@ -165,7 +167,45 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   }
 
   ///
-  Widget _lstAvos() {
+  Widget _chipsIdsHead() {
+
+    return Row(
+      children: [
+        const SizedBox(width: 10),
+        Chip(
+          label: Texto(
+            txt: 'ORDEN ID: ${context.watch<ItemSelectGlobProvider>().idOrdenSelect}',
+            txtC: Colors.white,
+          ),
+          backgroundColor: (itemProv.idOrdenSelect == 0 || itemProv.idOrdenSelect == -1)
+            ? Colors.grey.withOpacity(0.5) : Colors.orange,
+          deleteIcon: const Icon(Icons.close, size: 18, color: Colors.black),
+          visualDensity: VisualDensity.compact,
+          onDeleted: () => setState(() {
+            itemProv.idOrdenSelect = 0;
+          }),
+        ),
+        const Spacer(),
+        Chip(
+          label: Texto(
+            txt: 'AVO ID: $_idAvoSelect',
+            txtC: Colors.white,
+          ),
+          backgroundColor: (_idAvoSelect == 0)
+            ? Colors.grey.withOpacity(0.5) : Colors.red,
+          deleteIcon: const Icon(Icons.close, size: 18, color: Colors.black),
+          visualDensity: VisualDensity.compact,
+          onDeleted: () => setState(() {
+            _idAvoSelect = 0;
+          }),
+        ),
+        const SizedBox(width: 10),
+      ],
+    );
+  }
+
+  ///
+  Widget _seccionAvos() {
 
     return Container(
       width: winCnf.tamMiddle,
@@ -176,20 +216,41 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
         ),
         color: const Color.fromARGB(255, 22, 22, 22),
       ),
-      child: Align(
-        alignment: Alignment.center,
-        child: FutureBuilder(
-          future: _recuperarAvos,
-          builder: (_, AsyncSnapshot snap) {
-            if(snap.connectionState == ConnectionState.done) {
-              if(itemProv.avos.isEmpty) {
-                return _sinData(icono: Icons.people_alt);
-              }
-              return _lstDeAvos();
-            }
-            return _loading();
-          },
-        ),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          _chipsIdsHead(),
+          const Divider(color: Colors.green),
+          ValueListenableBuilder(
+            valueListenable: _totRodsAvo,
+            builder: (_, cant, child) {
+              return Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Texto(
+                    txt: 'Total de Piezas: $cant', isBold: true,
+                    txtC: Colors.blue
+                  ),
+                ),
+              );
+            },
+          ),
+          Expanded(
+            child: FutureBuilder(
+              future: _recuperarAvos,
+              builder: (_, AsyncSnapshot snap) {
+                if(snap.connectionState == ConnectionState.done) {
+                  if(itemProv.avos.isEmpty) {
+                    return _sinData(icono: Icons.people_alt);
+                  }
+                  return _lstDeAvos();
+                }
+                return _loading();
+              },
+            )
+          )
+        ],
       )
     );
   }
@@ -197,34 +258,32 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   ///
   Widget _lstDeAvos() {
 
-    return Center(
-      child: Scrollbar(
+    return Scrollbar(
+      controller: _scrollCtr,
+      radius: const Radius.circular(3),
+      thumbVisibility: true,
+      child: ListView.builder(
+        shrinkWrap: true,
         controller: _scrollCtr,
-        radius: const Radius.circular(3),
-        thumbVisibility: true,
-        child: ListView.builder(
-          shrinkWrap: true,
-          controller: _scrollCtr,
-          physics: const BouncingScrollPhysics(),
-          itemCount: itemProv.avos.length,
-          padding: const EdgeInsets.only(right: 10),
-          itemBuilder: (_, index) {
-            
-            return AbsorbPointer(
-              absorbing: _absClickAvo,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onDoubleTap: () => _seleccionandoAvo(index),
-                  child: Center(
-                    child: _tileAvo(index),
-                  ),
+        physics: const BouncingScrollPhysics(),
+        itemCount: itemProv.avos.length,
+        padding: const EdgeInsets.only(right: 10),
+        itemBuilder: (_, index) {
+          
+          return AbsorbPointer(
+            absorbing: _absClickAvo,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onDoubleTap: () => _seleccionandoAvo(index),
+                child: Center(
+                  child: _tileAvo(index),
                 ),
               ),
-            );
-          }
-        )
-      ),
+            ),
+          );
+        }
+      )
     );
   }
 
@@ -233,60 +292,15 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
     return Column(
       children: [
-        ValueListenableBuilder(
-          valueListenable: _totRodsAvo,
-          builder: (_, cant, child) {
-            return Row(
-              children: [
-                Chip(
-                  label: Texto(
-                    txt: 'ORDEN: ${context.watch<ItemSelectGlobProvider>().idOrdenSelect}',
-                    txtC: Colors.white,
-                  ),
-                  backgroundColor: (itemProv.idOrdenSelect == 0 || itemProv.idOrdenSelect == -1)
-                    ? Colors.grey.withOpacity(0.5) : Colors.orange,
-                  deleteIcon: const Icon(Icons.close, size: 18, color: Colors.black),
-                  visualDensity: VisualDensity.compact,
-                  onDeleted: () => setState(() {
-                    itemProv.idOrdenSelect = 0;
-                  }),
-                ),
-                const SizedBox(width: 10),
-                Chip(
-                  label: Texto(
-                    txt: 'AVO: $_idAvoSelect',
-                    txtC: Colors.white,
-                  ),
-                  backgroundColor: (_idAvoSelect == 0)
-                    ? Colors.grey.withOpacity(0.5) : Colors.red,
-                  deleteIcon: const Icon(Icons.close, size: 18, color: Colors.black),
-                  visualDensity: VisualDensity.compact,
-                  onDeleted: () => setState(() {
-                    _idAvoSelect = 0;
-                  }),
-                ),
-                const Spacer(),
-                Texto(txt: 'Total de Piezas: $cant', isBold: true, txtC: Colors.blue),
-              ],
-            );
-          },
-        ),
-        const Divider(color: Colors.green),
+        _asignadasRecientes(),
         Expanded(
-          child: Column(
-            children: [
-              _asignadasRecientes(),
-              Expanded(
-                child: (_isLoad)
-                ? _loading()
-                : _lstOrdsShare(
-                    ctr: _scrollCtrAsig,
-                    items: (_ordenesAvo.containsKey('$_idAvoSelect'))
-                      ? _ordenesAvo['$_idAvoSelect']! : []
-                  )
-              )
-            ],
-          )
+          child: (_isLoad)
+          ? _loading()
+          : _lstOrdsShare(
+              ctr: _scrollCtrAsig,
+              items: (_ordenesAvo.containsKey('$_idAvoSelect'))
+                ? _ordenesAvo['$_idAvoSelect']! : []
+            )
         )
       ],
     );
@@ -321,9 +335,9 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
           
           if(key == _idAvoSelect) {
             for (var i = 0; i < value.length; i++) {
-              final os = itemProv.ordenes.where((element) => element.id == value[i]).toList();
-              if(os.isNotEmpty) {
-                ords.add(os.first);
+              final os = itemProv.ordenes.indexWhere((e) => e[OrdCamp.orden.name]['o_id'] == value[i]);
+              if(os != -1) {
+                ords.add(itemProv.getOrden(os));
               }
             }
           }
@@ -607,88 +621,21 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     );
   }
 
-  ///
-  Widget _btnAlert({
-    required bool fnc,
-    required String acc,
-    required Color bg
-  }) {
 
-    return ElevatedButton(
-      style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(bg)
-      ),
-      onPressed: () => Navigator.of(context).pop(fnc),
-      child: Texto(txt: acc, isBold: true, isCenter: true, txtC: Colors.white)
-    );
-  }
-
-
-  // ----------------------------CONTROLADOR ----------------------------
+  // ---------------------------- CONTROLADOR ----------------------------
   
-  void _seleccionandoAvo(int index) async {
-    
-    bool resetOrdenToCero = false;
-    _idAvoSelect = itemProv.avos[index].id;
-    _absClickAvo = true;
-    if(_idAvoSelect != 0) {
-
-      await _getOrdenesByAvo();
-
-      // primero revisar si tiene ordenes recientes seleccionadas.
-      if(itemProv.ordenesAsignadas.containsKey(_idAvoSelect)) {
-
-        if(itemProv.idOrdenSelect != 0) {
-          if(!itemProv.ordenesAsignadas[_idAvoSelect]!.contains(itemProv.idOrdenSelect)) {
-            final idOrdenHas = itemProv.ordenesAsignadas[_idAvoSelect]!.first;
-            if(idOrdenHas != -1) {
-              itemProv.idOrdenSelect = idOrdenHas;
-              final ordS = itemProv.ordenes.firstWhere((element) => element.id == itemProv.idOrdenSelect);
-              itemProv.setOrdenEntitySelect(ordS);
-            }else{
-              resetOrdenToCero = true;
-            }
-          }
-        }
-      }else{
-        if(itemProv.ordenesAsignadas.isNotEmpty) {
-          resetOrdenToCero = true;
-        }
-      }
-
-      if(resetOrdenToCero) {
-        itemProv.idOrdenSelect = 0;
-        itemProv.setOrdenEntitySelect(OrdenEntity());
-      }else{
-        if(itemProv.ordenesAsignadas.isNotEmpty) {
-          if(itemProv.idOrdenSelect == 0) {
-            if(itemProv.ordenesAsignadas.containsKey(_idAvoSelect)) {
-              itemProv.idOrdenSelect = itemProv.ordenesAsignadas[_idAvoSelect]!.first;
-              final ordS = itemProv.ordenes.firstWhere((element) => element.id == itemProv.idOrdenSelect);
-              itemProv.setOrdenEntitySelect(ordS);
-            }
-          }
-        }
-      }
-    }
-
-    _absClickAvo = false;
-    setState(() {});
-  }
-
   ///
   Future<void> _getAvosAndFileCentinela() async {
 
     if(!_isInit) {
-      _isInit = true;
       winCnf = context.read<WindowCnfProvider>();
       itemProv = context.read<ItemSelectGlobProvider>();
+      itemProv.avos.clear();
       _centiProv = context.read<CentinelaFileProvider>();
       _sockCenti = SocketCentinela();
       _sockCenti.init(context);
-      itemProv.avos.clear();
     }
-
+    
     if(itemProv.avos.isEmpty) {
       await _contacEm.getAllContacts(tipo: 'anete');
       if(!_contacEm.result['abort']) {
@@ -708,17 +655,88 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     if(_centiProv.centinela.isEmpty) {
       await _sockCenti.getFromFile(globals.ipHarbi);
     }
+
+    Future.delayed(const Duration(milliseconds: 250), (){
+      _isInit = true;
+      itemProv.idOrdenSelect = 0;
+      itemProv.idPzaSelect = 0;
+      itemProv.setOrdenEntitySelect(null);
+      itemProv.piezaSelect = null;
+    });
+  }
+
+  ///
+  void _seleccionandoAvo(int index) async {
+    
+    bool resetOrdenToCero = false;
+    _idAvoSelect = itemProv.avos[index].id;
+    _absClickAvo = true;
+    if(_idAvoSelect != 0) {
+
+      await _getOrdenesByAvo();
+
+      // primero revisar si tiene ordenes recientes seleccionadas.
+      if(itemProv.ordenesAsignadas.containsKey(_idAvoSelect)) {
+
+        if(itemProv.idOrdenSelect != 0) {
+          if(!itemProv.ordenesAsignadas[_idAvoSelect]!.contains(itemProv.idOrdenSelect)) {
+            final idOrdenHas = itemProv.ordenesAsignadas[_idAvoSelect]!.first;
+            if(idOrdenHas != -1) {
+              itemProv.idOrdenSelect = idOrdenHas;
+              final os = itemProv.ordenes.indexWhere((e) => e[OrdCamp.orden.name]['o_id'] == itemProv.idOrdenSelect);
+              if(os != -1) {
+                itemProv.setOrdenEntitySelect(itemProv.getOrden(os));
+              }
+            }else{
+              resetOrdenToCero = true;
+            }
+          }
+        }
+
+      }else{
+        if(itemProv.ordenesAsignadas.isNotEmpty) {
+          resetOrdenToCero = true;
+        }
+      }
+
+      if(resetOrdenToCero) {
+        itemProv.idOrdenSelect = 0;
+        itemProv.setOrdenEntitySelect(null);
+      }else{
+        if(itemProv.ordenesAsignadas.isNotEmpty) {
+          if(itemProv.idOrdenSelect == 0) {
+            if(itemProv.ordenesAsignadas.containsKey(_idAvoSelect)) {
+
+              itemProv.idOrdenSelect = itemProv.ordenesAsignadas[_idAvoSelect]!.first;
+              final os = itemProv.ordenes.indexWhere((e) => e[OrdCamp.orden.name]['o_id'] == itemProv.idOrdenSelect);
+              if(os != -1) {
+                itemProv.setOrdenEntitySelect(itemProv.getOrden(os));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    _absClickAvo = false;
+    setState(() {});
   }
 
   ///
   Future<void> _desasignarOrden(int idOrden) async {
 
-    const msg = 'Estás segur@ de quitar esta orden al Asesor de Ventas OnLine?';
+    String subm = (idOrden == -1) ? 'TODAS LAS ORDENES' : 'esta orden'; 
+    var msg = 'Estás segur@ de quitar $subm al Asesor de Ventas OnLine?';
     bool? acc = await _showAlert(
-      titulo: 'DESASIGNAR ORDEN RECIENTE', msg: msg, onlyAlert: false, withYesOrNot: true
+      titulo: 'DESASIGNAR ORDEN(ES) RECIENTE(S)', msg: msg, onlyAlert: false, withYesOrNot: true
     );
+
     if(acc ?? false) {
-      itemProv.ordenesAsignadasRemove(_idAvoSelect, idOrden);
+      if(idOrden == -1) {
+        itemProv.ordenesAsignadas = {};
+      }else{
+        itemProv.ordenesAsignadasRemove(_idAvoSelect, idOrden);
+      }
       setState(() {});
     }
   }
@@ -802,7 +820,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       );
       acc = (acc == null) ? false : acc;
       if(acc) {
-        msg = 'Espera un momneto, estamos trabajando en ello';
+        msg = 'Espera un momento, estamos trabajando en ello.';
         _showAlert(
           titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg,
           onlyAlert: true, withYesOrNot: false
@@ -838,12 +856,23 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       acc = null;
       acc = await _showDialogToSafe();
       acc = (acc == null) ? false : acc;
-      if(_hasErrorSave && acc) {
-        _guardarAsignacion();
+      if(_hasErrorSave && !acc) {
+        acc = await _showAlert(
+          titulo: '¡Ocurrio un Error! :(',
+          msg: 'Al intentar guardar las asignaciones ocurrio una excepción inesperada.'
+          '\n¿Deseas interntar nuevamente guardar las asignaciones?',
+          withYesOrNot: true,
+          onlyAlert: false,
+          msgOnlyYes: 'INTENTAR'
+        );
+        acc = (acc == null) ? false : acc;
+        if(acc) {
+          _guardarAsignacion();
+        }
       }
       if(!_hasErrorSave && acc) {
         itemProv.idOrdenSelect = 0;
-        itemProv.setOrdenEntitySelect(OrdenEntity());
+        itemProv.setOrdenEntitySelect(null);
         setState((){});
       }
     }
@@ -857,97 +886,27 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Texto(txt: 'GUARDANDO NUEVAS ASIGNACIONES', isBold: true, isCenter: true),
-            const Divider(color: Colors.green),
-            const SizedBox(height: 10),
-            StatefulBuilder(
-              builder: (BuildContext context, StateSetter setState) {
-                return StreamBuilder<String>(
-                  stream: _saving(),
-                  initialData: 'Iniciando...',
-                  builder: (_, AsyncSnapshot<String> snap) {
-
-                    String result = snap.data ?? 'Cargando...';
-                    if(result.startsWith('ERROR')) {
-                      _hasErrorSave = true;
-                    }
-                    if(result.startsWith('ok')) {
-                      Navigator.of(context).pop(true);
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if(!result.startsWith('ERROR'))
-                          const Center(
-                            child: SizedBox(
-                              width: 40, height: 40,
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                        Texto(txt: result, isCenter: true, txtC: Colors.white),
-                        if(result.startsWith('ERROR'))
-                          ...[
-                            const Texto(
-                              txt: 'OCURRIO UN ERROR INESPERADO,\n¿Deseas Intentarlo nuevamente?',
-                              isCenter: true, txtC: Colors.amber,
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _btnAlert(acc: 'NO', bg: Colors.red, fnc: false),
-                                _btnAlert(acc: 'SI', bg: Colors.purple, fnc: true),
-                              ],
-                            )
-                          ]
-                      ],
-                    );
-                  }
-                );
-              }
-            )
-          ],
+        content: DialogToSaveAsign(
+          centiProv: _centiProv,
+          cpushOrden: _cpushOrden,
+          dataSaving: _dataSaving,
+          itemProv: itemProv,
+          ordenesAvo: _ordenesAvo,
+          onFinish: (_) async {
+            final nav = Navigator.of(context);
+            await _getOrdenesByAvo(force: true);
+            setState(() {});
+            nav.pop(true);
+          },
+          onError: (_) async {
+            setState(() {
+              _hasErrorSave = true;
+            });
+            Navigator.of(context).pop(false);
+          }
         ),
       )
     );
-  }
-
-  ///
-  Stream<String> _saving() async* {
-    
-    yield 'Preparando datos...';
-
-    await _centiProv.commit(_cpushOrden, _dataSaving);
-    _centiProv.updateVersion();
-    Future.delayed(const Duration(milliseconds: 500));
-    
-    yield 'Guardando datos en Servidor REMOTO';
-    await _centiProv.push(_cpushOrden, isLocal: false);
-    yield 'Guardando datos en Servidor LOCAL';
-    await _centiProv.push(_cpushOrden, isLocal: true);
-    
-    if(!_centiProv.result['abort']) {
-
-      if(_cpushOrden == CPush.asignacion) {
-        _enviarAbajoLasOrdenesAsignadas();
-        yield 'Limpiando Cache';
-        _limpiandoCache();
-      }
-
-      await _getOrdenesByAvo(force: true);
-      // Limpiamos las ordenes asignadas
-      itemProv.ordenesAsignadas = {};
-      yield 'ok';
-      return;
-    }
-    yield '${_centiProv.result['body']}';
   }
 
   ///
@@ -979,12 +938,12 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     bool okGo = false;
     if(!_ordenesAvo.containsKey(_idAvoSelect) && !force) {
       okGo = true;
-      await _ordsEm.getAllOrdenesByAvo(_idAvoSelect);
+      await _ordsEm.getAllOrdenesByAvoFromServer(_idAvoSelect);
     }
 
     if(force) {
       okGo = true;
-      await _ordsEm.getAllOrdenesByAvo(_idAvoSelect);
+      await _ordsEm.getAllOrdenesByAvoFromServer(_idAvoSelect);
     }
 
     if(okGo) {
@@ -1010,37 +969,5 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     });
   }
 
-  /// Enviamos las ordenes asignadas a la parte inferior de la pantalla
-  void _enviarAbajoLasOrdenesAsignadas() {
 
-    itemProv.ordenesAsignadas.forEach((idAvo, ordenesAsign) {
-
-      // Convertir los ids en Entitys
-      List<OrdenEntity> nords = [];
-      for (var i = 0; i < ordenesAsign.length; i++) {
-        nords.add(
-          itemProv.ordenes.firstWhere((element) => element.id == ordenesAsign[i])
-        );
-      }
-
-      if(_ordenesAvo.containsKey('$idAvo')) {
-        _ordenesAvo['$idAvo']!.insertAll(0, nords);
-      }else{
-        _ordenesAvo.putIfAbsent('$idAvo', () => nords);
-      }
-    });
-  }
-
-  /// Eliminamos las ordenes asignadas tambien en la variable _ordenes.
-  void _limpiandoCache() {
-
-    itemProv.ordenesAsignadas.forEach((idAvo, ordenes) {
-      List<OrdenEntity> lstOld = List<OrdenEntity>.from(itemProv.ordenes);
-      for (var i = 0; i < ordenes.length; i++) {
-        lstOld.removeWhere((element) => element.id == ordenes[i]);
-      }
-      itemProv.ordenes = List<OrdenEntity>.from(lstOld);
-      lstOld = [];
-    });
-  }
 }

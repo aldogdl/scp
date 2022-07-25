@@ -14,6 +14,11 @@ class LoadingMiddle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     
+    String msgT = 'Recuperando $msg';
+    if(msg == 'Piezas') {
+      msgT = 'Actualizando Estatus';
+    }
+    
     return Blur(
       blur: 2.5,
       colorOpacity: 0.1,
@@ -30,7 +35,7 @@ class LoadingMiddle extends StatelessWidget {
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-            child: Texto(txt: 'Recuperando $msg', sz: 12, txtC: Colors.amber),
+            child: Texto(txt: msgT, sz: 12, txtC: Colors.amber),
           )
         ],
       ),

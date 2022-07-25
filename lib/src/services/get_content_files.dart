@@ -96,31 +96,6 @@ class GetContentFile {
     regs.writeAsStringSync(json.encode(users));
   }
 
-  ///
-  static Future<bool> deleteRegOfLogin(String curc) async {
-
-    final pathTo = await GetPaths.getFileByPath('connpass');
-    final regs = File(pathTo);
-    if(regs.existsSync()) {
-
-      Map<String, dynamic> newsRegs = {};
-      final mRegs = Map<String, dynamic>.from( json.decode(regs.readAsStringSync()) );
-      if(mRegs.isNotEmpty){
-        mRegs.forEach((key, value) {
-          if(value['curc'] != curc) {
-            newsRegs.putIfAbsent(key, () => value);
-          }
-        });
-      }
-      if(newsRegs.isNotEmpty) {
-        regs.writeAsStringSync( json.encode(newsRegs) );
-      }
-      return true;
-    }
-    
-    return false;
-  }
-
   /// Cambiar la ip en el archivo local paths
   static Future<void> cambiarIpEnArchivoPath(String nuevaIp) async {
 
@@ -151,6 +126,31 @@ class GetContentFile {
         _globals.ipDbs[baseT] = ipG.toString();
       }
     }
+  }
+
+  ///
+  static Future<bool> deleteRegOfLogin(String curc) async {
+
+    final pathTo = await GetPaths.getFileByPath('connpass');
+    final regs = File(pathTo);
+    if(regs.existsSync()) {
+
+      Map<String, dynamic> newsRegs = {};
+      final mRegs = Map<String, dynamic>.from( json.decode(regs.readAsStringSync()) );
+      if(mRegs.isNotEmpty){
+        mRegs.forEach((key, value) {
+          if(value['curc'] != curc) {
+            newsRegs.putIfAbsent(key, () => value);
+          }
+        });
+      }
+      if(newsRegs.isNotEmpty) {
+        regs.writeAsStringSync( json.encode(newsRegs) );
+      }
+      return true;
+    }
+    
+    return false;
   }
 
   /// Recuperamos a todos los usuarios que se han registrado en esta SCP

@@ -46,6 +46,22 @@ class PiezasEntity {
   }
 
   ///
+  void fromFile(Map<String, dynamic> json, int indexOrden) {
+
+    id = json['id'];
+    est = json['est'];
+    stt = json['stt'];
+    piezaName = json['piezaName'];
+    origen = json['origen'];
+    lado = json['lado'];
+    posicion = json['posicion'];
+    fotos = List<String>.from(json['fotos']);
+    obs = json['obs'];
+    orden = json['orden'];
+    indexOrden = indexOrden;
+  }
+
+  ///
   Map<String, dynamic> toJson() {
 
     return {

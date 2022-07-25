@@ -160,9 +160,12 @@ class _TxtBskOrdenState extends State<TxtBskOrden> {
         
         _msg.value = 'Descargando, espera por favor';
         await _ordenEm.getOrdenById(idOrden);
+
         if(_ordenEm.result['body'].isNotEmpty) {
           _msg.value = 'Listo...';
-          provi.ordenInsert = Map<String, dynamic>.from(_ordenEm.result['body']);
+          final ordenFinded = Map<String, dynamic>.from(_ordenEm.result['body']);
+          print(ordenFinded);
+          
           Future.delayed(const Duration(seconds: 1), (){
             _msg.value = 'Recuperar Orden por ID';
           });

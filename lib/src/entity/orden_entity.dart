@@ -1,3 +1,5 @@
+enum OrdCamp { emisor, isVista, orden, piezas, resps, respToSolz }
+
 class OrdenEntity {
 
   int id = 0;
@@ -40,6 +42,29 @@ class OrdenEntity {
     empresa = data['e_nombre'];
     createdAt = data['o_createdAt']['date'];
     roles = List<String>.from(data['u_roles']);
+  }
+
+  ///
+  void fromFile(Map<String, dynamic> json) {
+
+    id = json['o_id'];
+    mkId = json['mk_id'];
+    mdId = json['md_id'];
+    uId = json['u_id'];
+    eId = json['e_id'];
+    est = json['o_est'];
+    stt = json['o_stt'];
+    anio = json['o_anio'];
+    mkLogo = json['mk_logo'];
+    marca = json['mk_nombre'];
+    modelo = json['md_nombre'];
+    isNac = json['o_isNac'];
+    own = json['u_nombre'];
+    cargo = json['u_cargo'];
+    celular = json['u_celular'];
+    empresa = json['e_nombre'];
+    createdAt = json['o_createdAt'];
+    roles = List<String>.from(json['u_roles']);
   }
 
   ///

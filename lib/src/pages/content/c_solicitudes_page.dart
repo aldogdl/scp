@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:extended_image/extended_image.dart';
+import 'package:scp/src/entity/orden_entity.dart';
 import 'package:scp/src/pages/content/widgets/sin_data.dart';
 import 'package:scp/src/pages/content/widgets/visor_fotos.dart';
 
@@ -414,7 +415,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           icono: Icons.slow_motion_video_sharp,
           icolor: const Color.fromRGBO(221, 221, 221, 1),
           tip: 'Enviar a Cotizar Orden [Ctr+Alt+R]',
-          fnc: () async => await _buscarCotizacion()
+          fnc: () async => await _rastrearCotizaciones()
         ),
         _icoAction(
           icono: Icons.not_interested_outlined,
@@ -571,7 +572,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   }
 
   ///
-  Future<void> _buscarCotizacion() async {
+  Future<void> _rastrearCotizaciones() async {
 
     int codeStatus = 1;
 
@@ -786,19 +787,33 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     scm.filter['receivers'] = [];
 
     yield 'Enviando y Actualizando datos...';
-    final oStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
-    final pStt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
+    final stt = await EstStt.getFirstSttByEstBusqueda(itemProv.ordenEntitySelect!.status());
 
     Map<String, dynamic> toSendData = {
       'verC': DateTime.now().millisecondsSinceEpoch,
       'camp': scm.toJson(),  
-      'ordS': {'est': oStt['est'], 'stt': oStt['stt']},
-      'pzS' : {'est': pStt['est'],'stt': pStt['stt']}
+      'ordS': {'est': stt['est'], 'stt': stt['stt']},
+      'pzS' : {'est': stt['est'],'stt': stt['stt']}
     };
 
     await _scmEm.setCampaingInDb(toSendData, isLocal: true);
+
     if(!_scmEm.result['abort']) {
-      await _scmEm.setCampaingInDb(toSendData, isLocal: false);
+
+      int inxOrd = itemProv.ordenes.indexWhere(
+        (e) => e[OrdCamp.orden]['o_id'] == itemProv.ordenEntitySelect!.id
+      );
+
+      if(inxOrd != -1) {
+        // Cambiando los status de las ordenes
+        itemProv.ordenes[inxOrd][OrdCamp.orden.name]['o_est'] = stt['est'];
+        itemProv.ordenes[inxOrd][OrdCamp.orden.name]['o_stt'] = stt['stt'];
+        stt['orden'] = itemProv.ordenEntitySelect!.id;
+        stt['version'] = DateTime.now().millisecondsSinceEpoch;
+        await _ordenEm.changeSttToServers(stt);
+        await _ordenEm.setOrdenAsignadas(['${stt['orden']}'], globals.user.id);
+      }
+
       yield 'ok';
     }else{
       yield '${_scmEm.result['body']}';

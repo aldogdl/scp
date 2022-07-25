@@ -15,7 +15,8 @@ class PiezasRepository {
 
     String uri = await GetPaths.getUri('get_piezas_by_orden', isLocal: isLocal);
     await MyHttp.get('$uri$id/');
-    result = MyHttp.result;
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
   }
   
 }

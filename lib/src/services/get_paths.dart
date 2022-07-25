@@ -212,10 +212,10 @@ class GetPaths {
   }
 
   ///
-  static Future<String> getApiHarbi(String uri, String ipHarbi) async {
+  static Future<Uri> getUriApiHarbi(String uri, String query) async {
 
     Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
-    return 'http://$ipHarbi:${uriPath['port_harbi']}/${uriPath['uri']}';
+    return Uri.http('${uriPath['ip_harbi']}:${uriPath['port_harbi']}', '${uriPath['uri']}/$query');
   }
 
   ///

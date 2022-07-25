@@ -43,12 +43,12 @@ class StatusBarr extends StatelessWidget {
               if(e.containsKey('cambios')) {
                 final cambios = List<String>.from(e['cambios']);
                 for (var i = 0; i < cambios.length; i++) {
-                  if(cambios[i].endsWith('[I]')) {
+                  if(cambios[i].endsWith('[IN]')) {
                     showConcole = true;
                     player.play();
                     break;
                   }
-                  if(cambios[i].endsWith('[IN]')) {
+                  if(cambios[i].endsWith('[NT]')) {
                     showNotif = true;
                     break;
                   }
