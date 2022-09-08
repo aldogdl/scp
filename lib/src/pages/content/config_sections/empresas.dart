@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import 'widgets/decoration_field.dart';
 import 'widgets/lst_contactos.dart';
 import '../../widgets/texto.dart';
-import '../../../config/sng_manager.dart';
-import '../../../vars/globals.dart';
 import '../../../entity/contacto_entity.dart';
 import '../../../entity/empres_entity.dart';
 import '../../../providers/socket_conn.dart';
@@ -21,7 +19,6 @@ class Empresas extends StatefulWidget {
 
 class _EmpresasState extends State<Empresas> {
 
-  final _globals = getSngOf<Globals>();
   final ContactsRepository _contacEm = ContactsRepository();
 
   final GlobalKey<FormState> _frmKey = GlobalKey<FormState>();
