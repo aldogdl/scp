@@ -11,30 +11,37 @@ class AldoEntity {
   // Los campos requeridos para armar el request
 
   // El Id interno de la pieza
-  // String id_articulogrupo = '';
-  // // La marca de Auto
-  // String id_articulotipo = '';
+  String type = '';
+  // La marca de Auto
+  String brand = '';
   // El modelo de Auto
   String model = '';
   // El año de Auto
   String year = '';
 
-  // El año de Auto
+  // El Id interno de la pieza
   String codeSap = '';
-
 
   String getBaseCatalogo() => '$uriBase$uriSearch';
   String getBaseModelos() => '$uriBase$uriSearch$uriMod';
 
   ///
-  String createQuery(Map<String, dynamic> search) {
+  void fromMap(Map<String, dynamic> search) {
 
-    // http://www.aldoautopartes.com/pi_resultados.jsp?id_articulogrupo=228&id_articulotipo=968
-    // type  = (search.containsKey('pieza')) ? search['pieza']['id'] : '';
-    // brand = (search.containsKey('marca')) ? search['marca']['id'] : '';
-    // model = (search.containsKey('modelo')) ? search['modelo']['id'] : '';
-    // year  = (search.containsKey('anio')) ? search['anio']['id'] : '';
-    final base = getBaseCatalogo();
-    return ''; // '$base?type=$type&brand=$brand&model=mid_$model&year=$year&btn_search=Buscar';
+    type  = (search.containsKey('pieza')) ? search['pieza']['id'] : '';
+    brand = (search.containsKey('marca')) ? search['marca']['id'] : '';
+    model = (search.containsKey('modelo')) ? search['modelo']['id'] : '';
+    year  = (search.containsKey('anio')) ? search['anio']['id'] : '';
+  }
+
+  /// http://www.aldoautopartes.com/pi_resultados.jsp?id_articulogrupo=228&id_articulotipo=968
+  Map<String, dynamic> getQuery() {
+
+    return {
+      'uri' : getBaseCatalogo(),
+      'data': {
+        '_action': 1, 'id_marca': brand, 'id_modelo': model, 'anio': year
+      }
+    };
   }
 }

@@ -71,7 +71,6 @@ class RadecRepository {
 
     List<Map<String, String>> estruct = [];
 
-    final entity = RadecEntity();
     final body = await getContentBy(entity.getBaseCatalogo());
 
     if(body != null) {

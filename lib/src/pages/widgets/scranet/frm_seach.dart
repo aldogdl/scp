@@ -1,7 +1,6 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 
-import '../../../services/scranet/build_data_scrap.dart';
 import '../../../services/scranet/system_file_scrap.dart';
 import '../texto.dart';
 
@@ -59,7 +58,7 @@ class _FrmSearchState extends State<FrmSearch> {
   Widget build(BuildContext context) {
 
     return StreamBuilder<String>(
-      stream: _checkSystem(),
+      stream: _hidratarFrm(),
       initialData: 'Checando Sistema',
       builder: (_, AsyncSnapshot<String> snap) {
 
@@ -310,63 +309,7 @@ class _FrmSearchState extends State<FrmSearch> {
   }
 
   ///
-  Stream<String> _checkSystem() async* {
-
-    String craw = 'radec';
-    String res = await SystemFileScrap.chekSystem(craw: craw);
-
-    if(res != 'ok') {
-
-      yield 'Hola, preparando todo para ti.';
-      await SystemFileScrap.buildFileSystem();
-      await Future.delayed(const Duration(milliseconds: 1500));
-
-      yield 'Recuperando Nombres de Piezas de ${craw.toUpperCase()}';
-      await Future.delayed(const Duration(milliseconds: 250));
-      await BuildDataScrap.getPiezasOf(craw);
-
-      yield 'Recuperando Marcas de ${craw.toUpperCase()}';
-      await Future.delayed(const Duration(milliseconds: 250));
-      await BuildDataScrap.getMarcasOf(craw);
-
-      final marcasW = await SystemFileScrap.getAllMarcasBy(craw);
-      Map<String, dynamic> models = {};
-
-      for (var i = 0; i < marcasW.length; i++) {
-
-        yield 'Recuperando Modelos de ${marcasW[i]['value']}';
-        await Future.delayed(const Duration(milliseconds: 250));
-        final clave = marcasW[i]['id'].toString().toUpperCase().trim();
-        if(clave.isEmpty) {
-          if(clave.contains('TODOS')) {
-            continue;
-          }
-        }
-
-        final modsWeb = await BuildDataScrap.getModelosOf(craw, clave);
-        if(modsWeb.isNotEmpty) {
-          List<Map<String, dynamic>> listos = [];
-          modsWeb.forEach((key, value) {
-            String checkVal = value.toString().trim();
-            if(checkVal.isNotEmpty) {
-              if(!checkVal.contains('TODOS')) {
-                listos.add({
-                  'id': key.toUpperCase().trim(),
-                  'value': checkVal.toUpperCase().trim()
-                });
-              }
-            }
-          });
-          
-          models.putIfAbsent(clave, () => listos);
-          await Future.delayed(const Duration(milliseconds: 2000));
-        }
-      }
-
-      if(models.isNotEmpty) {
-        SystemFileScrap.setModelosBy(craw, models);
-      }
-    }
+  Stream<String> _hidratarFrm() async* {
 
     yield 'Recuperando Piezas';
     await Future.delayed(const Duration(milliseconds: 250));

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../widgets/scranet/build_data_gral.dart';
 import '../../providers/socket_conn.dart';
 import '../../services/get_paths.dart';
 import '../../providers/pages_provider.dart';
@@ -29,6 +30,7 @@ class _SplasPageState extends State<SplasPage> {
       conn = context.read<SocketConn>();
     }
 
+    
     return Scaffold(
       body: Center(
         child: StreamBuilder<String>(
@@ -36,40 +38,56 @@ class _SplasPageState extends State<SplasPage> {
           initialData: 'Iniciando tu SCP',
           builder: (_, AsyncSnapshot<String> snap) {
 
-            return SizedBox.expand(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  const Text(
-                    'Hola',
-                    textScaleFactor: 1,
-                    style: TextStyle(
-                      fontSize: 50,
-                      fontWeight: FontWeight.w200,
-                      color: Colors.white
-                    ),
-                  ),
-                  Text(
-                    snap.data ?? 'Configurando...',
-                    textScaleFactor: 1,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white.withOpacity(0.7)
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if(snap.data != null && snap.data!.startsWith('ERR'))
-                    IconButton(
-                      onPressed: () => setState(() {}),
-                      icon: Icon(Icons.refresh, size: 35, color: Colors.white.withOpacity(0.5))
-                    )
-                ],
-              ),
-            );
+            if(snap.hasData) {
+              if(snap.data!.isNotEmpty) {
+                if(snap.data == '...') {
+                  return BuildDataGral(
+                    onFinish: (_) => prov.isSplash = false
+                  );
+                }
+              }
+            }
+
+            return _initSystem(snap.data);
           },
         ),
+      ),
+    );
+  }
+
+  ///
+  Widget _initSystem(String? snap) {
+
+    return SizedBox.expand(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          const Text(
+            'Hola',
+            textScaleFactor: 1,
+            style: TextStyle(
+              fontSize: 50,
+              fontWeight: FontWeight.w200,
+              color: Colors.white
+            ),
+          ),
+          Text(
+            snap ?? 'Configurando...',
+            textScaleFactor: 1,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.white.withOpacity(0.7)
+            ),
+          ),
+          const SizedBox(height: 20),
+          if(snap != null && snap.startsWith('ERR'))
+            IconButton(
+              onPressed: () => setState(() {}),
+              icon: Icon(Icons.refresh, size: 35, color: Colors.white.withOpacity(0.5))
+            )
+        ],
       ),
     );
   }
@@ -111,11 +129,23 @@ class _SplasPageState extends State<SplasPage> {
     yield 'Recuperando Datos [CENTINELA]';
     await conn.getDataFixed('centinela');
 
-    yield 'Sistema de Archivos Scraping';
+    yield 'Sistema de Archivos ScraNet';
     await SystemFileScrap.buildFileSystem();
-
+    yield 'Revisando datos principales [ScraNet]';
+    String res = await SystemFileScrap.chekSystem(craw: 'radec');
+    if(res != 'ok') {
+      yield '...';
+      return;
+    }
+    yield 'Datos de Proveedor Aldo-[ScraNet]';
+    res = await SystemFileScrap.chekSystem(craw: 'aldo');
+    // if(res != 'ok') {
+    //   yield '...';
+    //   return;
+    // }
     yield 'Comencemos...';
     await Future.delayed(const Duration(milliseconds: 500));
     prov.isSplash = false;
   }
+  
 }
