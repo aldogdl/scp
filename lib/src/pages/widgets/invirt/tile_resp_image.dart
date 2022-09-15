@@ -43,8 +43,10 @@ class TileRespImage extends StatelessWidget {
     String por = '...';
     String porTip = '...';
     if(cot.containsKey('cotz')) {
-      por = cot['cotz']['e_nombre'];
-      porTip = cot['cotz']['c_nombre'];
+      if(cot['cotz'].isNotEmpty) {
+        por = cot['cotz']['e_nombre'];
+        porTip = cot['cotz']['c_nombre'];
+      }
     }
 
     return Row(

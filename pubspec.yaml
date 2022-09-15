@@ -19,8 +19,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  fuzzywuzzy: ^0.2.0
   get_it: ^7.2.0
   google_fonts: ^3.0.1
+  html: ^0.15.0
   http: ^0.13.5
   intl: ^0.17.0
   just_audio: ^0.9.28
@@ -29,6 +31,8 @@ dependencies:
   path: ^1.8.2
   path_provider: ^2.0.11
   provider: ^6.0.3
+  string_similarity: ^2.0.0
+  url_launcher: ^6.1.5
   web_socket_channel: ^2.2.0
 
 dev_dependencies:

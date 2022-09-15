@@ -111,6 +111,15 @@ class Home extends StatelessWidget {
 
     return Row(
       children: [
+        const Expanded(
+          flex: 1,
+          child: Center(
+            child: Image(
+                image: AssetImage('assets/logo_1024.png'),
+              ),
+          ),
+        ),
+        const SizedBox(width: 20),
         Expanded(
           flex: 1,
           child: ListView.builder(
@@ -129,7 +138,7 @@ class Home extends StatelessWidget {
               index, datosDer[index]['c'], datosDer[index]['v']
             ),
           )
-        )
+        ),
       ],
     );
   }
@@ -153,6 +162,5 @@ class Home extends StatelessWidget {
       )
     );
   }
-
 
 }

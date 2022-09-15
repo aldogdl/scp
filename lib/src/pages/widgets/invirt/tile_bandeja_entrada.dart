@@ -92,9 +92,10 @@ class _TileBandejaEntradaState extends State<TileBandejaEntrada> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
+          
           TileTituloOrden(
-            marca: '', modelo: dataOrd['mod'], anio: '${dataOrd['anio']}',
+            marca: '> ${dataOrd['mrk']}', modelo: dataOrd['mod'],
+            anio: '${dataOrd['anio']}',
             nResp: 0, nOrd: dataOrd['id'], active: false,
             solicitante: dataOrd['sol'], created: dataOrd['created'],
             nPzas: dataOrd['nPzas'],

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/socket_conn.dart';
 import '../../services/get_paths.dart';
 import '../../providers/pages_provider.dart';
+import '../../services/scranet/system_file_scrap.dart';
 
 class SplasPage extends StatefulWidget {
 
@@ -109,6 +110,9 @@ class _SplasPageState extends State<SplasPage> {
 
     yield 'Recuperando Datos [CENTINELA]';
     await conn.getDataFixed('centinela');
+
+    yield 'Sistema de Archivos Scraping';
+    await SystemFileScrap.buildFileSystem();
 
     yield 'Comencemos...';
     await Future.delayed(const Duration(milliseconds: 500));

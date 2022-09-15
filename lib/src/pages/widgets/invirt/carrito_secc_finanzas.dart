@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/providers/invirt_provider.dart';
 
-import '../../../services/inventario_service.dart';
 import '../texto.dart';
+import '../scranet/dialog_genericas.dart';
+import '../../../providers/invirt_provider.dart';
+import '../../../services/inventario_service.dart';
 
 class CarritoSeccFinanzas extends StatefulWidget {
   const CarritoSeccFinanzas({Key? key}) : super(key: key);
@@ -97,6 +98,20 @@ class _CarritoSeccFinanzasState extends State<CarritoSeccFinanzas> {
             ),
             onPressed: (){},
             child: const Texto(txt: 'Enviar al Cliente', txtC: Colors.white)
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Texto( txt: 'Agregar Genericas' ),
+              IconButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(Colors.red)
+                ),
+                onPressed: () async => await _dialogGenericas(),
+                icon: const Icon(Icons.add)
+              )
+            ],
           )
         ],
       ),
@@ -267,5 +282,18 @@ class _CarritoSeccFinanzasState extends State<CarritoSeccFinanzas> {
     if(mounted) {
       Future.microtask(() => setState(() {}));
     }
+  }
+
+  Future<void> _dialogGenericas() async {
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return const AlertDialog(
+          contentPadding: EdgeInsets.all(0),
+          content: DialogGenericas(),
+        );
+      }
+    );
   }
 }

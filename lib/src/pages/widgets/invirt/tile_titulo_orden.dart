@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:scp/src/pages/widgets/my_tool_tip.dart';
 
 import '../texto.dart';
 
@@ -46,16 +47,24 @@ class TileTituloOrden extends StatelessWidget {
 
     double valOp = 0.55;
 
+    Widget wMd = Texto(
+      txt: modelo,
+      txtC: (active) ? Colors.green : Colors.green.withOpacity(valOp),
+      sz: 15, isBold: true
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Texto(
-              txt: modelo,
-              txtC: (active) ? Colors.green : Colors.green.withOpacity(valOp),
-              sz: 15, isBold: true
-            ),
+            if(marca.startsWith('>')) 
+              MyToolTip(
+                msg: marca,
+                child: wMd
+              )
+            else
+              wMd,
             _sz(5),
             Texto(
               txt: anio,
@@ -63,7 +72,8 @@ class TileTituloOrden extends StatelessWidget {
               sz: 15
             ),
             _sz(5),
-            Texto(txt: marca, txtC: Colors.grey, sz: 15),
+            if(!marca.startsWith('>'))
+              Texto(txt: marca, txtC: Colors.grey, sz: 15),
             const Spacer(),
             if(nPzas != 0)
               ...[

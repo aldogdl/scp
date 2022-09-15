@@ -69,7 +69,13 @@ class _TilePzaState extends State<TilePza> {
   ///
   Widget _tileResp(Map<String, dynamic> rsp) {
 
-    String label = rsp.containsKey('cotz') ? rsp['cotz']['c_nombre'] : 'Desconocido...';
+    String label = 'Desconocido...';
+    if(rsp.containsKey('cotz')) {
+      if(rsp['cotz'].isNotEmpty) {
+        label = rsp['cotz']['c_nombre'];
+      }
+    }
+
     label = (label.length > 20) ? '${label.substring(0, 20)}...' : label;
 
     return Padding(

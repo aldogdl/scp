@@ -41,6 +41,10 @@ class InventarioInjectService {
       return [];
     }
 
+    if(pzasAndResps.isNotEmpty) {
+      if(pzasAndResps.first.isEmpty) { return []; }
+    }
+
     // Tomamos solo los nombres de los archivos del resultado
     List<String> files = [];
     if(pzasAndResps.isNotEmpty) {

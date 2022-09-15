@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:extended_image/extended_image.dart';
-import 'package:scp/src/providers/pages_provider.dart';
+import 'package:scp/src/services/scranet/pza_simil.dart';
+import 'package:scp/src/services/scranet/system_file_scrap.dart';
 
 import 'widgets/data_basic_pza.dart';
 import 'widgets/dialog_rastrear_cot.dart';
@@ -13,6 +14,7 @@ import '../widgets/pieza_tile.dart';
 import '../widgets/texto.dart';
 import '../../config/sng_manager.dart';
 import '../../entity/piezas_entity.dart';
+import '../../providers/pages_provider.dart';
 import '../../providers/items_selects_glob.dart';
 import '../../providers/window_cnf_provider.dart';
 import '../../vars/intents/show_action_main.dart';
@@ -45,6 +47,8 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   final double minScale = 0.03;
   final double defScale = 0.1;
   final double maxScale = 0.6;
+
+  List<String> _piezasCom = [];
 
   int calls = 0;
   bool _isInit = false;
@@ -177,6 +181,7 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
           builder: (_, idP, __) => FutureBuilder(
             future: _getDataPiezasById(),
             builder: (_, AsyncSnapshot snapDataPza) {
+
               if(snapDataPza.connectionState == ConnectionState.done) {
                 if(snapDataPza.hasData) {
                   return _dataPza(snapDataPza.data);
@@ -568,7 +573,27 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
   Future<PiezasEntity?> _getDataPiezasById() async {
 
     final data = itemProv.piezas.where((e) => e.id == itemProv.idPzaSelect);
+
     if(data.isNotEmpty) {
+
+      if(_piezasCom.isEmpty) {
+        _piezasCom = SystemFileScrap.getPiezasToList();
+      }
+
+      if(_piezasCom.isNotEmpty) {
+        print(_piezasCom);
+        print(data.first.piezaName);
+        final res = PzaSimil.esTo('LADO', _piezasCom);
+        // final res = PzaSimil.esTo(data.first.piezaName, _piezasCom);
+        if(res == null) {
+          print('peligro');
+        }else{
+          if(res.score < 100) {
+            
+          }
+          print(res.toString());
+        }
+      }
       return data.first;
     }
     return null;

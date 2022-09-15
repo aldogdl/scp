@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/providers/invirt_provider.dart';
-import 'package:scp/src/providers/socket_conn.dart';
 
 import '../widgets/texto.dart';
-import '../../config/sng_manager.dart';
-import '../../providers/pages_provider.dart';
-import '../../services/get_content_files.dart';
-import '../../vars/globals.dart';
 import '../widgets/widgets_utils.dart';
+import '../../config/sng_manager.dart';
+import '../../services/get_content_files.dart';
+import '../../providers/pages_provider.dart';
+import '../../providers/socket_conn.dart';
+import '../../providers/invirt_provider.dart';
+import '../../vars/globals.dart';
 
 class ConfigPage extends StatefulWidget {
 
@@ -82,11 +82,11 @@ class _ConfigPageState extends State<ConfigPage> {
             s10,
             const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
             s10,
-            _iteMenu(context, icon: Icons.not_listed_location_outlined, label: 'ASIGANAR Ordenes', secc: 'soliNon'),
+            _iteMenu(context, icon: Icons.not_listed_location_outlined, label: 'asiganar Nuevas ORDENES', secc: 'soliNon'),
             s10,
-            _iteMenu(context, icon: Icons.business, label: 'Empresas y Miembros', secc: 'empresas'),
+            _iteMenu(context, icon: Icons.business, label: 'Empresas y Cotizadores', secc: 'empresas'),
             s10,
-            _iteMenu(context, icon: Icons.calculate_rounded, label: 'Gestión COTIZADORES', secc: 'gestCotz'),
+            _iteMenu(context, icon: Icons.calculate_rounded, label: 'Gestión Cotizadores', secc: 'gestCotz'),
             s10,
             _iteMenu(context, icon: Icons.account_circle_outlined, label: 'Miembros Administrativos', secc: 'admin_user'),
             s10,

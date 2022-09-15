@@ -114,10 +114,10 @@ class _GestCotizadoresState extends State<GestCotizadores> {
               }
             }
           ),
-          const SizedBox(width: 5),
+          const Spacer(),
           const Texto(txt: 'Totales:'),
           const SizedBox(width: 5),
-          const Texto(txt: 'Contactos: ', sz: 14,),
+          const Texto(txt: 'Contactos: ', sz: 14),
           ValueListenableBuilder(
             valueListenable: _cantTo,
             builder: (_, val, __) {
@@ -125,14 +125,14 @@ class _GestCotizadoresState extends State<GestCotizadores> {
             }
           ),
           const SizedBox(width: 20),
-          const Texto(txt: 'Seleccionados: ', sz: 14,),
+          const Texto(txt: 'Seleccionados: ', sz: 14),
           ValueListenableBuilder(
             valueListenable: _cantSe,
             builder: (_, val, __) {
               return Texto(txt: '$val', sz: 15, txtC: Colors.white, isBold: false);
             }
           ),
-          const Spacer(),
+          const SizedBox(width: 30),
           TextButton.icon(
             style: ButtonStyle(
               padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
@@ -255,6 +255,12 @@ class _GestCotizadoresState extends State<GestCotizadores> {
   Widget _lst() {
 
     indice = 0;
+    final colsSize = <double>[1,10,170,150,64,80,25];
+    Map<int, FixedColumnWidth> cols = {};
+    for (var i = 0; i < colsSize.length; i++) {
+      cols.putIfAbsent(i, () => FixedColumnWidth(colsSize[i]));
+    }
+
     return Scrollbar(
       controller: _scrollCtr,
       thumbVisibility: true,
@@ -267,32 +273,13 @@ class _GestCotizadoresState extends State<GestCotizadores> {
           physics: const BouncingScrollPhysics(),
           child: Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            columnWidths: const <int, TableColumnWidth>{
-              0: FixedColumnWidth(0),
-              1: FixedColumnWidth(10),
-              2: FixedColumnWidth(150),
-              3: FixedColumnWidth(110),
-              4: FixedColumnWidth(64),
-              5: FixedColumnWidth(80),
-              6: FixedColumnWidth(25),
-            },
-            children: _items.contacts.map((e) => _tileContact(e)).toList()
+            columnWidths: cols,
+            children: _items.contacts.map((e) => _tileContact(e) ).toList()
           ),
         ),
       )
     );
     
-  }
-
-  ///
-  Widget _loading() {
-
-    return const Center(
-      child: SizedBox(
-        height: 40, width: 40,
-        child: CircularProgressIndicator(),
-      ),
-    );
   }
 
   ///
@@ -304,29 +291,29 @@ class _GestCotizadoresState extends State<GestCotizadores> {
         color: (indice.isEven) ? Colors.black.withOpacity(0.2) : Colors.transparent
       ),
       children: <Widget>[
-        Texto(txt: '$indice'),
         Checkbox(
-            key: Key('$indice'),
-            checkColor: Colors.white,
-            activeColor: const Color.fromARGB(255, 33, 33, 33),
-            value: _idsSelected.contains(contact.id),
-            onChanged: (bool? val){
-              if(val != null) {
-                if(val) {
-                  if(!_idsSelected.contains(contact.id)) {
-                    _idsSelected.add(contact.id);
-                  }
-                }else{
-                  _idsSelected.remove(contact.id);
+          key: Key('$indice'),
+          checkColor: Colors.white,
+          activeColor: const Color.fromARGB(255, 33, 33, 33),
+          value: _idsSelected.contains(contact.id),
+          onChanged: (bool? val){
+            if(val != null) {
+              if(val) {
+                if(!_idsSelected.contains(contact.id)) {
+                  _idsSelected.add(contact.id);
                 }
+              }else{
+                _idsSelected.remove(contact.id);
               }
-              setState(() {
-                _cantSe.value = _idsSelected.length;
-              });
             }
-          ),
+            setState(() {
+              _cantSe.value = _idsSelected.length;
+            });
+          }
+        ),
+        Texto(txt: '$indice'),
         Texto(txt: contact.nombre, width: 20),
-        Texto(txt: contact.nomEmp, width: 13, txtC: Colors.white.withOpacity(0.75)),
+        Texto(txt: contact.nomEmp, width: 20, txtC: Colors.white.withOpacity(0.75)),
         Texto(txt: contact.celular),
         Texto(txt: contact.curc, txtC: Colors.white.withOpacity(0.75)),
         IconButton(
@@ -363,24 +350,30 @@ class _GestCotizadoresState extends State<GestCotizadores> {
 
     _items.contactsOfNotified = [];
     await _contacEm.getAllCotizadores();
-    
     List<ContacsEntity> lsR = [];
+
     if(!_contacEm.result['abort']) {
       if(_contacEm.result['body'].isNotEmpty) {
         final lista = List<Map<String, dynamic>>.from(_contacEm.result['body']);
+        _contacEm.clear();
+
         for (var i = 0; i < lista.length; i++) {
           var ct = ContacsEntity();
           ct.fromServer(lista[i]);
-          _idsSelected.add(ct.id);
-          _contacEm.clear();
-          lsR.add(ct);
+          if(!_idsSelected.contains(ct.id)) {
+            _idsSelected.add(ct.id);
+          }
+          final has = lsR.where((element) => element.id == ct.id);
+          if(has.isEmpty) {
+            lsR.add(ct);
+          }
         }
       }
     }
 
-    Future.delayed(const Duration(milliseconds: 500), (){
+    Future.microtask((){
       _items.contacts = List<ContacsEntity>.from(lsR);
-      _cantTo.value = _items.contacts.length;
+      _cantTo.value = _idsSelected.length;
       lsR = [];
       if(_idsSelected.isNotEmpty) {
         _isSelecAll = true;
@@ -389,6 +382,17 @@ class _GestCotizadoresState extends State<GestCotizadores> {
         _isReloding = false;
       });
     });
+  }
+
+  ///
+  Widget _loading() {
+
+    return const Center(
+      child: SizedBox(
+        height: 40, width: 40,
+        child: CircularProgressIndicator(),
+      ),
+    );
   }
 
 }

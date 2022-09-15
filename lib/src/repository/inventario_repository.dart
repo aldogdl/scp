@@ -490,6 +490,7 @@ class InventarioRepository {
       var resultado = {
         'id':elMap[OrdCamp.orden.name]['o_id'],
         'mod': elMap[OrdCamp.orden.name]['md_nombre'],
+        'mrk': elMap[OrdCamp.orden.name]['mk_nombre'],
         'anio': elMap[OrdCamp.orden.name]['o_anio'],
         'nPzas': elMap[OrdCamp.metrik.name][Mtrik.pzas.name],
         'sol': elMap[OrdCamp.orden.name]['e_nombre'],
@@ -709,7 +710,7 @@ class InventarioRepository {
   Map<String, dynamic> schemaBandeja() {
 
     return {
-      'id':0, 'mod': 'MODELO', 'anio': '0000',
+      'id':0, 'mod': 'MODELO', 'mrk': 'MARCA', 'anio': '0000',
       'nPzas':0, 'solNom':'DESCONOCIDO', 'sol': 'SOLICITANTE EMPRESA', 'solId':0,
       'created': DateTime.now().toIso8601String(),
     };
