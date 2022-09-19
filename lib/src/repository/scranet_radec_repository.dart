@@ -1,14 +1,14 @@
 import 'dart:convert';
-import 'package:html/dom.dart' as dom;
+import 'package:html/dom.dart' as doc;
 import 'package:http/http.dart' as http;
 
-import '../entity/aldo_entity.dart';
+import '../entity/radec_entity.dart';
 import '../services/scranet/system_file_scrap.dart';
 
-class RadecRepository { 
+class ScranetRadecRepository { 
 
-  final entity = AldoEntity();
-  final className = 'aldo';
+  final entity = RadecEntity();
+  final className = 'radec';
   
   ///
   Future<List<Map<String, dynamic>>> searchAutopartes(String query) async {
@@ -57,31 +57,45 @@ class RadecRepository {
   }
 
   /// Recuperamos el html de la pagina indicada
-  Future<dom.Document?> getContentBy(String uri) async {
+  Future<doc.Document?> getContentBy(String uri) async {
 
-    http.Response res = await http.get(Uri.parse(uri));
+    late http.Response res;
+    try {
+      res = await http.get(Uri.parse(uri));
+    } catch (_) {
+      return null;
+    }
+
     if(res.statusCode == 200) {
-      return dom.Document.html(res.body);
+      return doc.Document.html(res.body);
     }
     return null;
   }
 
   /// Recuperamos el html de la pagina indicada
-  Future<dom.Document?> postContentBy() async {
+  Future<List<Map<String, dynamic>>> getAllElement(String tag) async {
 
-    final query = entity.getQuery();
-    http.Response res = await http.post(
-      Uri.parse(query['uri']),
-      body: json.encode(query['data']),
-      headers: {
-        'Content-type': 'application/json',
-        'Accept': 'application/json, text/plain, */*'
+    List<Map<String, String>> estruct = [];
+
+    final body = await getContentBy(entity.getBaseCatalogo());
+
+    if(body != null) {
+      final dom = body.querySelectorAll(tag);
+      if(dom.isNotEmpty) {
+        for (var i = 0; i < dom.length; i++) {
+
+          final idV = dom[i].attributes['value'].toString().trim();
+          final valueR = dom[i].innerHtml.toString().trim();
+          if(idV.isNotEmpty && valueR.isNotEmpty) {
+            if(!idV.contains('TODOS') && !valueR.contains('TODOS')) {
+              estruct.add({'id': idV, 'value': valueR});
+            }
+          }
+        }
       }
-    );
-    if(res.statusCode == 200) {
-      return dom.Document.html(res.body);
     }
-    return null;
+
+    return estruct;
   }
 
   /// Recuperamos el html de la pagina indicada
@@ -99,34 +113,9 @@ class RadecRepository {
   }
 
   /// Recuperamos todas las piezas de la web de Radec
-  Future<void> getAllPiezas(Map<String, dynamic> search) async {
+  Future<void> getAllPiezas() async {
 
-    entity.fromMap(search);
-    List<Map<String, String>> estruct = [];
-
-    final body = await postContentBy();
-
-    if(body != null) {
-
-      final dom = body.querySelectorAll(
-        'body>table:nth-child(3)>tbody>tr>td:nth-child(2)>table>tbody'
-      );
-
-      if(dom.isNotEmpty) {
-
-        for (var i = 0; i < dom.length; i++) {
-
-          final idV = dom[i].attributes['value'].toString().trim();
-          final valueR = dom[i].innerHtml.toString().trim();
-          if(idV.isNotEmpty && valueR.isNotEmpty) {
-            if(!idV.contains('TODOS') && !valueR.contains('TODOS')) {
-              estruct.add({'id': idV, 'value': valueR});
-            }
-          }
-        }
-      }
-    }
-    
+    final estruct = await getAllElement('#product_type_term > option');
     if(estruct.isNotEmpty) {
       await SystemFileScrap.setPiezasBy(className, estruct);
     }
@@ -135,7 +124,7 @@ class RadecRepository {
   /// Recuperamos todas las marcas de la web de Radec
   Future<void> getAllMarcas() async {
 
-    final estruct = <Map<String, dynamic>>[];
+    final estruct = await getAllElement('#product_brand_term > option');
     if(estruct.isNotEmpty) {
       await SystemFileScrap.setMarcasBy(className, estruct);
     }

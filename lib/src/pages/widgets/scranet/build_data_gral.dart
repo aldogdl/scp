@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../services/scranet/build_data_scrap.dart';
 import '../texto.dart';
 import '../../../services/scranet/system_file_scrap.dart';
 
@@ -66,7 +67,7 @@ class BuildDataGral extends StatelessWidget {
                 const SizedBox(height: 15),
                 const Texto(
                   txt: 'Este proceso puede durar considerables minutos '
-                  'por favor, espera y ten pasciencia, estamos trabajando '
+                  'por favor, espera y ten paciencia, estamos trabajando '
                   'para ti, NO CIERRES EL SCP en este punto.',
                   txtC: Color.fromARGB(255, 207, 74, 74),
                 ),
@@ -105,7 +106,7 @@ class BuildDataGral extends StatelessWidget {
                   child: FutureBuilder(
                     future: _procesandoTask(proccs, nProccs),
                     builder: (_, AsyncSnapshot snap) {
-                      return _procesando(proccs);
+                      return _consola(proccs);
                     },
                   )
                 )
@@ -118,7 +119,7 @@ class BuildDataGral extends StatelessWidget {
   }
 
   ///
-  Widget _procesando(ValueNotifier<List<Map<String, dynamic>>> proc) {
+  Widget _consola(ValueNotifier<List<Map<String, dynamic>>> proc) {
 
     return ValueListenableBuilder<List<Map<String, dynamic>>>(
       valueListenable: proc,
@@ -173,26 +174,32 @@ class BuildDataGral extends StatelessWidget {
     ValueNotifier<List<Map<String, dynamic>>> proc, ValueNotifier<int> nProc
   ) async  {
 
-    List<Map<String, dynamic>> task = [];
-
-    String craw = 'radec';
+    var craw = 'radec';
     await _st('[${craw.toUpperCase()}] Nombres de Piezas', proc, nProc);
-    // await BuildDataScrap.getPiezasOf(craw);
+    await BuildDataScrap.getPiezasOf(craw);
     await _st('', proc, nProc);
 
     await _st('[${craw.toUpperCase()}] Nombres de Marcas', proc, nProc);
-    // await BuildDataScrap.getMarcasOf(craw);
+    await BuildDataScrap.getMarcasOf(craw);
     await _st('', proc, nProc);
 
-    await _buildModelos(craw, task, proc, nProc);
+    craw = 'aldo';
+    await _st('[${craw.toUpperCase()}] Piezas y Marcas', proc, nProc);
+    await BuildDataScrap.getPiezasOf(craw);
+    await _st('', proc, nProc);
+
+    craw = 'radec';
+    await _buildModelosRadec(craw, proc, nProc);
+    craw = 'aldo';
+    await _buildModelosAldo(craw, proc, nProc);
     onFinish(null);
   }
 
   ///
-  Future<void> _buildModelos
+  Future<void> _buildModelosRadec
     (
-      String craw, List<Map<String, dynamic>> task,
-      ValueNotifier<List<Map<String, dynamic>>> proc, ValueNotifier<int> nProc
+      String craw, ValueNotifier<List<Map<String, dynamic>>> proc,
+      ValueNotifier<int> nProc
     ) async 
   {
 
@@ -209,26 +216,57 @@ class BuildDataGral extends StatelessWidget {
       }
 
       await _st('[${craw.toUpperCase()}] Modelos de ${marcasW[i]['value']}', proc, nProc);
-      // await BuildDataScrap.getMarcasOf(craw);
-      await _st('', proc, nProc);
-      // final modsWeb = await BuildDataScrap.getModelosOf(craw, clave);
-      // if(modsWeb.isNotEmpty) {
-      //   List<Map<String, dynamic>> listos = [];
-      //   modsWeb.forEach((key, value) {
-      //     String checkVal = value.toString().trim();
-      //     if(checkVal.isNotEmpty) {
-      //       if(!checkVal.contains('TODOS')) {
-      //         listos.add({
-      //           'id': key.toUpperCase().trim(),
-      //           'value': checkVal.toUpperCase().trim()
-      //         });
-      //       }
-      //     }
-      //   });
+      
+      final modsWeb = await BuildDataScrap.getModelosOf(craw, marcasW[i]);
+      
+      if(modsWeb.isNotEmpty) {
+        List<Map<String, dynamic>> listos = [];
+
+        modsWeb.forEach((key, value) {
+          String checkVal = value.toString().trim();
+          if(checkVal.isNotEmpty) {
+            if(!checkVal.contains('TODOS')) {
+              listos.add({
+                'id': key.toUpperCase().trim(),
+                'value': checkVal.toUpperCase().trim()
+              });
+            }
+          }
+        });
         
-      //   models.putIfAbsent(clave, () => listos);
-      //   await Future.delayed(const Duration(milliseconds: 2000));
-      // }
+        models.putIfAbsent(clave, () => listos);
+        await Future.delayed(const Duration(milliseconds: 2000));
+      }
+      await _st('', proc, nProc);
+    }
+
+    if(models.isNotEmpty) {
+      SystemFileScrap.setModelosBy(craw, models);
+    }
+  }
+
+  ///
+  Future<void> _buildModelosAldo
+    (
+      String craw, ValueNotifier<List<Map<String, dynamic>>> proc,
+      ValueNotifier<int> nProc
+    ) async 
+  {
+
+    await _st('--------- [${craw.toUpperCase()}] ---------', proc, nProc);
+    final marcasW = await SystemFileScrap.getAllMarcasBy(craw);
+    Map<String, dynamic> models = {};
+
+    for (var i = 0; i < marcasW.length; i++) {
+      
+      await _st('[${craw.toUpperCase()}] Modelos de ${marcasW[i]['value']}', proc, nProc);
+      final modsWeb = await BuildDataScrap.getModelosOf(craw, marcasW[i]);
+
+      if(modsWeb['m'].isNotEmpty) {
+        models.putIfAbsent(marcasW[i]['id'].trim(), () => List<Map<String, dynamic>>.from(modsWeb['m']));
+        await Future.delayed(const Duration(milliseconds: 2000));
+      }
+      await _st('', proc, nProc);
     }
 
     if(models.isNotEmpty) {

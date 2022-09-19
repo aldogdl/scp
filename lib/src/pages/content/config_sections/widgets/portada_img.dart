@@ -49,6 +49,9 @@ class _PortadaImgState extends State<PortadaImg> {
             return CachedNetworkImage(
               imageUrl: (snap.hasData) ? snap.data : '0',
               fit: BoxFit.cover,
+              errorWidget: (context, url, error) => const Image(
+                image: AssetImage('assets/logo_1024.png'),
+              ),
             );
           }
 

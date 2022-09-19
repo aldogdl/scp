@@ -5,7 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'frm_seach.dart';
 import '../texto.dart';
 import '../../../entity/radec_entity.dart';
-import '../../../repository/radec_repository.dart';
+import '../../../repository/scranet_radec_repository.dart';
 
 class DialogGenericas extends StatefulWidget {
 
@@ -264,7 +264,7 @@ class _DialogGenericasState extends State<DialogGenericas> {
   Future<void> _makeSearch(Map<String, dynamic> search) async {
 
     _cacheSearch = search;
-    final radecEm = RadecRepository();
+    final radecEm = ScranetRadecRepository();
     final entity = RadecEntity();
     _resultsW.value = entity.createQuery(search);
     final res = await radecEm.searchAutopartes(_resultsW.value);
@@ -307,7 +307,7 @@ class _DialogGenericasState extends State<DialogGenericas> {
   Future<void> _launchURL(String url) async {
 
     if (!await launchUrl(Uri.parse(url))) {
-      print('Could not launch $url');
+      // print('Could not launch $url');
       throw 'Could not launch $url';
     }
   }

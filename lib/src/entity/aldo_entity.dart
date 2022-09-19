@@ -3,6 +3,8 @@ class AldoEntity {
   
   final String uriBase = 'http://aldoautopartes.com/';
   final String uriSearch = 'pi_resultados.jsp';
+  final String uriPzasMrks = 'pi_busqueda.jsp';
+  
   // El Uri de la ficha tecnica de la pieza parametro "/code_sap" -> Código SAP
   final String uriFt = 'producto';
   // El uri para recuperar los modelos de cada marca parametro "/MARCA"
@@ -24,6 +26,7 @@ class AldoEntity {
 
   String getBaseCatalogo() => '$uriBase$uriSearch';
   String getBaseModelos() => '$uriBase$uriSearch$uriMod';
+  String getBasePzasMrks() => '$uriBase$uriPzasMrks';
 
   ///
   void fromMap(Map<String, dynamic> search) {
@@ -34,13 +37,24 @@ class AldoEntity {
     year  = (search.containsKey('anio')) ? search['anio']['id'] : '';
   }
 
+  /// 
+  Map<String, dynamic> getQuerySearchModels() {
+
+    return {
+      'uri' : getBasePzasMrks(),
+      'data': {
+        '_action': '1', 'id_marca': brand, 'id_modelo': model, 'anio': year
+      }
+    };
+  }
+
   /// http://www.aldoautopartes.com/pi_resultados.jsp?id_articulogrupo=228&id_articulotipo=968
   Map<String, dynamic> getQuery() {
 
     return {
       'uri' : getBaseCatalogo(),
       'data': {
-        '_action': 1, 'id_marca': brand, 'id_modelo': model, 'anio': year
+        '_action': '1', 'id_marca': brand, 'id_modelo': model, 'anio': year
       }
     };
   }

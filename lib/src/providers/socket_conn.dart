@@ -158,9 +158,13 @@ class SocketConn extends ChangeNotifier {
   Future<void> getNameRed() async {
 
     if (globals.myIp.isEmpty) {
-      globals.wifiName = await info.getWifiName() ?? '';
-      globals.myIp = await info.getWifiIP() ?? '';
-      globals.wifiName = 'Oculta';
+      try {
+        globals.wifiName = await info.getWifiName() ?? '';
+        globals.myIp = await info.getWifiIP() ?? '';
+      } catch (e) {
+        globals.myIp = '';
+        globals.wifiName = 'AutoparNet';
+      }
       notifyListeners();
     }
   }
@@ -399,7 +403,7 @@ class SocketConn extends ChangeNotifier {
       }
 
       ipH = utf8.decode(base64Decode(MyHttp.result['body']));
-      
+
       if(ipH.contains(':')) {
         final partes = List<String>.from(ipH.split(':'));
         globals.ipHarbi = partes.first;
@@ -417,10 +421,14 @@ class SocketConn extends ChangeNotifier {
     await MyHttp.get('http://${globals.ipHarbi}:${globals.portHarbi}/api_harbi/get_ipdb');
 
     if(!MyHttp.result['abort']) {
-      if(MyHttp.result['body'].containsKey('base_r')) {
-        globals.ipDbs = Map<String, dynamic>.from(MyHttp.result['body']);
-        MyHttp.clean();
-        return 'Conexión via API exitosa';
+      
+      final resp = MyHttp.result['body'];
+      if(resp.runtimeType != String) {
+        if(resp.containsKey('base_r')) {
+          globals.ipDbs = Map<String, dynamic>.from(resp);
+          MyHttp.clean();
+          return 'Conexión via API exitosa';
+        }
       }
     }
     return 'ERROR, No hay conexión con HARBI';

@@ -95,6 +95,9 @@ class MiddleSide extends StatelessWidget {
       case Paginas.config:
         child = const ConfigPage();
         break;
+      case Paginas.dataScranet:
+        child = const ConfigPage();
+        break;
       default:
     }
     return child;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:scp/src/pages/content/c_scranet_page.dart';
 
 import 'consola.dart';
 import 'pages/content/c_invent_virtual.dart';
@@ -158,6 +159,9 @@ class ContentSide extends StatelessWidget {
         break;
       case Paginas.cotizadores:
         child = const CCotizadoresPage();
+        break;
+      case Paginas.dataScranet:
+        child = const CDataScranet();
         break;
       case Paginas.config:
         child = const CConfigPage();

@@ -6,6 +6,7 @@ enum Paginas {
   cotizadores,
   solicitantes,
   inventVirtual,
+  dataScranet,
   config
 }
 

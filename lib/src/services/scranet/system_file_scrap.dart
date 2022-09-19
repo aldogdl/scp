@@ -110,6 +110,9 @@ class SystemFileScrap {
       case 'radec':
         filename = fileRadecPiezas;
         break;
+      case 'aldo':
+        filename = fileAldoPiezas;
+        break;
       default:
     }
     
@@ -123,6 +126,9 @@ class SystemFileScrap {
     switch (craw) {
       case 'radec':
         filename = fileRadecMrks;
+        break;
+      case 'aldo':
+        filename = fileAldoMrks;
         break;
       default:
     }
@@ -152,6 +158,9 @@ class SystemFileScrap {
       case 'radec':
         filename = fileRadecMrks;
         break;
+      case 'aldo':
+        filename = fileAldoMrks;
+        break;
       default:
     }
 
@@ -166,6 +175,9 @@ class SystemFileScrap {
     switch (craw) {
       case 'radec':
         filename = fileRadecMods;
+        break;
+      case 'aldo':
+        filename = fileAldoMods;
         break;
       default:
     }
@@ -229,7 +241,7 @@ class SystemFileScrap {
 
     final file = File('${dir.path}$s$filename');
     if(!file.existsSync()) {
-      file.createSync();
+      file.createSync(recursive: true);
     }
     file.writeAsStringSync(json.encode(dt));
     return;
@@ -267,20 +279,4 @@ class SystemFileScrap {
     return {};
   }
 
-  ///
-  static radec(String query) {
-    
-    // Revisar si en Radec existe la pieza
-    // Revisar si en Radec existe la marca
-    // Revisar si en Radec existe el modelos
-
-  }
-
-  ///
-  static aldo(String query) {
-
-    // Revisar si en aldo existe la pieza
-    // Revisar si en aldo existe la marca
-    // Revisar si en aldo existe el modelos
-  }
 }

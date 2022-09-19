@@ -91,6 +91,8 @@ class _ConfigPageState extends State<ConfigPage> {
             _iteMenu(context, icon: Icons.account_circle_outlined, label: 'Miembros Administrativos', secc: 'admin_user'),
             s10,
             _iteMenu(context, icon: Icons.clear_all, label: 'Borrar Registro de Login', secc: 'dialog_del_reg'),
+            s10,
+            _iteMenu(context, icon: Icons.video_settings_rounded, label: 'Datos ScraNet', secc: 'data_scranet'),
           ]
       ],
     );
@@ -289,6 +291,9 @@ class _ConfigPageState extends State<ConfigPage> {
           return;
         case 'invirt':
           context.read<PageProvider>().page = Paginas.inventVirtual;
+          return;
+        case 'data_scranet':
+          context.read<PageProvider>().page = Paginas.dataScranet;
           return;
       }
       context.read<PageProvider>().confSecction = secc;
