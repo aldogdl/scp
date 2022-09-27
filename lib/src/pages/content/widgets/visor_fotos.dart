@@ -1,7 +1,7 @@
-import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
-import 'package:scp/src/pages/content/widgets/sin_data.dart';
+import 'package:extended_image/extended_image.dart';
 
+import 'sin_data.dart';
 import '../../../providers/items_selects_glob.dart';
 import '../../widgets/texto.dart';
 

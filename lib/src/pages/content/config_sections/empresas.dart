@@ -39,7 +39,6 @@ class _EmpresasState extends State<Empresas> {
   final FocusNode _celFcs = FocusNode();
   final FocusNode _passFcs = FocusNode();
 
-
   late Future<void> _recuperarDatosMeta;
   ContactoEntity? _contact;
   final ValueNotifier<bool> _refreshList = ValueNotifier<bool>(false);
@@ -482,6 +481,7 @@ class _EmpresasState extends State<Empresas> {
 
   ///
   Future<void> _getDatosMeta() async {
+
     cargos = await GetContentFile.cargos();
     if(cargos.isNotEmpty) {
       _cargoSelect = cargos.first;
@@ -499,6 +499,7 @@ class _EmpresasState extends State<Empresas> {
       EmpresaEntity emp = _hidratarEmpresaFromScreen(); 
       ContactoEntity cont = _hidratarContactoFromScreen();
       Map<String, dynamic> dataContac = cont.toJson();
+
       if(_isOtherContac) {
         dataContac['isOtherContac'] = _isOtherContac;
         dataContac['id'] = 0;
@@ -510,6 +511,7 @@ class _EmpresasState extends State<Empresas> {
       await _contacEm.safeDataContact(data, isLocal: false);
 
       if(_contacEm.result['abort']) {
+
         provi.msgErr = _contacEm.result['body'];
         debugPrint(_contacEm.result['msg']);
       }else{

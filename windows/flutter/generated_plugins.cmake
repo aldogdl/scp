@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
+  desktop_drop
   just_audio_windows
   network_info_plus_windows
   url_launcher_windows

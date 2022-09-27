@@ -71,7 +71,9 @@ class _ConfigPageState extends State<ConfigPage> {
         s10,
         _iteMenu(context, icon: Icons.fact_check_outlined, label: 'Ordenes por Revisar', secc: 'soliOk'),
         s10,
-        _iteMenu(context, icon: Icons.shopify_outlined, label: 'Inventario Virtual', secc: 'invirt'),
+        _iteMenu(context, icon: Icons.dvr_outlined, label: 'Almacén Virtual', secc: 'almacenVirtual'),
+        s10,
+        _iteMenu(context, icon: Icons.shopify_outlined, label: 'Generar Solicitud de Cotización', secc: 'cotiza'),
         s10,
         const Divider(),
         s10,
@@ -82,7 +84,7 @@ class _ConfigPageState extends State<ConfigPage> {
             s10,
             const Texto(txt: 'ADMINISTRACIÓN', sz: 13),
             s10,
-            _iteMenu(context, icon: Icons.not_listed_location_outlined, label: 'asiganar Nuevas ORDENES', secc: 'soliNon'),
+            _iteMenu(context, icon: Icons.not_listed_location_outlined, label: 'Asiganar Nuevas ORDENES', secc: 'soliNon'),
             s10,
             _iteMenu(context, icon: Icons.business, label: 'Empresas y Cotizadores', secc: 'empresas'),
             s10,
@@ -92,7 +94,7 @@ class _ConfigPageState extends State<ConfigPage> {
             s10,
             _iteMenu(context, icon: Icons.clear_all, label: 'Borrar Registro de Login', secc: 'dialog_del_reg'),
             s10,
-            _iteMenu(context, icon: Icons.video_settings_rounded, label: 'Datos ScraNet', secc: 'data_scranet'),
+            _iteMenu(context, icon: Icons.video_settings_rounded, label: 'Build ScraNet', secc: 'data_scranet'),
           ]
       ],
     );
@@ -100,11 +102,9 @@ class _ConfigPageState extends State<ConfigPage> {
 
   ///
   Widget _iteMenu(BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String secc,
-  }) {
-
+    required IconData icon, required String label, required String secc })
+  {
+    
     return TextButton.icon(
       onPressed: () => _changeSecc(context, secc),
       icon: Icon(icon),
@@ -180,11 +180,9 @@ class _ConfigPageState extends State<ConfigPage> {
 
   ///
   Widget _listaOf({
-    required String type,
-    required List<Map<String, dynamic>> items,
-    required ScrollController ctr,
-    ValueChanged<int>? onDelete
-  }) {
+    required String type, required List<Map<String, dynamic>> items,
+    required ScrollController ctr, ValueChanged<int>? onDelete})
+  {
 
     return Scrollbar(
       controller: ctr,
@@ -249,10 +247,7 @@ class _ConfigPageState extends State<ConfigPage> {
   }
 
   ///
-  Widget _lineDataLog({
-    required String label,
-    required String value,
-  }) {
+  Widget _lineDataLog({ required String label, required String value }) {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
@@ -274,6 +269,7 @@ class _ConfigPageState extends State<ConfigPage> {
     if(secc == 'dialog_del_reg') {
       _deleteRegUserLogin();
     }else{
+
       switch (secc) {
         case 'cerrar_sesion':
         final sock = context.read<SocketConn>();
@@ -289,13 +285,14 @@ class _ConfigPageState extends State<ConfigPage> {
         case 'soliOk':
           context.read<PageProvider>().page = Paginas.solicitudes;
           return;
-        case 'invirt':
-          context.read<PageProvider>().page = Paginas.inventVirtual;
+        case 'almacenVirtual':
+          context.read<PageProvider>().page = Paginas.almacenVirtual;
           return;
-        case 'data_scranet':
-          context.read<PageProvider>().page = Paginas.dataScranet;
+        case 'cotiza':
+          context.read<PageProvider>().page = Paginas.cotiza;
           return;
       }
+
       context.read<PageProvider>().confSecction = secc;
       setState(() {});
     }

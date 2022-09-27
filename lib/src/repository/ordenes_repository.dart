@@ -1,4 +1,5 @@
 import '../services/get_paths.dart';
+import '../services/get_paths_cotiza.dart';
 import '../services/my_http.dart';
 
 class OrdenesRepository {
@@ -8,6 +9,18 @@ class OrdenesRepository {
   ///
   void clear() {
     result = {'abort':false, 'msg': 'ok', 'body':{}};
+  }
+
+  /// Solicitamos al servidor el token del que usa el SCP
+  Future<String> getTokenServer(Map<String, dynamic> data) async {
+
+    String domi = await GetPaths.getDominio(isLocal: false);
+
+    final isToken = await MyHttp.makeLogin(domi, data);
+    if(isToken.isNotEmpty) {
+      return isToken;
+    }
+    return '';
   }
 
   ///
@@ -61,6 +74,43 @@ class OrdenesRepository {
     String uri = await GetPaths.getUri('get_ids_ordenes_by_avo', isLocal: isLocal);
     await MyHttp.get('$uri$avo/');
     result = MyHttp.result;
+  }
+
+  /// Desde la seccion de cotizar, creamos una nueva solicitud de cotizacion
+  Future<void> setOrdenByCotiza(Map<String, dynamic> orden, String tk) async {
+
+    String uri = GetPathCotiza.getUri('set_orden', isLocal: false);
+    await MyHttp.post(uri, orden, t: tk);
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
+  }
+
+  /// Desde la seccion de cotizar, creamos una nueva solicitud de cotizacion
+  Future<void> setPiezaByCotiza(Map<String, dynamic> pieza, String tk) async {
+
+    String uri = GetPathCotiza.getUri('set_pieza', isLocal: false);
+    await MyHttp.post(uri, pieza, t: tk);
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
+  }
+
+  /// Desde la seccion de cotizar, creamos una nueva solicitud de cotizacion
+  Future<void> setFotoCotiza(Map<String, dynamic> data, String tk) async {
+
+    String uri = GetPathCotiza.getUri('upload_img', isLocal: false);
+    await MyHttp.upFileByData(uri, tk, metas: data);
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
+  }
+
+  /// Actualizamos los datos y la version en el centinela para que sepa harbi
+  /// que hay una nueva orden.
+  Future<void> updateCentinelaServer(int idOrden, String tk) async {
+
+    String uri = GetPathCotiza.getUri('enviar_orden', isLocal: false);
+    await MyHttp.get('$uri$idOrden/', t: tk);
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
   }
 
 }

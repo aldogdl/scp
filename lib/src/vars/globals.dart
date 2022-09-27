@@ -3,7 +3,7 @@ import '../entity/contacto_entity.dart';
 
 class Globals {
 
-  String verApp = '1.3.1';
+  String verApp = '1.4.0';
   bool isLocalConn = true;
   String wifiName = '';
   String myIp = '';
@@ -15,10 +15,12 @@ class Globals {
   ContactoEntity user = ContactoEntity();
   FocusNode focusMain = FocusNode();
   
+  List<String> origenCar = ['NACIONAL', 'IMPORTADO'];
   List<String> posic = ['DELANTERA', 'TRASERA', 'LATERAL', 'MOTOR', 'SUSPENSION'];
   List<String> lugar = ['IZQUIERDO', 'DERECHO', 'CENTRAL', 'SUPERIOR', 'INFERIOR'];
   Map<String, dynamic> lugAbr = {
-    'IZQUIERDO':'IZQ.', 'DERECHO':'DER.', 'CENTRAL':'CEN.', 'SUPERIOR':'SUP.', 'INFERIOR':'INF.'
+    'IZQUIERDO':'IZQ.', 'DERECHO':'DER.', 'CENTRAL':'CEN.', 'SUPERIOR':'SUP.', 'INFERIOR':'INF.',
+    'DELANTERA': 'DEL.', 'TRASERA': 'TRAS.', 'LATERAL': 'LAT.', 'SUSPENSION': 'SUSP.'
   };
   List<String> origenes = ['SEMINUEVA Original', 'GENÉRICA nueva', 'CUALQUIER Orígen'];
 }

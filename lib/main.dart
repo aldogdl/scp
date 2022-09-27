@@ -6,6 +6,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'src/pages/a_main/scp_layout.dart';
 import 'src/config/sng_manager.dart';
 import 'src/pages/login/login_page.dart';
+import 'src/providers/cotiza_process_provider.dart';
+import 'src/providers/cotiza_provider.dart';
 import 'src/providers/centinela_file_provider.dart';
 import 'src/providers/invirt_provider.dart';
 import 'src/providers/items_selects_glob.dart';
@@ -48,6 +50,8 @@ class ProvidersConfig extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ItemSelectGlobProvider()),
         ChangeNotifierProvider(create: (_) => CentinelaFileProvider()),
         ChangeNotifierProvider(create: (_) => InvirtProvider()),
+        ChangeNotifierProvider(create: (_) => CotizaProvider()),
+        ChangeNotifierProvider(create: (_) => CotizaProcessProvider()),
       ],
       child: MaterialApp(
         scrollBehavior: MyCustomScrollBehavior(),

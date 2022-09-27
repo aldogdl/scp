@@ -9,7 +9,7 @@ class EstStt {
   String estacion = '';
 
   // Revisamos que exista, en caso contrario descargamos la ruta adecuada
-  static Future<void> init(String ruta) async {
+  static Future<void> init() async {
     if(r.status.isEmpty) {
       await r.hidratar();
     }
@@ -57,12 +57,15 @@ class EstStt {
   /// Obtenemos la siguiente estacion
   static String getNextEst(Map<String, dynamic> data) {
 
-    
     return 'Ruta Desconocida';
   }
 
   /// Obtenemos la estacion solicitada
   static String getEst(Map<String, dynamic> data) {
+
+    if(data['est'].toString().isEmpty) {
+      return 'Nueva Orden';
+    }
 
     return r.status['est'][data['est']];
   }
@@ -70,6 +73,9 @@ class EstStt {
   /// Obtenemos el estatus segun su estacion
   static String getSttByEst(Map<String, dynamic> data) {
 
+    if(data['stt'].toString().isEmpty) {
+      return 'Iniciando';
+    }
     return r.status['stt'][data['est']][data['stt']];
   }
 

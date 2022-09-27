@@ -105,6 +105,24 @@ class OrdenEntity {
   }
 
   ///
+  Map<String, dynamic> toJsonSave() {
+
+    return {
+      'id': id,
+      'id_marca': mkId,
+      'id_modelo': mdId,
+      'anio': anio,
+      'is_nacional': isNac,
+      'est': est,
+      'stt': stt,
+      'own': uId,
+      'mk_nombre': marca,
+      'md_nombre': modelo,
+      'o_createdAt': createdAt
+    };
+  }
+
+  ///
   Map<String, dynamic> toJson() {
 
     return {

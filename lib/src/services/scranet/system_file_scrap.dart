@@ -10,18 +10,15 @@ class SystemFileScrap {
   static const folder = 'scrap';
 
   static const fileRadecPiezas = 'radec_piezas.json';
-  static const fileRadecMrks = 'radec_mrks.json';
-  static const fileRadecMods = 'radec_mods.json';
-
-  static const fileAldoPiezas = 'aldo_piezas.json';
-  static const fileAldoMrks = 'aldo_mrks.json';
-  static const fileAldoMods = 'aldo_mods.json';
+  static const fileRadecMrks   = 'radec_mrks.json';
+  static const fileRadecMods   = 'radec_mods.json';
+  static const fileAldoPiezas  = 'aldo_piezas.json';
+  static const fileAldoMrks    = 'aldo_mrks.json';
+  static const fileAldoMods    = 'aldo_mods.json';
 
   /// Construimos el sistema de archivos en caso de no existir
   /// [RETURN] los archivos que no existieron
   static Future<String> chekSystem({required String craw}) async {
-
-    String result = 'ok';
 
     List<String> filesRadec = [
       fileRadecPiezas,
@@ -50,23 +47,24 @@ class SystemFileScrap {
     final dir = Directory('$root$s$folder');
 
     if(!dir.existsSync()) {
-      result = 'nuevo';
+      return 'Construir Data';
     }else{
+
       // Creamos los archivos
       for (var i = 0; i < files.length; i++) {
         final file = File('${dir.path}$s${files[i]}');
         if(!file.existsSync()) {
-          result = 'No se encotró ${files[i]}';
+          return 'No se encotró ${files[i]}';
         }else{
           final content = file.readAsStringSync();
           if(content.isEmpty) {
-            result = 'Recuperar datos para ${files[i]}';
+            return 'Recuperar datos para ${files[i]}';
           }
         }
       }
     }
 
-    return result;
+    return 'ok';
   }
 
   /// Construimos el sistema de archivos en caso de no existir
@@ -134,6 +132,27 @@ class SystemFileScrap {
     }
 
     return _getFile(filename);
+  }
+
+  /// Guardamos las marcas recuperadas desde la web de...
+  static Future<List<Map<String, dynamic>>> getAllModelosByIdMarca(String craw, String idMrk) async {
+
+    String filename = '';
+    switch (craw) {
+      case 'radec':
+        filename = fileRadecMods;
+        break;
+      case 'aldo':
+        filename = fileAldoMods;
+        break;
+      default:
+    }
+
+    Map<String, dynamic> mods = _getFileContentMap(filename);
+    if(idMrk != '0') {
+      return List<Map<String, dynamic>>.from(mods[idMrk]);
+    }
+    return [];
   }
 
   /// Guardamos las marcas recuperadas desde la web de...

@@ -5,8 +5,9 @@ enum Paginas {
   solicitudes,
   cotizadores,
   solicitantes,
-  inventVirtual,
+  almacenVirtual,
   dataScranet,
+  cotiza,
   config
 }
 

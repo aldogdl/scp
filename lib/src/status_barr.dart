@@ -108,10 +108,11 @@ class StatusBarr extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _btnIcon(tip: 'Menú Principal', icono: Icons.menu, size: 17, fnc: () {
+            pageR.resetPage();
             pageR.page = Paginas.config;
           }),
           wid10,
-          _text('SWP de: ${_globals.user.nombre} [${_globals.user.curc}]'),
+          _text('SCP de: ${_globals.user.nombre} [${_globals.user.curc}] V.${_globals.verApp}'),
           wid10,
           wid5,
           _btnIconAndTxt(txt: '${watchC.manifests.length}', tip: 'Centinela',
@@ -168,9 +169,7 @@ class StatusBarr extends StatelessWidget {
           wid10,
           const QuerysProcess(),
           const Spacer(),
-          _text('HARBI. Ver.: ${_globals.verApp}'),
-          wid10,
-          _text('Socket. ${watchC.idConn}'),
+          _text('HARBI Socket. ${watchC.idConn}'),
           wid10,
           _text('REV. ${watchC.msgCron}'),
           if(watchC.alertCV)

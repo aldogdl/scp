@@ -375,6 +375,7 @@ class _AdminUsersState extends State<AdminUsers> {
       var data = cont.toJsonForAdminUser();
       
       setState(() { _isAbsorbing = true; });
+      _contacEm.clear();
       
       await _contacEm.safeDataContact(data, isLocal: false);
       if(_contacEm.result['abort']) {

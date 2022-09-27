@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'config_sections/scranet_page.dart';
 import 'config_sections/gest_cotizadores.dart';
 import 'config_sections/admin_users.dart';
 import 'config_sections/empresas.dart';
@@ -8,6 +9,7 @@ import 'config_sections/home.dart';
 import '../../providers/pages_provider.dart';
 
 class CConfigPage extends StatelessWidget {
+  
   const CConfigPage({Key? key}) : super(key: key);
 
   @override
@@ -41,6 +43,9 @@ class CConfigPage extends StatelessWidget {
         break;
       case 'gestCotz':
         child = const GestCotizadores();
+        break;
+      case 'data_scranet':
+        child = const BuildScranet();
         break;
       default:
         child = Home();

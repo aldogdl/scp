@@ -1,9 +1,10 @@
 import 'dart:convert';
 
-import '../config/sng_manager.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' show MediaType;
 
+import '../config/sng_manager.dart';
 import '../vars/globals.dart';
 
 class MyHttp {
@@ -39,12 +40,21 @@ class MyHttp {
   }
 
   ///
-  static Future<void> get(String uri) async {
+  static Future<void> get(String uri, {String t = ''}) async {
 
     late http.Response response;
     Uri uriParse = Uri.parse(uri);
+    Map<String, String> headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json'
+    };
+
+    if(t.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $t';
+    }
+
     try {
-      response = await http.get(uriParse);
+      response = await http.get(uriParse, headers: headers);
     } catch (e) {
       // 
       if(e.toString().contains('SocketException')) {
@@ -91,14 +101,19 @@ class MyHttp {
   }
 
   ///
-  static Future<void> post(String uri, Map<String, dynamic> data) async {
+  static Future<void> post(String uri, Map<String, dynamic> data, {String t = ''}) async {
 
+    result.clear();
     Map<String, String> headers = {
       'Content-type': 'application/json',
       'Accept': 'application/json',
     };
-    var req = http.MultipartRequest('POST', Uri.parse(uri));
 
+    if(t.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $t';
+    }
+
+    var req = http.MultipartRequest('POST', Uri.parse(uri));
     req.headers.addAll(headers);
     req.fields['data'] = json.encode(data);
     late http.Response response;
@@ -108,11 +123,12 @@ class MyHttp {
       result = {'abort':true, 'msg': e.toString(), 'body':'ERROR, Sin conexión al servidor, intentalo nuevamente.'};
       return;
     }
-
+    
     if(response.statusCode == 200) {
       clean();
       result = Map<String, dynamic>.from(json.decode(response.body));
     }else{
+      result['abort'] = true;
       _drawErrorInConsole(response);
     }
   }
@@ -144,10 +160,82 @@ class MyHttp {
     }
   }
 
+  /// 
+  static Future<void> upFileByData(
+    String uri, String token,
+    {required Map<String, dynamic> metas}
+  ) async {
+
+    clean();
+    Uri url = Uri.parse(uri);
+    var req = http.MultipartRequest('POST', url);
+    Map<String, String> headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token'
+    };
+
+    String filename = metas['filename'];
+    List<String> partes = filename.split('.');
+    String ext = partes.last;
+    String campo = '${DateTime.now().millisecondsSinceEpoch}';
+
+    if( metas['bytes'].isNotEmpty ) {
+
+      req.files.add(
+        http.MultipartFile.fromBytes(
+          campo,
+          List<int>.from(metas['bytes']),
+          filename: filename,
+          contentType: MediaType('image', ext)
+        )
+      );
+      req.fields['data'] = json.encode({
+        'filename': filename,
+        'campo'   : campo,
+        'idTmp'   : (metas.containsKey('idTmp')) ? metas['idTmp'] : '',
+        'idOrden' : (metas.containsKey('idOrden')) ? metas['idOrden'] : ''
+      });
+      req.headers.addAll(headers);
+      http.Response reServer = await http.Response.fromStream(await req.send());
+
+      if(reServer.statusCode == 200) {
+        var body = json.decode(reServer.body);
+        if(body.isNotEmpty) {
+          try {
+            result['body'] = List<Map<String, dynamic>>.from(body);
+          } catch (e) {
+            result = Map<String, dynamic>.from(body);
+            if(body['abort']) {
+              _drawErrorInConsole(reServer);
+            }
+          }
+        }
+      }else{
+        _drawErrorInConsole(reServer);
+      }
+
+    }else{
+      result['abort']= true;
+      result['msg']  = 'err';
+      result['body'] = 'Sin Imagenes para enviar.';
+    }
+  }
+
   ///
   static void _drawErrorInConsole(http.Response response) {
 
+    switch (response.statusCode) {
+      case 401:
+        if(response.reasonPhrase != null) {
+          if(response.reasonPhrase!.contains('Unauthorized')) {
+            result['body'] = 'Invalido Token';
+          }
+        }
+        break;
+      default:
+    }
     debugPrint('[ERROR]::${response.statusCode}');
     debugPrint(response.body);
+    debugPrint(response.reasonPhrase);
   }
 }

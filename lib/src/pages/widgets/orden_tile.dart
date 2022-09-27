@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import 'texto.dart';
 import 'my_tool_tip.dart';
 import '../../entity/orden_entity.dart';
 import '../../providers/items_selects_glob.dart';
-import '../../services/get_path_images.dart';
 import '../../services/status/est_stt.dart';
 
 const Color clrSelec = Color.fromARGB(255, 19, 84, 138);
@@ -165,30 +164,26 @@ class OrdenTile extends StatelessWidget {
   Widget _logoMarca() {
 
     return Container(
-      width: 30, height: 30,
+      width: 40, height: 40,
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(100),
-        color: Colors.white.withOpacity(0.8)
+        color: Colors.white.withOpacity(0.1)
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(100),
-        child: (orden.mkLogo == '0')
-        ? const Icon(Icons.car_repair, color: Colors.black)
-        : FutureBuilder(
-            future: GetPathImages.getPathToLogoMarcaOf(orden.mkLogo),
-            builder: (_, AsyncSnapshot dataUri) {
-              if(dataUri.connectionState == ConnectionState.done) {
-                if(dataUri.hasData) {
-                  return CachedNetworkImage(
-                    imageUrl: dataUri.data,
-                    fit: BoxFit.contain,
-                  );
-                }
-              }
-              return const SizedBox();
-            },
+      child: (orden.marca.isEmpty)
+      ? const Icon(Icons.car_repair, color: Colors.black, size: 19)
+      : Center(
+        child: Text(
+          orden.marca.substring(0,1),
+          textScaleFactor: 1,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.comfortaa(
+            color: Colors.red,
+            fontSize: 22,
+            fontWeight: FontWeight.w900
           ),
-      ),
+        ),
+      )
     );
   }
   

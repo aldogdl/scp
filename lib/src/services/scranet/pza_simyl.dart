@@ -1,9 +1,9 @@
-import 'package:fuzzywuzzy/model/extracted_result.dart';
-import 'package:string_similarity/string_similarity.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
+import 'package:fuzzywuzzy/model/extracted_result.dart';
 
-class PzaSimil {
+class PzaSimyl {
 
+  ///
   static ExtractedResult? esTo(String pza, List<String> pool) {
 
     // final rating = pza.bestMatch(pool);

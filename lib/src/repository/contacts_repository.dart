@@ -57,7 +57,7 @@ class ContactsRepository {
   ///
   Future<void> safeDataContact(Map<String, dynamic> data, {isLocal = true}) async {
 
-    String uri = await GetPaths.getUri('seve_data_contact', isLocal: isLocal);
+    String uri = await GetPaths.getUri('guardar_datos_empcontac', isLocal: isLocal);
     await MyHttp.post(uri, data);
     result = MyHttp.result;
   }

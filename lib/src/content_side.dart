@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:scp/src/pages/content/c_scranet_page.dart';
 
 import 'consola.dart';
+import 'pages/content/c_cotiza_page.dart';
 import 'pages/content/c_invent_virtual.dart';
 import 'pages/content/c_config_page.dart';
 import 'pages/content/c_solicitudes_non_page.dart';
 import 'pages/content/c_cotizadores_page.dart';
 import 'pages/content/c_solicitantes_page.dart';
 import 'pages/content/c_solicitudes_page.dart';
+import 'pages/content/config_sections/scranet_page.dart';
 import 'providers/pages_provider.dart';
 import 'providers/socket_conn.dart';
 import 'providers/window_cnf_provider.dart';
@@ -55,8 +56,9 @@ class ContentSide extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Consumer<PageProvider>(
-                  builder: (_, PageProvider page, __) => _determinarWidget(page.page),
+                Selector<PageProvider, Paginas>(
+                  selector: (_, prov) => prov.page,
+                  builder: (_, p, __) => _determinarWidget(p),
                 ),
                 if(!context.watch<PageProvider>().closeConsole)
                   const Positioned(
@@ -75,8 +77,9 @@ class ContentSide extends StatelessWidget {
   Widget _head(BuildContext context) {
 
     String titulo = context.watch<PageProvider>().page.name.toUpperCase();
+    
     titulo = (titulo == 'SOLICITUDESNON') ? 'SOLICITUDES SIN ASIGNAR' : titulo;
-    titulo = (titulo == 'INVENTVIRTUAL') ? 'INVENTARIO VIRTUAL' : titulo;
+    titulo = (titulo == 'ALMACENVIRTUAL') ? 'ALMACÉN VIRTUAL' : titulo;
     titulo = (titulo == 'CONFIG') ? 'AUTOPARNET SCP' : titulo;
 
     return Row(
@@ -154,17 +157,20 @@ class ContentSide extends StatelessWidget {
       case Paginas.solicitantes:
         child = const CSolicitantesPage();
         break;
-      case Paginas.inventVirtual:
+      case Paginas.almacenVirtual:
         child = const CInventVirtualPage();
         break;
       case Paginas.cotizadores:
         child = const CCotizadoresPage();
         break;
       case Paginas.dataScranet:
-        child = const CDataScranet();
+        child = const BuildScranet();
         break;
       case Paginas.config:
         child = const CConfigPage();
+        break;
+      case Paginas.cotiza:
+        child = const CCotizaPage();
         break;
       default:
     }
