@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
-import 'package:scp/src/pages/widgets/my_tool_tip.dart';
 
 import '../texto.dart';
-import '../../../providers/invirt_provider.dart';
+import '../my_tool_tip.dart';
+import '../visor_fotografico.dart';
 import '../../../services/inventario_service.dart';
 
 class TileRespImage extends StatelessWidget {
@@ -19,26 +18,42 @@ class TileRespImage extends StatelessWidget {
     required this.isForSend,
   }) : super(key: key);
 
+  
   @override
   Widget build(BuildContext context) {
 
-    final invProv = context.read<InvirtProvider>();
-    
     return Container(
       width: maxW,
-      height: MediaQuery.of(context).size.height * 0.2,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Column(
         children: [
-          _laData(invProv),
-          _lstFotosContainer(context)
+          _laData(),
+          _lstFotosContainer(context),
+          Container(
+            width: MediaQuery.of(context).size.width,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: Colors.green),
+                bottom: BorderSide(color: Colors.green)
+              )
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.comment, size: 18),
+                const SizedBox(width: 8),
+                Texto(txt: cot['r_observs'])
+              ],
+            ),
+          )
         ],
       ),
     );
   }
 
   ///
-  Widget _laData(InvirtProvider invProv) {
+  Widget _laData() {
 
     String por = '...';
     String porTip = '...';
@@ -111,7 +126,7 @@ class TileRespImage extends StatelessWidget {
       ],
     );
   }
-  
+
   ///
   Widget _lstFotosContainer(BuildContext context) {
 
@@ -128,7 +143,6 @@ class TileRespImage extends StatelessWidget {
         height: MediaQuery.of(context).size.height * 0.15,
       ),
       padding: const EdgeInsets.all(5),
-      margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.3),
         border: Border(
@@ -217,7 +231,28 @@ class TileRespImage extends StatelessWidget {
       padding: const EdgeInsets.only(right: 20),
       physics: const BouncingScrollPhysics(),
       itemCount: fotos.length,
-      itemBuilder: (_, int index) => _img(context, fotos[index]),
+      itemBuilder: (_, int index) => InkWell(
+        onTap: () {
+          
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => SimpleDialog(
+              children: [
+                VisorFotografico(
+                  initFoto: index,
+                  source: 'resp',
+                  titulo: cot['r_observs'],
+                  fotos: List<String>.from(fotos),
+                  onClose: (_) => Navigator.of(context).pop(),
+                )
+              ],
+            )
+          );
+          
+        },
+        child: _img(context, fotos[index]),
+      ),
     );
   }
 
@@ -255,5 +290,5 @@ class TileRespImage extends StatelessWidget {
 
   ///
   Widget _sw(double sep) => SizedBox(width: sep);
-
+  
 }

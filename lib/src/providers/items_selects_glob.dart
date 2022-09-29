@@ -14,6 +14,7 @@ class ItemSelectGlobProvider extends ChangeNotifier {
     _idPzaSelect = -1;
     _piezas = [];
     _fotosByPiezas = [];
+    gestureKey = [];
     _ordenesAsignadas = {};
     _ordenEntitySelect = null;
     _piezaSelect = null;
@@ -135,7 +136,7 @@ class ItemSelectGlobProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-    ///
+  ///
   int sIniFotoW = 0;
   int sIniFotoH = 0;
   int currentPage = 0;
@@ -152,29 +153,22 @@ class ItemSelectGlobProvider extends ChangeNotifier {
   }
   
   ///
-  void sigFoto(ExtendedPageController pageCtl, ValueChanged<void> onFinish) {
+  void sigFoto(ExtendedPageController pageCtl, ValueChanged<void> onFinish) async {
 
     if(fotosByPiezas.isNotEmpty) {
-      if(pageCtl.page == fotosByPiezas.length -1) {
-        pageCtl.animateToPage(
-          pageCtl.initialPage,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeIn
-        );
-      }else{
-        pageCtl.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
-      }
+      await pageCtl.nextPage(
+        duration: const Duration(milliseconds: 100), curve: Curves.easeIn
+      );
       onFinish(null);
     }
   }
 
   ///
-  void backFoto(ExtendedPageController pageCtl, ValueChanged<void> onFinish) {
+  void backFoto(ExtendedPageController pageCtl, ValueChanged<void> onFinish) async {
 
     if(fotosByPiezas.isNotEmpty) {
-      pageCtl.previousPage(
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeIn
+      await pageCtl.previousPage(
+        duration: const Duration(milliseconds: 100), curve: Curves.easeIn
       );
       onFinish(null);
     }
@@ -184,8 +178,9 @@ class ItemSelectGlobProvider extends ChangeNotifier {
   void zoomFoto(Size mediaQ, double widthOfResto, ValueChanged<void> onFinish) {
 
     if(fotosByPiezas.isNotEmpty) {
+
       double nt = gestureKey[currentPage].currentState!.gestureDetails!.totalScale! + 0.5;
-      gestureKey[currentPage].currentState!.gestureDetails=GestureDetails(
+      gestureKey[currentPage].currentState!.gestureDetails = GestureDetails(
         actionType: ActionType.zoom,
         userOffset: true,
         offset: _calcularCentros(

@@ -376,8 +376,12 @@ class InventarioRepository {
         for (var i = 0; i < ordenes.length; i++) {
           
           final ordFile = await getContentFile(sortResp[ordenes[i]]!['filename']);
-
-          final respOldis = List<Map<String, dynamic>>.from(ordFile[OrdCamp.resps.name]);
+          List<Map<String, dynamic>> respOldis = [];
+          if(ordFile.isNotEmpty) {
+            if(ordFile.containsKey(OrdCamp.resps.name)) {
+              respOldis = List<Map<String, dynamic>>.from(ordFile[OrdCamp.resps.name]);
+            }
+          }
           List<Map<String, dynamic>> respNews = [];
           List<Map<String, dynamic>> respToAdd = [];
           respNews.addAll(List<Map<String, dynamic>>.from(sortResp[ordenes[i]]!['resps']));

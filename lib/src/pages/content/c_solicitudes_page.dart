@@ -31,13 +31,13 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
 
   final Globals globals = getSngOf<Globals>();
   
-  final ExtendedPageController _pageCtl = ExtendedPageController();
-  final ScrollController _scrollCtl = ScrollController();
-  final ScrollController _scrollTxtCtl = ScrollController();
-  final FocusNode _fcuActions = FocusNode();
-  final ValueNotifier<bool> _hasFocus = ValueNotifier<bool>(false);
-  final ValueNotifier<int> _currentFotoNum = ValueNotifier<int>(1);
-  final ValueNotifier<String> _seccView = ValueNotifier<String>('fotos');
+  final _pageCtl = ExtendedPageController();
+  final _scrollCtl = ScrollController();
+  final _scrollTxtCtl = ScrollController();
+  final _fcuActions = FocusNode();
+  final _hasFocus = ValueNotifier<bool>(false);
+  final _currentFotoNum = ValueNotifier<int>(1);
+  final _seccView = ValueNotifier<String>('fotos');
   
   late final WindowCnfProvider winCnf;
   late final ItemSelectGlobProvider itemProv;
@@ -67,9 +67,9 @@ class _CSolicitudesPageState extends State<CSolicitudesPage> {
     _fcuActions.dispose();
     _scrollTxtCtl.dispose();
     _hasFocus.dispose();
-    itemProv.disposeMy();
     _currentFotoNum.dispose();
     _seccView.dispose();
+    itemProv.disposeMy();
     super.dispose();
   }
 

@@ -36,6 +36,7 @@ class VisorFotos extends StatelessWidget {
             return const SinData(icono: Icons.photo_size_select_actual_rounded, opacity: 0.2);
           }
         }
+
         return _loading();
       }
     );
@@ -61,6 +62,7 @@ class VisorFotos extends StatelessWidget {
               mode: ExtendedImageMode.gesture,
               extendedImageGestureKey: itemProv.gestureKey[index],
               initGestureConfigHandler: (ExtendedImageState state) {
+                
                 itemProv.sIniFotoW = state.extendedImageInfo!.image.width;
                 itemProv.sIniFotoH = state.extendedImageInfo!.image.height;
                 return GestureConfig(

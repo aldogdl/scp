@@ -28,13 +28,13 @@ class CSolicitudesNonPage extends StatefulWidget {
 
 class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
-  final Globals globals = getSngOf<Globals>();
-  final ContactsRepository _contacEm = ContactsRepository();
-  final OrdenesRepository _ordsEm = OrdenesRepository();
-  final ScrollController _scrollCtr = ScrollController();
-  final ScrollController _scrollCtrAsig = ScrollController();
-  final ScrollController _scrollCtrSINAsig = ScrollController();
-  final ValueNotifier<int> _totRodsAvo = ValueNotifier<int>(0);
+  final globals = getSngOf<Globals>();
+  final _contacEm = ContactsRepository();
+  final _ordsEm = OrdenesRepository();
+  final _scrollCtr = ScrollController();
+  final _scrollCtrAsig = ScrollController();
+  final _scrollCtrSINAsig = ScrollController();
+  final _totRodsAvo = ValueNotifier<int>(0);
 
   late final WindowCnfProvider winCnf;
   late final ItemSelectGlobProvider itemProv;
@@ -142,8 +142,8 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     required Color bg,
     required Function fnc,
     required String msg,
-    bool isActive = true,
-  }) {
+    bool isActive = true}) 
+  {
 
     double op = (isActive) ? 1 : 0.3;
 

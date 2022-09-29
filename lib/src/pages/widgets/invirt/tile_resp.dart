@@ -144,6 +144,7 @@ class TileResp extends StatelessWidget {
     final pza = invProv.pzaResults.firstWhere(
       (p) => p['id'] == cot['p_id'], orElse: () => {}
     );
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -243,9 +244,8 @@ class TileResp extends StatelessWidget {
 
   ///
   Widget _btn(IconData ico, String tip, {
-    required Color c, required Function fnc, double padd = 8
-  }) {
-
+    required Color c, required Function fnc, double padd = 8 })
+  {
     return Padding(
       padding: EdgeInsets.only(right: padd),
       child: MouseRegion(

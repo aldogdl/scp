@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:http/http.dart' as http;
@@ -33,20 +35,14 @@ class _SetImagesState extends State<SetImages> {
   final _sep = Platform.pathSeparator;
   final permitidas = <String>['jpg', 'jpeg', 'png'];
 
+  late CotizaProvider _ctzP;
   List<Map<String, dynamic>> _pzas = []; 
   bool _onDragIn = false;
   bool _isInit = false;
   int _idOrden = -1;
   int _intento = 1;
   String _idPza = '0';
-  late CotizaProvider _ctzP;
   
-  @override
-  void initState() {
-    
-    super.initState();
-  }
-
   @override
   void dispose() {
     _fotos.dispose();
@@ -149,19 +145,29 @@ class _SetImagesState extends State<SetImages> {
       child: LayoutBuilder(
         builder: (_, constraint) {
 
-          return ValueListenableBuilder<List<String>>(
-            valueListenable: _fotos,
-            builder: (_, fts, child) {
+          return Row(
+            children: [
+              Expanded(
+                child: ValueListenableBuilder<List<String>>(
+                  valueListenable: _fotos,
+                  builder: (_, fts, child) {
 
-              if(fts.isEmpty) { return child!; }
+                    if(fts.isEmpty) { return child!; }
 
-              return ListView.builder(
-                itemCount: fts.length,
-                scrollDirection: Axis.horizontal,
-                itemBuilder: (_, index) => _tileImage(constraint, index)
-              );
-            },
-            child: _dropZone()
+                    return ListView.builder(
+                      itemCount: fts.length,
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (_, index) => _tileImage(constraint, index)
+                    );
+                  },
+                  child: _msgEmpty()
+                ),
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.04,
+                child: _dropZone(),
+              )
+            ],
           );
         },
       )
@@ -214,30 +220,61 @@ class _SetImagesState extends State<SetImages> {
       onDragDone: (urls) async => await _fromDrop(urls),
       onDragEntered: (details) => setState(() { _onDragIn = true; }),
       onDragExited: (details) => setState(() { _onDragIn = false; }),
-      child: Center(
-        child: TextButton(
-          onPressed: () async => await _launchExplorer(),
-          child: SizedBox.expand(
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: const [
-                Icon(Icons.photo_album_outlined, color: Color.fromARGB(255, 54, 54, 54), size: 50),
-                Texto(
-                  txt: 'Arrastra y Suelta multiples Fotografías aquí',
-                  txtC: Color.fromARGB(255, 87, 87, 87),
-                ),
-                Texto(
-                  txt: 'Presiona para abrir el Explorador de Archivos',
-                  txtC: Color.fromARGB(255, 122, 122, 122),
-                  sz: 13,
-                ),
-              ],
-            ),
+      child: Container(
+        margin: const EdgeInsets.only(left: 10),
+        decoration: const BoxDecoration(
+          border: Border(
+            left: BorderSide(color: Color.fromARGB(255, 71, 71, 71))
           )
         ),
+        child: Center(
+          child: TextButton(
+            style: ButtonStyle(
+              padding: MaterialStateProperty.all(const EdgeInsets.all(0)),
+              alignment: Alignment.centerLeft,
+              visualDensity: VisualDensity.compact
+            ),
+            onPressed: () async => await _launchExplorer(),
+            child: SizedBox.expand(
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    _onDragIn ? Icons.data_object_sharp : Icons.drag_indicator_sharp,
+                    color: const Color.fromARGB(255, 54, 54, 54), size: 45
+                  ),
+                ],
+              ),
+            )
+          ),
+        ),
       ),
+    );
+  }
+    
+  ///
+  Widget _msgEmpty() {
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: const [
+          Icon(Icons.photo_album_outlined, color: Color.fromARGB(255, 54, 54, 54), size: 50),
+          Texto(
+            txt: 'Arrastra y Suelta multiples Fotografías en el Receptor',
+            txtC: Color.fromARGB(255, 87, 87, 87),
+          ),
+          Texto(
+            txt: 'ubicador en la parte derecha de este contenedor.',
+            txtC: Color.fromARGB(255, 122, 122, 122),
+            sz: 13,
+          ),
+        ],
+      )
     );
   }
   
@@ -440,6 +477,10 @@ class _SetImagesState extends State<SetImages> {
   /// Capturamos las imagenes que biene de arrastrar y soltar
   Future<void> _fromDrop(DropDoneDetails details) async {
     
+    if(_ctzP.piezas.isEmpty) {
+      _msgs.value = '[X] No se ha detectado ninguna pieza.';
+      return;
+    }
     _msgs.value = '';
     if(details.files.isNotEmpty) {
       // Guardamos en memoria el ultimo path
@@ -454,6 +495,11 @@ class _SetImagesState extends State<SetImages> {
   /// Capturamos la imagen que biene de la web
   Future<void> _downLoadFromUrl() async {
 
+    if(_ctzP.piezas.isEmpty) {
+      _msgs.value = '[X] No se ha detectado ninguna pieza.';
+      return;
+    }
+
     _msgs.value = '';
     var url = _urls.text;
     if(url.isEmpty) {
@@ -461,10 +507,15 @@ class _SetImagesState extends State<SetImages> {
       _fUrl.requestFocus();
       return;
     }
+    if(url.startsWith('data:')) {
+      await _fromBase64();
+      return;
+    }
     if(!url.startsWith('http')) {
       await _launchWeb();
       return;
     }
+
     _urls.text = '';
     var response = await http.get(Uri.parse(url));
     if(response.statusCode == 200) {
@@ -500,6 +551,56 @@ class _SetImagesState extends State<SetImages> {
         await _inserFoto(file2.path);
       }
     }
+  }
+
+  /// Capturamos la imagen que biene de la web
+  Future<void> _fromBase64() async {
+
+    _msgs.value = '';
+    var url = _urls.text;
+    _urls.text = '';
+
+    var partes = url.split(',');
+    String tipo = partes.first;
+    tipo = tipo.replaceAll('data:', '');
+    tipo = tipo.replaceAll(';base64', '');
+    if(!tipo.contains('image')) {
+      _msgs.value = 'El código proporcionado no es una imagen valida.';
+      return;
+    }
+    tipo = tipo.replaceAll('image/', '').trim().toLowerCase();
+    if(!permitidas.contains(tipo)) {
+      _msgs.value = '$tipo No es una extención valida.';
+      return;
+    }
+    
+    var documentDirectory = GetPaths.getPathRoot();
+    var firstPath = '$documentDirectory/images_cache';
+    final dirTmp = Directory(firstPath);
+    String numFt = '1';
+    if(!dirTmp.existsSync()) {
+      dirTmp.create(recursive: true);
+    }else{
+
+      final ftos = dirTmp.listSync().toList();
+      int cantF = 0;
+      if(ftos.isNotEmpty) {
+        for (var i = 0; i < ftos.length; i++) {
+          if(ftos[i].path.contains(_idPza)) {
+            cantF++;
+          }
+        }
+        numFt = '$cantF';
+      }
+    }
+
+    var pathFull = '$firstPath$_sep$_idPza${DateTime.now().millisecondsSinceEpoch}_$numFt.$tipo';
+
+    Uint8List bytes = base64.decode(partes.last);
+    File file = File(pathFull);
+    file.writeAsBytesSync(bytes);
+    await _inserFoto(file.path);
+
   }
 
   ///
