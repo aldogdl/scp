@@ -7,11 +7,13 @@ import '../../../providers/cotiza_provider.dart';
 class BadgetsCotiza extends StatefulWidget {
 
   final String tipo;
+  final String from;
   final ValueChanged<void> onTap;
   const BadgetsCotiza({
     Key? key,
     required this.tipo,
-    required this.onTap
+    required this.onTap,
+    this.from = 'cotiza'
   }) : super(key: key);
   @override
   State<BadgetsCotiza> createState() => _BadgetsCotizaState();
@@ -90,12 +92,17 @@ class _BadgetsCotizaState extends State<BadgetsCotiza> {
            {'sp': ''}, {'lab': 'piezas', 'tit': 'Autopartes'},
         ];
       case 'auto':
-        return [
+        List<Map<String, dynamic>> items = [
           {'lab': 'marcas', 'tit': 'Marcas'}, {'s': ''},
           {'lab': 'modelos', 'tit': 'Modelos'}, {'s': ''},
           {'lab': 'anios', 'tit': 'Años'}, {'s': ''},
-          {'lab': 'origenCar', 'tit': 'Nacional'}, {'sp': ''},
         ];
+
+        if(widget.from == 'cotiza') {
+          items.add({'lab': 'origenCar', 'tit': 'Nacional'});
+          items.add({'sp': ''});
+        }
+        return items;
       default:
         return [
           {'lab': 'pieza', 'tit': 'Pieza'}, {'s': ''},

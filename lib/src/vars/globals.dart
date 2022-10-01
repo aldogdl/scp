@@ -23,4 +23,5 @@ class Globals {
     'DELANTERA': 'DEL.', 'TRASERA': 'TRAS.', 'LATERAL': 'LAT.', 'SUSPENSION': 'SUSP.'
   };
   List<String> origenes = ['SEMINUEVA Original', 'GENÉRICA nueva', 'CUALQUIER Orígen'];
+  List<String> conjunciones = ['DE', 'DEL', 'LA', 'EL', 'LOS', 'LAS', 'PARA'];
 }

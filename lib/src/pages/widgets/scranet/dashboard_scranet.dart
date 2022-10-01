@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'piezas_cp.dart';
 import 'marcas_cp.dart';
 import 'modelos_cp.dart';
 import 'my_navigator_rail.dart';
@@ -10,7 +12,7 @@ class DashboardScranet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final seccShow = ValueNotifier<String>('modelos');
+    final seccShow = ValueNotifier<String>('piezas');
 
     return Row(
       children: [
@@ -44,6 +46,8 @@ class DashboardScranet extends StatelessWidget {
         return const MarcasCp();
       case 'modelos':
         return const ModelosCp();
+      case 'piezas':
+        return const PiezasCp();
       default:
         return const Text('Sección no Encontrada');
     }

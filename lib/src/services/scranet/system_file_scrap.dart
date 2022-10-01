@@ -15,6 +15,7 @@ class SystemFileScrap {
   static const fileAldoPiezas  = 'aldo_piezas.json';
   static const fileAldoMrks    = 'aldo_mrks.json';
   static const fileAldoMods    = 'aldo_mods.json';
+  static const fileAnetPiezas  = 'anet_piezas.json';
 
   /// Construimos el sistema de archivos en caso de no existir
   /// [RETURN] los archivos que no existieron
@@ -101,6 +102,34 @@ class SystemFileScrap {
   }
 
   /// Guardamos las piezas recuperadas desde la web de...
+  static Future<String> setPiezaBy(String craw, Map<String, dynamic> pza) async {
+
+    var pzasCurrent = getAllPiezasFromFile(craw: craw);
+    final has = pzasCurrent.indexWhere( (element) => element['id'] == pza['id']);
+    if(has == -1) {
+      pzasCurrent.add(pza);
+    }else{
+      pzasCurrent[has] = pza;
+    }
+
+    String filename = '';
+    switch (craw) {
+      case 'radec':
+        filename = fileRadecPiezas;
+        break;
+      case 'aldo':
+        filename = fileAldoPiezas;
+        break;
+      case 'anet':
+        filename = fileAnetPiezas;
+        break;
+      default:
+    }
+    
+    return _setFile(filename, pzasCurrent);
+  }
+
+  /// Guardamos las piezas recuperadas desde la web de...
   static Future<void> setPiezasBy(String craw, List<Map<String, dynamic>> dt) async {
 
     String filename = '';
@@ -117,7 +146,7 @@ class SystemFileScrap {
     _setFile(filename, dt);
   }
 
-  /// Guardamos las marcas recuperadas desde la web de...
+  /// Recuperamos las marcas desde el archivo
   static Future<List<Map<String, dynamic>>> getAllMarcasBy(String craw) async {
 
     String filename = '';
@@ -163,6 +192,9 @@ class SystemFileScrap {
       case 'radec':
         filename = fileRadecMods;
         break;
+      case 'aldo':
+        filename = fileAldoMods;
+        break;
       default:
     }
 
@@ -206,41 +238,61 @@ class SystemFileScrap {
   }
 
   ///
-  static List<String> getPiezasToList() {
+  static List<Map<String, dynamic>> getPiezasToList(String craw) {
 
-    List<String> pzasR = [];
+    String filename = '';
+    switch (craw) {
+      case 'radec':
+        filename = fileRadecPiezas;
+        break;
+      case 'aldo':
+        filename = fileAldoPiezas;
+        break;
+      case 'anet':
+        filename = fileAnetPiezas;
+        break;
+      default:
+    }
+
+    List<Map<String, dynamic>> pzasR = [];
     final s = GetPaths.getSep();
     final root = GetPaths.getPathRoot();
     final dir = Directory('$root$s$folder');
 
-    final file = File('${dir.path}$s$fileRadecPiezas');
+    final file = File('${dir.path}$s$filename');
 
     if(file.existsSync()) {
 
-      final pzas = List<Map<String, dynamic>>.from(
+      return List<Map<String, dynamic>>.from(
         json.decode(file.readAsStringSync())
       );
-
-      if(pzas.isNotEmpty) {
-        for (var i = 0; i < pzas.length; i++) {
-          if(!pzasR.contains(pzas[i]['value'])) {
-            pzasR.add(pzas[i]['value'].toString().toUpperCase().trim());
-          }
-        }
-      }
     }
 
     return pzasR;
   }
 
   ///
-  static List<Map<String, dynamic>> getAllPiezasFromFile() {
+  static List<Map<String, dynamic>> getAllPiezasFromFile({String craw = 'radec'}) {
 
     final s = GetPaths.getSep();
     final root = GetPaths.getPathRoot();
     final dir = Directory('$root$s$folder');
 
-    final file = File('${dir.path}$s$fileRadecPiezas');
+    String filename = '';
+    switch (craw) {
+      case 'radec':
+        filename = fileRadecPiezas;
+        break;
+      case 'aldo':
+        filename = fileAldoPiezas;
+        break;
+      case 'anet':
+        filename = fileAnetPiezas;
+        break;
+      default:
+    }
+
+    final file = File('${dir.path}$s$filename');
 
     if(file.existsSync()) {
       return List<Map<String, dynamic>>.from(
@@ -252,7 +304,7 @@ class SystemFileScrap {
   }
 
   ///
-  static _setFile(String filename, dynamic dt) {
+  static String _setFile(String filename, dynamic dt) {
 
     final s = GetPaths.getSep();
     final root = GetPaths.getPathRoot();
@@ -262,8 +314,12 @@ class SystemFileScrap {
     if(!file.existsSync()) {
       file.createSync(recursive: true);
     }
-    file.writeAsStringSync(json.encode(dt));
-    return;
+    try {
+      file.writeAsStringSync(json.encode(dt));
+    } catch (_) {
+      return 'No se pudo guardar la Pieza en el Archivo';
+    }
+    return 'ok';
   }
 
   ///

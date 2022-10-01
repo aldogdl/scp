@@ -22,19 +22,19 @@ class RadecEntity {
   // El año de Auto
   String codeSap = '';
 
-
   String getBaseCatalogo() => '$uriBase$uriSearch';
   String getBaseModelos() => '$uriBase$uriSearch$uriMod';
+  // Ej. https://www.radec.com.mx/catalog/?type=46
+  String getBaseFetchPzas() => '$uriBase$uriSearch?type=$type';
 
   ///
   String createQuery(Map<String, dynamic> search) {
-
     // https://www.radec.com.mx/catalogo?type=19&brand=AUDI&model=mid_A3&year=&btn_search=Buscar
     type  = (search.containsKey('pieza')) ? search['pieza']['id'] : '';
     brand = (search.containsKey('marca')) ? search['marca']['id'] : '';
-    model = (search.containsKey('modelo')) ? search['modelo']['id'] : '';
+    model = (search.containsKey('modelo')) ? 'mid_${search['modelo']['id']}' : '';
     year  = (search.containsKey('anio')) ? search['anio']['id'] : '';
     final base = getBaseCatalogo();
-    return '$base?type=$type&brand=$brand&model=mid_$model&year=$year&btn_search=Buscar';
+    return '$base?type=$type&brand=$brand&model=$model&year=$year&btn_search=Buscar';
   }
 }

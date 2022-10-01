@@ -14,7 +14,7 @@ class MyNavigatorRail extends StatefulWidget {
 
 class MyNavigatorRailState extends State<MyNavigatorRail> {
   
-  int _selected = 1;
+  int _selected = 2;
 
   @override
   Widget build(BuildContext context) {

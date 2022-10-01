@@ -27,6 +27,12 @@ class AldoEntity {
   String getBaseCatalogo() => '$uriBase$uriSearch';
   String getBaseModelos() => '$uriBase$uriSearch$uriMod';
   String getBasePzasMrks() => '$uriBase$uriPzasMrks';
+  /// http://www.aldoautopartes.com/pi_busqueda.jsp?id_articulotipo=976
+  String getFetchPzas() => '$uriBase$uriPzasMrks?id_articulotipo=$type';
+  /// id_articulogrupo = El Id de la marca
+  /// id_articulotipo  = El Id de la Pieza
+  /// http://www.aldoautopartes.com/pi_resultados.jsp?id_articulogrupo=228&id_articulotipo=968
+  String getPzasDeUnMarca() => '$uriBase$uriSearch?id_articulogrupo=$brand&id_articulotipo=$type';
 
   ///
   void fromMap(Map<String, dynamic> search) {
@@ -48,7 +54,7 @@ class AldoEntity {
     };
   }
 
-  /// http://www.aldoautopartes.com/pi_resultados.jsp?id_articulogrupo=228&id_articulotipo=968
+  /// 
   Map<String, dynamic> getQuery() {
 
     return {

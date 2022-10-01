@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../widgets/texto.dart';
-import '../widgets/orden_tile.dart';
 import '../widgets/frm_cotiza/badgets_coiza.dart';
 import '../widgets/frm_cotiza/marcas_lst.dart';
 import '../widgets/frm_cotiza/modelos_lst.dart';
 import '../widgets/frm_cotiza/tile_item_list.dart';
+import '../widgets/my_tool_tip.dart';
+import '../widgets/orden_tile.dart';
+import '../widgets/texto.dart';
 import '../../config/sng_manager.dart';
 import '../../entity/modelos_entity.dart';
 import '../../entity/marcas_entity.dart';
@@ -20,7 +21,11 @@ import '../../vars/globals.dart';
 
 class CotizaFrmPage extends StatefulWidget {
 
-  const CotizaFrmPage({Key? key}) : super(key: key);
+  final String from;
+  const CotizaFrmPage({
+    Key? key,
+    this.from = 'cotiza'
+  }) : super(key: key);
 
   @override
   State<CotizaFrmPage> createState() => _CotizaFrmPageState();
@@ -61,31 +66,38 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
 
     return Column(
       children: [
-        OrdenTile(orden: _ctzP.orden, cantPzas: _cantPzas),
-        Row(
-          children: [
-            BadgetsCotiza(
-              tipo: 'taps',
-              onTap: (_) => setState(() {}),
+        if(widget.from == 'cotiza')
+          ...[
+            OrdenTile(orden: _ctzP.orden, cantPzas: _cantPzas),
+            Row(
+              children: [
+                BadgetsCotiza(
+                  tipo: 'taps',
+                  onTap: (_) => setState(() {}),
+                ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.only(right: 15),
+                  child: Selector<CotizaProvider, String>(
+                    selector: (_, prov) => prov.tokenServer,
+                    builder: (_, t, child) {
+
+                      return MyToolTip(
+                        msg:  (t.isNotEmpty) ? 'Token Activo al Servidor' : 'Token Desactualizado',
+                        child: (t.isNotEmpty)
+                          ? child!
+                          : InkWell(
+                            onTap: () => _makeToken(),
+                            child: const Icon(Icons.lock_reset, color: Colors.red, size: 18),
+                          )
+                      );
+                    },
+                    child: const Icon(Icons.lock, color: Colors.blue, size: 18),
+                  ),
+                )
+              ],
             ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.only(right: 15),
-              child: Selector<CotizaProvider, String>(
-                selector: (_, prov) => prov.tokenServer,
-                builder: (_, t, child) {
-                  return (t.isNotEmpty)
-                    ? child!
-                    : InkWell(
-                      onTap: () => _makeToken(),
-                      child: const Icon(Icons.lock_reset, color: Colors.red, size: 18),
-                    );
-                },
-                child: const Icon(Icons.lock, color: Colors.blue, size: 18),
-              ),
-            )
           ],
-        ),
         Selector<CotizaProvider, String>(
           selector: (_, prov) => prov.isOrdFinish,
           builder: (_, val, __) {

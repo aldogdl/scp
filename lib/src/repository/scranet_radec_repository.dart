@@ -10,13 +10,30 @@ class ScranetRadecRepository {
   final entity = RadecEntity();
   final className = 'radec';
   
-  ///
+  /// Buscamos la pieza con marca modelo y todo
   Future<List<Map<String, dynamic>>> searchAutopartes(String query) async {
 
-    List<Map<String, dynamic>> results = [];
     final dom = await getContentBy(query);
+    return _extraerContenidoDeTabla(dom);
+  }
+  
+  /// Buscamos todos los resultados que conincidan con el nomnre de la pieza
+  Future<List<Map<String, dynamic>>> fetchPiezas(String pieza) async {
+
+    entity.type = pieza;
+
+    final dom = await getContentBy(entity.getBaseFetchPzas());
+    return _extraerContenidoDeTabla(dom);
+  }
+
+  ///
+  List<Map<String, dynamic>> _extraerContenidoDeTabla(doc.Document? dom) {
+
+    List<Map<String, dynamic>> results = [];
+
     if(dom != null) {
       final html = dom.querySelectorAll('div.category-list-products > table > tbody > tr');
+      
       if(html.isNotEmpty) {
 
         for (var i = 0; i < html.length; i++) {
@@ -53,9 +70,10 @@ class ScranetRadecRepository {
         }
       }
     }
+
     return results;
   }
-
+  
   /// Recuperamos el html de la pagina indicada
   Future<doc.Document?> getContentBy(String uri) async {
 
@@ -67,6 +85,7 @@ class ScranetRadecRepository {
     }
 
     if(res.statusCode == 200) {
+      
       return doc.Document.html(res.body);
     }
     return null;
@@ -143,4 +162,36 @@ class ScranetRadecRepository {
     return {};
   }
 
+  ///
+  Future<Map<String, dynamic>> findMarca(String marca) async {
+
+    marca = marca.toUpperCase().trim();
+    final mrks = await SystemFileScrap.getAllMarcasBy(className);
+    if(mrks.isNotEmpty) {
+      return mrks.firstWhere((element) => element['value'] == marca, orElse: () => {});
+    }
+    return {};
+  }
+
+  ///
+  Future<Map<String, dynamic>> findModeloAndMarca(String modelo) async {
+
+    modelo = modelo.toUpperCase().trim();
+    final autos = await SystemFileScrap.getAllModelosBy(className);
+    Map<String, dynamic> model = {};
+    if(autos.isNotEmpty) {
+      autos.forEach((marca, mods) {
+        final fm = List<Map<String, dynamic>>.from(mods);
+        var has = fm.firstWhere(
+          (element) => element['value'] == modelo, orElse: () => {}
+        );
+        if(has.isNotEmpty) {
+          model = Map<String, dynamic>.from(has);
+          model['marca'] = marca;
+          return;
+        }
+      });
+    }
+    return model;
+  }
 }

@@ -415,6 +415,21 @@ class SocketConn extends ChangeNotifier {
     return 'ERROR desconocido, $ipH';
   }
 
+  /// Recuperamos la Ip de Harbi, de manera local.
+  Future<String> getIpToHarbiFromLocal() async {
+
+    final ipCode = GetContentFile.ipConectionLocal();
+    final ipH = utf8.decode(base64Decode(ipCode));
+    if(ipH.contains(':')) {
+      final partes = List<String>.from(ipH.split(':'));
+      globals.ipHarbi = partes.first;
+      globals.portHarbi = partes.last;
+      return 'Datos de conexión recuperados';
+    }
+
+    return 'ERROR desconocido, $ipH';
+  }
+
   ///
   Future<String> probandoConnWithHarbi() async {
 

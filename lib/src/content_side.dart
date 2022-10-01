@@ -129,8 +129,8 @@ class ContentSide extends StatelessWidget {
   Widget _txt({
     required String label,
     Color color = Colors.green,
-    double size = 12,
-  }) {
+    double size = 12}) 
+  {
 
     return Text(
       label,

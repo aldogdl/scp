@@ -12,12 +12,14 @@ class GetPathScranet {
 
   ///
   static String getUri(String uri, {bool isLocal = true}) {
-
+     
     final paths = {
       'get_marcas': 'get-all-marcas/',
       'set_marca': 'set-marca/',
       'set_modelo': 'set-modelo/',
       'get_modelos_by_idmrk': 'get-modelos-by-idmrk/',
+      'set_pieza': 'set-pieza/',
+      'del_pieza': 'del-pieza/',
     };
     
     if(isLocal) {

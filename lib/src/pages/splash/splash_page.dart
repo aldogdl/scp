@@ -93,6 +93,8 @@ class _SplasPageState extends State<SplasPage> {
 
     String response = '';
     yield 'Recuperando datos de Conexión';
+
+    // response = await conn.getIpToHarbiFromLocal();
     response = await conn.getIpToHarbiFromServer();
     yield response;
     if(response.contains('ERROR')){ return; }

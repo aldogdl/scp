@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:html/dom.dart' as doc;
 import 'package:http/http.dart' as http;
 
@@ -13,83 +14,152 @@ class ScranetAldoRepository {
   ///
   Future<List<Map<String, dynamic>>> searchAutopartes(String query) async {
 
-    Map<String, dynamic> search = {
-        'pieza': {'id':''},
-        'marca': {'id':'228'},
-        'modelo': {'id':'5'},
-        'anio': {'id':'2014'},
-      };
-    entity.fromMap(search);
-    List<Map<String, String>> estruct = [];
-
-    final body = await postContentBy();
-    if(body != null) {
-
-      final dom = body.querySelectorAll(
-        'body>table:nth-child(3)>tbody>tr>td:nth-child(2)>table>tbody'
-      );
-      
-      if(dom.isNotEmpty) {
-
-        for (var i = 0; i < dom.length; i++) {
-
-          // final idV = dom[i].attributes['value'].toString().trim();
-          // final valueR = dom[i].innerHtml.toString().trim();
-          // if(idV.isNotEmpty && valueR.isNotEmpty) {
-          //   if(!idV.contains('TODOS') && !valueR.contains('TODOS')) {
-          //     estruct.add({'id': idV, 'value': valueR});
-          //   }
-          // }
-        }
-      }
-    }
-    
-    if(estruct.isNotEmpty) {
-      await SystemFileScrap.setPiezasBy(className, estruct);
-    }
-
     List<Map<String, dynamic>> results = [];
     final dom = await getContentBy(query);
     if(dom != null) {
-      final html = dom.querySelectorAll('div.category-list-products > table > tbody > tr');
-      if(html.isNotEmpty) {
+      results = _scrapFromPageResultOfPiezas(dom);
+    }
+    return results;
+  }
 
-        for (var i = 0; i < html.length; i++) {
-          final tds = html[i].querySelectorAll('td');
-          if(tds.isNotEmpty) {
+  /// Aldo no cuenta con una forma sencilla de llegar a los nombres de las piezas
+  /// por lo tanto necesitamos recuperar primeramente el nombre de la pieza y
+  /// entre los resultados buscar en cada marca para ver cual me entrega resultados
+  /// la primera que entrege resultados la tomo y saco del ciclo de busqueda.
+  Future<List<Map<String, dynamic>>> fetchPiezas(String idPza) async {
 
-            var fotoBig = tds[0].querySelector('a')!.attributes['href'] ?? '';
-            var fotoThum = tds[0].querySelector('a > img')!.attributes['src'] ?? '';
-            var fichaTecnica = tds[3].querySelector('a')!.attributes['href'] ?? '';
-            
-            if(fotoBig.startsWith('/')) {
-              fotoBig = '${entity.uriBase}$fotoBig';
+    entity.type = idPza;
+    List<Map<String, dynamic>> results = [];
+
+    var dom = await getContentBy(entity.getFetchPzas());
+
+    if(dom != null) {
+
+      var trs = _getAllTrsSort(dom);
+      if(trs.isNotEmpty) {
+
+        String referenciaDe = '';
+        for (var i = 0; i < trs.length; i++) {
+
+          final isA = trs[i].getElementsByTagName('a');
+          if(isA.first.attributes['href'] != null) {
+            if(isA.first.attributes['href']!.contains('id_articulotipo=$idPza')) {
+              dom = await getContentBy('${entity.uriBase}${isA.first.attributes['href']!}');
+              if(dom != null) {
+                referenciaDe = isA.first.text;
+                results = _scrapFromPageResultOfPiezas(dom, referenciaDe: referenciaDe);
+                break;
+              }
             }
-
-            if(fotoThum.startsWith('/')) {
-              fotoThum = '${entity.uriBase}$fotoThum';
-            }
-
-            if(fichaTecnica.startsWith('/')) {
-              fichaTecnica = '${entity.uriBase}$fichaTecnica';
-            }
-
-            results.add({
-              'img' : fotoThum,
-              'imgB': fotoBig,
-              'sap' : tds[1].text.toString().trim(),
-              'idP' : tds[2].text.toString().trim(),
-              'pza' : tds[3].querySelector('a')!.text,
-              'ftc' : fichaTecnica,
-              'apps': tds[3].querySelector('div.brands-models')!.text,
-              'cost': tds[4].text.toString().trim(),
-            });
           }
         }
       }
     }
+    
     return results;
   }
+
+  ///
+  List<Map<String, dynamic>> _scrapFromPageResultOfPiezas
+    (doc.Document dom, {String referenciaDe = ''})
+  {
+
+    List<Map<String, dynamic>> pzas = [];
+    List<doc.Element> trs = _getAllTrsSort(dom);
+    if(trs.isNotEmpty) {
+      for (var i = 0; i < trs.length; i++) {
+        Map<String, dynamic> item = {};
+        item = _getImageAndHook(item, trs[i]);
+        item = _getPzaNameAndId(item, trs[i]);
+        item = _getCostoPza(item, trs[i]);
+        if(referenciaDe.isNotEmpty) {
+          item['ref'] = referenciaDe;
+        }
+        pzas.add(item);
+      }
+    }
+
+    return pzas;
+  }
+
+  ///
+  Map<String, dynamic> _getImageAndHook(Map<String, dynamic> item, doc.Element e) {
+
+    var tag = e.getElementsByTagName('img');
+    if(tag.isNotEmpty) {
+      var src = tag.first.attributes['src'];
+      if(src!.contains('_thumbs')) {
+        item['img'] = src.trim();
+        item['imgB'] = src.replaceAll('_thumbs/', '').trim();
+        final hook = tag.first.attributes['alt'];
+        item['sap'] = '0';
+        if(hook != null) {
+          item['sap'] = tag.first.attributes['alt']!.trim();
+        }
+      }
+    }
+
+    return item;
+  }
+
+  ///
+  Map<String, dynamic> _getPzaNameAndId(Map<String, dynamic> item, doc.Element e) {
+
+    var tag = e.getElementsByTagName('a');
+    if(tag.isNotEmpty) {
+      for (var i = 0; i < tag.length; i++) {
+        
+        var tag2 = tag[i].getElementsByTagName('img');
+        if(tag2.isEmpty) {
+          final ftc = tag[i].attributes['href'];
+          if(ftc!.contains('id_articulo')) {
+            item['ftc'] = '${entity.uriBase}$ftc';
+            final partes = ftc.split('=');
+            item['idP'] = partes.last.trim();
+            item['pza'] = tag[i].text.trim();
+            break;
+          }
+        }
+      }
+    }
+
+    return item;
+  }
+
+  ///
+  Map<String, dynamic> _getCostoPza(Map<String, dynamic> item, doc.Element e) {
+
+    item['cost'] = '\$0';
+    var tag = e.getElementsByTagName('div');
+    if(tag.isNotEmpty) {
+      for (var i = 0; i < tag.length; i++) {
+        if(tag[i].text.startsWith('\$')) {
+          item['cost'] = tag[i].text.trim();
+          break;
+        }
+      }
+    }
+
+    return item;
+  }
+
+  ///
+  List<doc.Element> _getAllTrsSort(doc.Document dom) {
+
+    List<doc.Element> trs = [];
+    List<doc.Element> trsb = dom.querySelectorAll('tr.tablegridcellb');
+    List<doc.Element> trsa = dom.querySelectorAll('tr.tablegridcella');
+    for (var i = 0; i < trsb.length; i++) {
+      trs.add(trsb[i]);
+      try {
+        trs.add(trsa[i]);
+      } catch (_) {
+        break;
+      }
+    }
+    return trs;
+  }
+
 
   /// Recuperamos el html de la pagina indicada
   Future<doc.Document?> getContentBy(String uri) async {
@@ -352,4 +422,38 @@ class ScranetAldoRepository {
     return [];
   }
 
+  ///
+  Future<Map<String, dynamic>> findMarca(String marca) async {
+
+    marca = marca.toUpperCase().trim();
+    final mrks = await SystemFileScrap.getAllMarcasBy(className);
+    if(mrks.isNotEmpty) {
+      return mrks.firstWhere((element) => element['value'] == marca, orElse: () => {});
+    }
+    return {};
+  }
+
+  ///
+  Future<Map<String, dynamic>> findModeloAndMarca(String modelo) async {
+
+    modelo = modelo.toUpperCase().trim();
+    final autos = await SystemFileScrap.getAllModelosBy(className);
+    Map<String, dynamic> model = {};
+    if(autos.isNotEmpty) {
+      
+      autos.forEach((marca, mods) {
+        final fm = List<Map<String, dynamic>>.from(mods);
+        var has = fm.firstWhere(
+          (element) => element['value'] == modelo, orElse: () => {}
+        );
+        if(has.isNotEmpty) {
+          model = Map<String, dynamic>.from(has);
+          model['marca'] = marca;
+          return;
+        }
+      });
+    }
+
+    return model;
+  }
 }

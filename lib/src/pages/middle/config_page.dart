@@ -270,30 +270,32 @@ class _ConfigPageState extends State<ConfigPage> {
       _deleteRegUserLogin();
     }else{
 
+      final pProv = context.read<PageProvider>();
+
       switch (secc) {
         case 'cerrar_sesion':
         final sock = context.read<SocketConn>();
           sock.cerrarConection();
           sock.isLoged = false;
           sock.makeRegToHarbi = false;
-          context.read<PageProvider>().resetPage();
+          pProv.resetPage();
           context.read<InvirtProvider>().cleanVars();
           return;
         case 'soliNon':
-          context.read<PageProvider>().page = Paginas.solicitudesNon;
+          pProv.page = Paginas.solicitudesNon;
           return;
         case 'soliOk':
-          context.read<PageProvider>().page = Paginas.solicitudes;
+          pProv.page = Paginas.solicitudes;
           return;
         case 'almacenVirtual':
-          context.read<PageProvider>().page = Paginas.almacenVirtual;
+          pProv.page = Paginas.almacenVirtual;
           return;
         case 'cotiza':
-          context.read<PageProvider>().page = Paginas.cotiza;
+          pProv.page = Paginas.cotiza;
           return;
       }
 
-      context.read<PageProvider>().confSecction = secc;
+      pProv.confSecction = secc;
       setState(() {});
     }
   }

@@ -372,15 +372,17 @@ class _GestCotizadoresState extends State<GestCotizadores> {
     }
 
     Future.microtask((){
-      _items.contacts = List<ContacsEntity>.from(lsR);
-      _cantTo.value = _idsSelected.length;
-      lsR = [];
-      if(_idsSelected.isNotEmpty) {
-        _isSelecAll = true;
+      if(mounted) {
+        _items.contacts = List<ContacsEntity>.from(lsR);
+        _cantTo.value = _idsSelected.length;
+        lsR = [];
+        if(_idsSelected.isNotEmpty) {
+          _isSelecAll = true;
+        }
+        setState(() {
+          _isReloding = false;
+        });
       }
-      setState(() {
-        _isReloding = false;
-      });
     });
   }
 

@@ -9,6 +9,21 @@ class GetContentFile {
 
   static final Globals _globals = getSngOf<Globals>();
 
+  /// Es usado solo en desarrollo para no estar pidiendo
+  /// de manera remota la IP de harbi.
+  static String ipConectionLocal() {
+
+    String pathTo = GetPaths.getPathRoot();
+    final File cargosF = File('$pathTo${GetPaths.getSep()}harbi_connx.json');
+    if(cargosF.existsSync()) {
+      final res = Map<String, dynamic>.from(json.decode(cargosF.readAsStringSync()));
+      if(res.isNotEmpty && res.containsKey('123H')) {
+        return res['123H'];
+      }
+    }
+    return '';
+  }
+
   ///
   static Future<List<String>> cargos() async {
 

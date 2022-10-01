@@ -23,13 +23,14 @@ class MiddleSide extends StatelessWidget {
         width: context.read<WindowCnfProvider>().tamMiddle,
         child: Container(
           color: context.read<WindowCnfProvider>().middleColor,
-          child: Consumer<PageProvider>(
-            builder: (_, PageProvider page, __) {
+          child: Selector<PageProvider, Paginas>(
+            selector: (_, prov) => prov.page,
+            builder: (_, p, __) {
 
               return Column(
                 children: [
-                  _middleWidget(page.page),
-                  Expanded( child: _determinarWidget(page.page) )
+                  _middleWidget(p),
+                  Expanded( child: _determinarWidget(p) )
                 ],
               );
             }
