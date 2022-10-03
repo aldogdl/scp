@@ -70,15 +70,26 @@ class GetPaths {
     File paths = File('${getPathRoot()}${getSep()}$nameFilePathsP');
     if (paths.existsSync()) {
       Map mapa = json.decode(paths.readAsStringSync());
-      if (mapa.containsKey(key)) {
+      if(key == 'all') {
+
         return {
           'port_harbi': mapa['portHarbi'],
           'port_server': mapa['portServer'],
           'ip_harbi': mapa['ip_harbi'],
           'base_r': mapa['server_remote'],
           'base_l': mapa['server_local'],
-          'uri': mapa[key],
         };
+      }else{
+        if (mapa.containsKey(key)) {
+          return {
+            'port_harbi': mapa['portHarbi'],
+            'port_server': mapa['portServer'],
+            'ip_harbi': mapa['ip_harbi'],
+            'base_r': mapa['server_remote'],
+            'base_l': mapa['server_local'],
+            'uri': mapa[key],
+          };
+        }
       }
     }
     return {};
@@ -98,6 +109,23 @@ class GetPaths {
   static Future<String> getDominio({bool isLocal = true}) async {
     final paths = await _getFromFilePathsProd('portServer');
     return (isLocal) ? paths['base_l'] : paths['base_r'];
+  }
+
+  ///
+  static Future<String> getUriCtc(String uri, {bool isLocal = true}) async {
+
+    Map<String, dynamic> uriPath = await _getFromFilePathsProd('all');
+    final paths = {
+      'set_filtro': 'scp/cotizadores/set-filtro',
+      'get_filtros_emp': 'scp/cotizadores/get-filtro-by-emp',
+      'del_filtro_by_id': 'scp/cotizadores/del-filtro-by-id',
+    };
+
+    String base = '${uriPath['base_l']}${paths[uri]}/';
+    if (!isLocal) {
+      base = '${uriPath['base_r']}${paths[uri]}/';
+    }
+    return base;
   }
 
   ///

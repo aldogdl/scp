@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+
+import 'package:scp/src/pages/widgets/filtros/filtros_main.dart';
+import 'package:scp/src/pages/widgets/widgets_utils.dart';
+
 import '../../../entity/contacts_entity.dart';
 import '../../../providers/items_selects_glob.dart';
 import '../../../repository/contacts_repository.dart';
@@ -72,7 +76,6 @@ class _GestCotizadoresState extends State<GestCotizadores> {
       ),
     );
   }
-
 
   ///
   Widget _barra() {
@@ -317,7 +320,17 @@ class _GestCotizadoresState extends State<GestCotizadores> {
         Texto(txt: contact.celular),
         Texto(txt: contact.curc, txtC: Colors.white.withOpacity(0.75)),
         IconButton(
-          onPressed: (){},
+          onPressed: () {
+            String loc = 'LOCAL';
+            if(!contact.isLocal) {
+              loc = 'FORANEO';
+            }
+            WidgetsAndUtils.showAlertBody(
+              context,
+              titulo: 'Filtros para ${contact.nomEmp} [ $loc ]',
+              body: FiltrosMain(contact: contact),
+            );
+          },
           icon: const Icon(Icons.filter_list)
         )
       ],

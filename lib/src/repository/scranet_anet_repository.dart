@@ -17,6 +17,12 @@ class ScranetAnetRepository {
   bool isLoading = false;
 
   ///
+  List<Map<String, dynamic>> getAllPiezasNamesFromFile() {
+
+    return SystemFileScrap.getAllPiezasFromFile(craw: 'anet');
+  }
+
+  ///
   Future<String> setPiezaName(Map<String, dynamic> pieza) async {
 
     String uri = GetPathScranet.getUri('set_pieza', isLocal: true);

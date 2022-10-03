@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:scp/src/entity/marcas_entity.dart';
-import 'package:scp/src/providers/cotiza_provider.dart';
-import 'package:scp/src/repository/autos_repository.dart';
-
 import '../scranet/tile_marcas_anet.dart';
+import '../../../entity/marcas_entity.dart';
+import '../../../providers/cotiza_provider.dart';
+import '../../../repository/autos_repository.dart';
 
 class MarcasLst extends StatefulWidget {
 

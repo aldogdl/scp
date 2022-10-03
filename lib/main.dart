@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:scp/src/providers/filtros_provider.dart';
 
 import 'src/pages/a_main/scp_layout.dart';
 import 'src/config/sng_manager.dart';
@@ -52,6 +53,7 @@ class ProvidersConfig extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => InvirtProvider()),
         ChangeNotifierProvider(create: (_) => CotizaProvider()),
         ChangeNotifierProvider(create: (_) => CotizaProcessProvider()),
+        ChangeNotifierProvider(create: (_) => FiltrosProvider()),
       ],
       child: MaterialApp(
         scrollBehavior: MyCustomScrollBehavior(),

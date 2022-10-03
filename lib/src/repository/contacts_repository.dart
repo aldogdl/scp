@@ -61,4 +61,31 @@ class ContactsRepository {
     await MyHttp.post(uri, data);
     result = MyHttp.result;
   }
+
+  ///
+  Future<void> getFiltroByEmp(int idEmp) async {
+
+    String uri = await GetPaths.getUriCtc('get_filtros_emp');
+    await MyHttp.get('$uri$idEmp');
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
+  }
+
+  ///
+  Future<void> setFiltroCotizador(Map<String, dynamic> data, {bool isLocal = true}) async {
+
+    String uri = await GetPaths.getUriCtc('set_filtro', isLocal: isLocal);
+    await MyHttp.post(uri, data);
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
+  }
+
+  ///
+  Future<void> delFiltroById(int id, {bool isLocal = true}) async {
+    
+    String uri = await GetPaths.getUriCtc('del_filtro_by_id', isLocal: isLocal);
+    await MyHttp.get('$uri$id/');
+    result = Map<String, dynamic>.from(MyHttp.result);
+    MyHttp.clean();
+  }
 }
