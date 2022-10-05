@@ -89,7 +89,7 @@ class _BadgetsCotizaState extends State<BadgetsCotiza> {
       case 'taps':
         return [
            {'sp': ''}, {'lab': 'auto', 'tit': 'Vehículo'}, {'sp': ''}, {'s': ''},
-           {'sp': ''}, {'lab': 'piezas', 'tit': 'Autopartes'},
+           {'sp': ''}, {'lab': 'piezas', 'tit': 'Autoparte'},
         ];
       case 'auto':
         List<Map<String, dynamic>> items = [

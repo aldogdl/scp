@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scp/src/config/sng_manager.dart';
+import 'package:scp/src/pages/widgets/my_tool_tip.dart';
+import 'package:scp/src/pages/widgets/widgets_utils.dart';
 
 import '../texto.dart';
 import '../../../providers/cotiza_provider.dart';
@@ -77,6 +79,8 @@ class _LstPiezasOrdenState extends State<LstPiezasOrden> {
       pos = _globals.lugAbr[pos];
     }
 
+    const dblClk = 'Doble click para Editar';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       child: Row(
@@ -123,36 +127,89 @@ class _LstPiezasOrdenState extends State<LstPiezasOrden> {
               children: [
                 Row(
                   children: [
-                    Texto(txt: '${pza.piezaName} $lado $pos',
-                      sz: 15, txtC: Colors.white
+                    MyToolTip(
+                      msg: dblClk,
+                      child: InkWell(
+                        onDoubleTap: () {
+                          _ctzP.idPzaEdit = pza.id;
+                          _ctzP.txtEdit = pza.piezaName;
+                          _ctzP.taps = 'switch:pieza';
+                        },
+                        child: Texto(txt: pza.piezaName,
+                          sz: 15, txtC: Colors.white
+                        ),
+                      )
+                    ),
+                    const SizedBox(width: 8),
+                    MyToolTip(
+                      msg: pza.lado,
+                      child: InkWell(
+                        onDoubleTap: () {
+                          _ctzP.idPzaEdit = pza.id;
+                          _ctzP.txtEdit = pza.lado;
+                          _ctzP.taps = 'switch:lado';
+                        },
+                        child: Texto(txt: lado,
+                          sz: 13, txtC: const Color.fromARGB(255, 173, 173, 173)
+                        ),
+                      )
+                    ),
+                    const SizedBox(width: 8),
+                    MyToolTip(
+                      msg: pza.posicion,
+                      child: InkWell(
+                        onDoubleTap: () {
+                          _ctzP.idPzaEdit = pza.id;
+                          _ctzP.txtEdit = pza.posicion;
+                          _ctzP.taps = 'switch:posicion';
+                        },
+                        child: Texto(txt: pos,
+                          sz: 13, txtC: const Color.fromARGB(255, 128, 128, 128)
+                        ),
+                      )
                     ),
                     const SizedBox(width: 20),
-                    Texto(txt: pza.origen, sz: 13, txtC: Colors.blue),
-                    const Spacer(),
-                    _iconGestion(
-                      ico: Icons.edit, color: Colors.blue,
-                      fnc: (){}
+                    MyToolTip(
+                      msg: dblClk,
+                      child: InkWell(
+                        onDoubleTap: () {
+                          _ctzP.idPzaEdit = pza.id;
+                          _ctzP.txtEdit = pza.origen;
+                          _ctzP.taps = 'switch:origin';
+                        },
+                        child: Texto(txt: pza.origen, sz: 13, txtC: Colors.blue)
+                      )
                     ),
+                    const Spacer(),
                     const SizedBox(width: 20),
                     _iconGestion(
                       ico: Icons.delete, color: Colors.red,
-                      fnc: (){}
+                      fnc: () => _deletePza(pza.id)
                     ),
                     const SizedBox(width: 20),
                     _iconGestion(
-                      ico: Icons.extension, color: Colors.red,
+                      ico: Icons.extension, color: Colors.blue,
                       fnc: (){}
                     )
                   ],
                 ),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    Texto(
-                      txt: deta, sz: 13, txtC: Colors.grey
+                    MyToolTip(
+                      msg: dblClk,
+                      child: InkWell(
+                        onDoubleTap: () {
+                          _ctzP.idPzaEdit = pza.id;
+                          _ctzP.txtEdit = pza.obs;
+                          _ctzP.taps = 'switch:detalles';
+                        },
+                        child: Texto(txt: deta, sz: 13, txtC: Colors.grey)
+                      )
                     ),
                     const Spacer(),
                     Texto(
-                      txt: 'Id: ${pza.id}',
+                      txt: 'Id: ${_ctzP.formatIdPza(pza.id)}',
                       txtC: const Color.fromARGB(255, 88, 206, 147),
                       sz: 13,
                     ),
@@ -183,5 +240,27 @@ class _LstPiezasOrdenState extends State<LstPiezasOrden> {
     );
   }
 
-  
+  void _deletePza(int id) async {
+
+    bool? acc = await WidgetsAndUtils.showAlert(
+      context,
+      titulo: 'Borrando Pieza',
+      msg: 'Se eliminará permanentemente la pieza seleccionada.\n'
+      '¿Estás segur@ de continuar?',
+      msgOnlyYes: 'Sí, Borrar',
+      onlyAlert: false,
+      focusOnConfirm: true,
+      onlyYES: false,
+      withYesOrNot: true
+    );
+
+    acc = (acc == null) ? false : acc;
+    if(acc) {
+      final ind = _ctzP.piezas.indexWhere((pz) => pz.id == id);
+      if(ind != -1) {
+        _ctzP.piezas.removeAt(ind);
+        _ctzP.refreshLstPzasOrden = _ctzP.piezas.length;
+      }
+    }
+  }
 }

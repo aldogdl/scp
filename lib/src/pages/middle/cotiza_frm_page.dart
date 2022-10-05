@@ -132,6 +132,12 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
           selector: (_, prov) => prov.taps,
           builder: (_, tap, __) {
 
+            if(tap.startsWith('switch')) {
+              Future.microtask((){
+                _makeSwitch();
+              });
+            }
+
             if(tap == 'auto') {
               return BadgetsCotiza(
                 tipo: 'auto',
@@ -144,6 +150,7 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
                 }
               );
             }
+
             return BadgetsCotiza(
               tipo: 'piezas',
               onTap: (_) {
@@ -182,6 +189,13 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
         hintText: _getHint(),
         hintStyle: TextStyle(
           color: Colors.white.withOpacity(0.3)
+        ),
+        suffixIcon: InkWell(
+          onTap: () => _tapInItem(_ctrT.text, 'field'),
+          child: Icon(
+            Icons.check,
+            color: (_ctzP.idPzaEdit != 0) ? Colors.orange : const Color.fromARGB(255, 197, 197, 197),
+          ),
         )
       ),
     );
@@ -487,6 +501,7 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
       case 'marcas':
 
         if(item.isEmpty) {
+          if(_ctzP.lMarcas.isEmpty) { return; }
           _ctrT.text = '${_ctzP.lMarcas.first.marca}.1';
         }else{
           if(from == 'onTap') {
@@ -801,6 +816,11 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
           }
           break;
         case 'pieza':
+          
+          if(_ctzP.idPzaEdit != 0) {
+            _editPiezaCurrent('pieza', partes.last);
+            return;
+          }
 
           if(_pieza.id == 0) {
             _pieza.id = DateTime.now().millisecondsSinceEpoch;
@@ -808,26 +828,41 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
           _pieza.piezaName = partes.last;
           _pieza.est = _ctzP.orden.est;
           _pieza.stt = _ctzP.orden.stt;
-
           _ctzP.seccion = 'lado';
           setState(() {});
           break;
         case 'lado':
+          if(_ctzP.idPzaEdit != 0) {
+            _editPiezaCurrent('lado', partes.last);
+            return;
+          }
           _pieza.lado = partes.last;
           _ctzP.seccion = 'posicion';
           setState(() {});
           break;
         case 'posicion':
+          if(_ctzP.idPzaEdit != 0) {
+            _editPiezaCurrent('posicion', partes.last);
+            return;
+          }
           _pieza.posicion = partes.last;
           _ctzP.seccion = 'origin';
           setState(() {});
           break;
         case 'origin':
+          if(_ctzP.idPzaEdit != 0) {
+            _editPiezaCurrent('origin', partes.last);
+            return;
+          }
           _pieza.origen = partes.last;
           _ctzP.seccion = 'detalles';
           setState(() {});
           break;
         case 'detalles':
+          if(_ctzP.idPzaEdit != 0) {
+            _editPiezaCurrent('detalles', partes.last);
+            return;
+          }
           _pieza.obs = partes.last;
           _ctzP.piezas.add(_pieza);
           _buildNewPza();
@@ -848,16 +883,76 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
       _itemsFilter.clear();
       _ctzP.search = '';
       _fco.requestFocus();
+
     }
   }
 
   ///
-  void _buildNewPza({bool refresh = true}) {
+  void _editPiezaCurrent(String campo, String value) {
+
+    PiezasEntity? tmp;
+    print('inde pza');
+    print(_ctzP.indexPzaCurren);
+
+    if(_ctzP.indexPzaCurren != -1) {
+      tmp = _ctzP.piezas[_ctzP.indexPzaCurren];
+      if(tmp.id == _ctzP.idPzaEdit) {
+        tmp = _changeValuePza(campo, value, tmp);
+        _ctzP.piezas[_ctzP.indexPzaCurren] = tmp;
+      }else{
+        tmp = null;
+      }
+    }
+
+    if(tmp == null || tmp.id == 0) {
+      final indx = _ctzP.piezas.indexWhere((pi) => pi.id == _ctzP.idPzaEdit);
+
+      if(indx != -1) {
+        tmp = _ctzP.piezas[indx];
+        if(tmp.id == _ctzP.idPzaEdit) {
+          tmp = _changeValuePza(campo, value, tmp);
+          _ctzP.piezas[indx] = tmp;
+        }
+      }
+    }
+
+    tmp = null;
+    _buildNewPza(forceRefres: true);
+  }
+
+  ///
+  PiezasEntity _changeValuePza(String campo, String value, PiezasEntity pza) {
+
+    switch (campo) {
+      case 'pieza':
+        pza.piezaName = value;
+        break;
+      case 'lado':
+        pza.lado = value;
+        break;
+      case 'posicion':
+        pza.posicion = value;
+        break;
+      case 'origin':
+        pza.origen = value;
+        break;
+      case 'detalles':
+        pza.obs = value;
+        break;
+      default:
+    }
+    return pza;
+  }
+
+  ///
+  void _buildNewPza({bool refresh = true, bool forceRefres = false}) {
 
     _pieza = PiezasEntity();
     _pieza.id = DateTime.now().millisecondsSinceEpoch;
     _cantPzas = _ctzP.piezas.length;
     _ctzP.indexPzaCurren = (_ctzP.piezas.isEmpty) ? 0 : _ctzP.piezas.length -1;
+    _ctzP.txtEdit = '';
+    _ctzP.idPzaEdit = 0;
     _ctzP.fotoThubm = '';
     _ctrT.text = '';
     _itemsFilter = [];
@@ -865,7 +960,11 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
 
     if(refresh) {
       _ctzP.seccion = 'pieza';
-      _ctzP.refreshLstPzasOrden = _cantPzas;
+      if(forceRefres) {
+        _ctzP.refreshLstPzasOrden = _ctzP.refreshLstPzasOrden + 1;
+      }else{
+        _ctzP.refreshLstPzasOrden = _cantPzas;
+      }
       setState(() {});
     }
   }
@@ -885,4 +984,31 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
     setState(() {});
   }
 
+  ///
+  void _makeSwitch() {
+
+    final partes = _ctzP.taps.split(':');
+    final accSec = partes.last;
+
+    Future.delayed(const Duration(microseconds: 250), () {
+
+      if(_ctzP.seccion == 'pieza') {
+        _ctzP.seccion = 'marcas';
+        _ctzP.taps = 'auto';
+      }else{
+        _ctzP.seccion = 'pieza';
+        _ctzP.taps = 'piezas';
+      }
+      _ctrT.text = _ctzP.txtEdit.toLowerCase().trim();
+      _ctzP.txtEdit = '';
+      setState(() {});
+      
+      Future.delayed(const Duration(microseconds: 250), () {
+        _ctzP.seccion = accSec;
+        _ctzP.taps = 'piezas';
+        _ctrT.selection = TextSelection(baseOffset: 0, extentOffset: _ctrT.text.length);
+        _fco.requestFocus();
+      });
+    });
+  }
 }

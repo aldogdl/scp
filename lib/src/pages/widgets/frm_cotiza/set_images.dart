@@ -310,7 +310,7 @@ class _SetImagesState extends State<SetImages> {
                   });
                 }
                 _idPza = '${_ctzP.piezas[index].id}';
-                txt = 'Fotografías para la pieza: $_idPza';
+                txt = 'Fotografías para la pieza: ${_ctzP.formatIdPza(_ctzP.piezas[index].id)}';
               }
               return Texto(txt: txt);
             },

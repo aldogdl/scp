@@ -14,6 +14,8 @@ class CotizaProvider extends ChangeNotifier {
     lMarcas = [];
     lModelos = [];
     lAnios = [];
+    txtEdit = '';
+    idPzaEdit = 0;
     _fotoThubm = '';
     _indexPzaCurren = -1;
     _taps = 'auto';
@@ -22,6 +24,9 @@ class CotizaProvider extends ChangeNotifier {
   }
 
   String inicialDir = '';
+  // Usado para colocar el texto que se quiere editar en la caja.
+  String txtEdit = '';
+  int idPzaEdit = 0;
   OrdenEntity orden = OrdenEntity();
   List<PiezasEntity> piezas = [];
   
@@ -29,7 +34,6 @@ class CotizaProvider extends ChangeNotifier {
   List<ModelosEntity> lModelos = [];
   List<int> lAnios = [];
 
-  
   // El token server para hacer petiones a la API de cotiza
   String _tokenServer = '';
   String get tokenServer => _tokenServer;
@@ -98,4 +102,11 @@ class CotizaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///
+  String formatIdPza(int idP) {
+
+    List<String> partes = '$idP'.split('');
+    partes.insert((partes.length - 5), '-');
+    return partes.join('');
+  }
 }
