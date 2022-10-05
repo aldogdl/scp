@@ -107,6 +107,15 @@ class _LoginPageState extends State<LoginPage> {
           txtC: Color.fromARGB(255, 218, 218, 218),
           sz: 22,
         ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.25,
+          child: const Image(
+            image: AssetImage('assets/logo_1024.png'),
+            fit: BoxFit.contain,
+          ),
+        ),
+        const SizedBox(height: 5),
         Texto(
           txt: context.watch<SocketConn>().msgErr,
           txtC: (context.watch<SocketConn>().msgErr.startsWith('[X]'))
