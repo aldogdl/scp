@@ -3,18 +3,21 @@ import 'package:flutter/material.dart';
 import 'controles.dart';
 import 'tile_bandeja_metricas.dart';
 import 'tile_titulo_orden.dart';
+import '../centinela/centinela.dart';
 import '../../../repository/inventario_repository.dart';
 
 class TileBandejaEntrada extends StatefulWidget {
 
   final String nomFile;
   final bool isSelected;
+  final bool withControls;
   final ValueChanged<int> onTap;
   const TileBandejaEntrada({
     Key? key,
     required this.nomFile,
     required this.onTap,
     required this.isSelected,
+    this.withControls = true,
   }) : super(key: key);
 
   @override
@@ -64,7 +67,8 @@ class _TileBandejaEntradaState extends State<TileBandejaEntrada> {
     return Column(
       children: [
         _body(),
-        _losControles(),
+        if(widget.withControls)
+          _losControles(),
         const SizedBox(height: 10)
       ],
     );
@@ -97,7 +101,9 @@ class _TileBandejaEntradaState extends State<TileBandejaEntrada> {
             marca: '> ${dataOrd['mrk']}', modelo: dataOrd['mod'],
             anio: '${dataOrd['anio']}',
             nResp: 0, nOrd: dataOrd['id'], active: false,
-            solicitante: dataOrd['sol'], created: dataOrd['created'],
+            solEmp: dataOrd['sol'],
+            solNom: dataOrd['solNom'],
+            created: dataOrd['created'],
             nPzas: dataOrd['nPzas'],
             onTap: (int idOrd) => widget.onTap(idOrd)
           ),
@@ -131,8 +137,15 @@ class _TileBandejaEntradaState extends State<TileBandejaEntrada> {
           idOrd: dataOrd['id'],
           nPzas: dataOrd['nPzas'],
           created: dataOrd['created'],
-          onSendProcess: (_) async {
-            
+          onOpenCentinela: (_) async {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => AlertDialog(
+                contentPadding: const EdgeInsets.all(0),
+                content: Centinela( orden: dataOrd ),
+              )
+            );
           }
         ),
       );

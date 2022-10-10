@@ -7,7 +7,7 @@ class Controles extends StatefulWidget {
   final int nPzas;
   final String filename;
   final String created;
-  final ValueChanged<void> onSendProcess;
+  final ValueChanged<void> onOpenCentinela;
 
   const Controles({
     Key? key,
@@ -15,7 +15,7 @@ class Controles extends StatefulWidget {
     required this.created,
     required this.idOrd,
     required this.nPzas,
-    required this.onSendProcess,
+    required this.onOpenCentinela,
   }) : super(key: key);
 
   @override
@@ -43,8 +43,8 @@ class _ControlesState extends State<Controles> {
           child: Row(
             children: [
               _btn(
-                Icons.exit_to_app, 'Procesar',
-                c: Colors.lightBlue, fnc: () => widget.onSendProcess(null)
+                Icons.android, 'Centinela',
+                c: const Color.fromARGB(255, 9, 206, 140), fnc: () => widget.onOpenCentinela(null)
               ),
               _btn(
                 Icons.back_hand_rounded, 'Cancelar',
@@ -72,8 +72,8 @@ class _ControlesState extends State<Controles> {
       padding: EdgeInsets.only(right: padd),
       child: MouseRegion(
         child: IconButton(
-          icon: Icon(ico, size: 15, color: c),
-          iconSize: 15,
+          icon: Icon(ico, color: c),
+          iconSize: (ico == Icons.android) ? 20 : 15,
           onPressed: () => fnc(),
           tooltip: tip,
           padding: const EdgeInsets.all(0),

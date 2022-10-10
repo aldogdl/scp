@@ -891,9 +891,6 @@ class _CotizaFrmPageState extends State<CotizaFrmPage> {
   void _editPiezaCurrent(String campo, String value) {
 
     PiezasEntity? tmp;
-    print('inde pza');
-    print(_ctzP.indexPzaCurren);
-
     if(_ctzP.indexPzaCurren != -1) {
       tmp = _ctzP.piezas[_ctzP.indexPzaCurren];
       if(tmp.id == _ctzP.idPzaEdit) {

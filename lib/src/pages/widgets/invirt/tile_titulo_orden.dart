@@ -8,7 +8,8 @@ class TileTituloOrden extends StatelessWidget {
   final String marca;
   final String modelo;
   final String anio;
-  final String solicitante;
+  final String solEmp;
+  final String solNom;
   final String created;
   final int nOrd;
   final int nResp;
@@ -20,7 +21,7 @@ class TileTituloOrden extends StatelessWidget {
     Key? key,
     required this.marca,
     required this.modelo,
-    required this.solicitante,
+    required this.solEmp,
     required this.created,
     required this.anio,
     required this.nResp,
@@ -28,6 +29,7 @@ class TileTituloOrden extends StatelessWidget {
     required this.nOrd,
     this.nPzas = 0,
     this.active = true,
+    this.solNom = '',
   }) : super(key: key);
 
   @override
@@ -52,7 +54,7 @@ class TileTituloOrden extends StatelessWidget {
       txtC: (active) ? Colors.green : Colors.green.withOpacity(valOp),
       sz: 15, isBold: true
     );
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -94,7 +96,13 @@ class TileTituloOrden extends StatelessWidget {
         const SizedBox(height: 3),
         Row(
           children: [
-            Texto(txt: solicitante, sz: 12, txtC: Colors.white.withOpacity(0.5)),
+            MyToolTip(
+              msg: solNom,
+              child: Texto(
+                txt: solEmp.toUpperCase(), sz: 12,
+                txtC: Colors.white.withOpacity(0.5)
+              )
+            ),
             const Spacer(),
             Texto(txt: created, sz: 12, txtC: Colors.white.withOpacity(0.5), isFecha: true),
           ],

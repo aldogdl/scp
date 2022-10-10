@@ -257,6 +257,70 @@ class InventarioRepository {
     return metrix;
   }
 
+  /// Cuando el AVO revisa el centinela de cada orden, esta trae datos desde HARBI,
+  /// estos datos actualiza la info local del archivo de la orden y guarda tambien
+  /// todos los datos optenidos para mostrarlos la siguiente ves que se revice el centinela
+  /// Retorna verdadero de la seccion que se encontro el cambio para actualizar pantalla
+  Future<Map<String, dynamic>> updateDataCentinela(Map<String, dynamic> data, String filename) async {
+
+    Map<String, dynamic> seccs = {'metrix':false, 'provs': true, 'newData': {}};
+    final dir = getPathToAsigns();
+    final file = File('$dir/$filename');
+
+    if(file.existsSync()) {
+
+      var content = Map<String, dynamic>.from(json.decode(file.readAsStringSync()));
+
+      if(!content.containsKey(OrdCamp.metrik.name)) {
+        Map<String, dynamic> m = _schemaMetrica();
+        m[Mtrik.pzas.name] = content[OrdCamp.piezas.name].length;
+        content[OrdCamp.metrik.name] = m;
+      }else{
+
+        if(data.containsKey('metas')) {
+          
+          String estScm = fromFolderToStringStatusScm(data['metas']['folder']);
+          if(estScm != content[OrdCamp.metrik.name]['scmEst']) {
+            content[OrdCamp.metrik.name]['scmEst'] = estScm;
+            seccs['metrix'] = true;
+          }
+          if(data['metas'].containsKey('camp')) {
+            content['campaings'] = [data['metas']['camp']];
+          }
+        }
+
+        if(data.containsKey('notengo')) {
+          if(data['notengo'].isNotEmpty) {
+            var cnt = 0;
+            final nt = Map<String, dynamic>.from(data['notengo']);
+            nt.forEach((key, value) {
+              final idP = List<String>.from(value);
+              cnt = cnt + idP.length;
+            });
+            if(content[OrdCamp.metrik.name]['cnt'] != cnt) {
+              content[OrdCamp.metrik.name]['cnt'] = cnt;
+              seccs['metrix'] = true;
+            }
+          }
+        }
+
+        if(data.containsKey('resps')) {
+          final listResp = List<Map<String, dynamic>>.from(data['resps']);
+          if(content[OrdCamp.metrik.name]['rsp'] != listResp.length) {
+            content[OrdCamp.metrik.name]['rsp'] = listResp.length;
+              seccs['metrix'] = true;
+          }
+        }
+      }
+
+      content['centinela'] = data;
+      file.writeAsStringSync(json.encode(content));
+      seccs['newData'] = content;
+    }
+
+    return seccs;
+  }
+
   ///
   Future<Map<String, dynamic>> getContentFile(String filename) async {
 
@@ -718,6 +782,35 @@ class InventarioRepository {
       'nPzas':0, 'solNom':'DESCONOCIDO', 'sol': 'SOLICITANTE EMPRESA', 'solId':0,
       'created': DateTime.now().toIso8601String(),
     };
+  }
+
+  /// -> 0 = EN STAGE, 1 = EN BANDEJA, 2 = EN COLA, 3 = ENVIANDOSE
+  /// -> 4 = EN PAPELERA, 5 = ENVIADO
+  String fromIntToStringStatusScm(String stt) {
+
+    switch (stt) {
+      case '0': return 'EN STAGE';
+      case '1': return 'EN BANDEJA';
+      case '2': return 'EN COLA';
+      case '3': return 'ENVIANDOSE';
+      case '4': return 'EN PAPELERA';
+      case '5': return 'ENVIADO';
+      default:
+      return 'Desconocido';
+    }
+  }
+
+  ///
+  String fromFolderToStringStatusScm(String stt) {
+
+    switch (stt) {
+      case 'scm_await': return '2';
+      case 'scm_tray': return '3';
+      case 'scm_werr': return '4';
+      case 'scm_hist': return '5';
+      default:
+      return '0';
+    }
   }
 
   ///

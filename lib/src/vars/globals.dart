@@ -3,7 +3,7 @@ import '../entity/contacto_entity.dart';
 
 class Globals {
 
-  String verApp = '1.4.3';
+  String verApp = '1.4.5';
   bool isLocalConn = true;
   String wifiName = '';
   String myIp = '';

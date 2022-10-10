@@ -112,7 +112,7 @@ class _InventVirtualState extends State<InventVirtual> {
             }
           );
         },
-        child: _lstOnlyOrds(lst: lst),
+        child: _lstOnlyOrds(lst: lst)
       )
     );
   }

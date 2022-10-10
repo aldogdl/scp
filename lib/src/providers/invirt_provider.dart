@@ -27,7 +27,7 @@ class InvirtProvider extends ChangeNotifier {
   /// La lista de cronos
   Map<int, dynamic> cronos = {};
 
-  /// Los cosotos que han sido seleccionados para la zona financiera
+  /// Los costos que han sido seleccionados para la zona financiera
   bool _recalcular = false;
   bool get recalcular => _recalcular;
   set recalcular(bool rc) {

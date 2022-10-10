@@ -84,6 +84,7 @@ class _LoginPageState extends State<LoginPage> {
               builder: (_, val, __) {
 
                 if(val) { return const SplasPage(); }
+
                 return _body();
               }
             )
@@ -93,21 +94,47 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  ///
   Widget _body() {
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Spacer(),
-        const Expanded(child: SizedBox()),
-        const Texto(
-          txt: 'Sistema de Cotización y Procesamiento',
-          txtC: Color.fromARGB(255, 218, 218, 218),
+        Texto(
+          txt: 'Sistema de Cotización y Procesamiento Ver. [${globals.verApp}]',
+          txtC: const Color.fromARGB(255, 218, 218, 218),
           sz: 22,
         ),
         const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.black.withOpacity(0.3)),
+            color: Colors.black.withOpacity(0.1)
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _logo(),
+              const SizedBox(width: 10),
+              _frmBody(),
+            ],
+          ),
+        )
+      ],
+    );
+  }
+  
+  ///
+  Widget _logo() {
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
         SizedBox(
           width: MediaQuery.of(context).size.width * 0.25,
           child: const Image(
@@ -115,13 +142,36 @@ class _LoginPageState extends State<LoginPage> {
             fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 10),
         Texto(
           txt: context.watch<SocketConn>().msgErr,
           txtC: (context.watch<SocketConn>().msgErr.startsWith('[X]'))
             ? Colors.orange : Colors.blue
         ),
         const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Texto(txt: 'SERVIDOR HARBI: ${globals.ipHarbi}'),
+              ),
+            ),
+          ],
+        )
+      ],
+    );
+  }
+
+  ///
+  Widget _frmBody() {
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
         Container(
           constraints: BoxConstraints(
             minWidth: MediaQuery.of(context).size.width * 0.1,
@@ -154,19 +204,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           )
         ),
-        const Spacer(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Texto(txt: 'HARBI: ${globals.ipHarbi}'),
-              ),
-            ),
-          ],
-        )
       ],
     );
   }

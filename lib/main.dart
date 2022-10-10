@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:scp/src/providers/centinela_provider.dart';
 import 'package:scp/src/providers/filtros_provider.dart';
 
 import 'src/pages/a_main/scp_layout.dart';
@@ -45,15 +46,16 @@ class ProvidersConfig extends StatelessWidget {
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => WindowCnfProvider()),
-        ChangeNotifierProvider(create: (_) => PageProvider()),
-        ChangeNotifierProvider(create: (_) => SocketConn()),
-        ChangeNotifierProvider(create: (_) => ItemSelectGlobProvider()),
         ChangeNotifierProvider(create: (_) => CentinelaFileProvider()),
-        ChangeNotifierProvider(create: (_) => InvirtProvider()),
+        ChangeNotifierProvider(create: (_) => CentinelaProvider()),
         ChangeNotifierProvider(create: (_) => CotizaProvider()),
         ChangeNotifierProvider(create: (_) => CotizaProcessProvider()),
         ChangeNotifierProvider(create: (_) => FiltrosProvider()),
+        ChangeNotifierProvider(create: (_) => ItemSelectGlobProvider()),
+        ChangeNotifierProvider(create: (_) => InvirtProvider()),
+        ChangeNotifierProvider(create: (_) => PageProvider()),
+        ChangeNotifierProvider(create: (_) => SocketConn()),
+        ChangeNotifierProvider(create: (_) => WindowCnfProvider()),
       ],
       child: MaterialApp(
         scrollBehavior: MyCustomScrollBehavior(),
