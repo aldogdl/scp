@@ -1,4 +1,4 @@
-enum OrdCamp { filename, metrik, emisor, isVista, orden, piezas, resps, respToSolz }
+enum OrdCamp { filename, metrik, emisor, isVista, orden, piezas, resps, respToSolz, iris}
 
 class OrdenEntity {
 

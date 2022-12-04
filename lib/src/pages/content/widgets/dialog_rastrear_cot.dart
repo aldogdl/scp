@@ -283,7 +283,11 @@ class _DialogRastrearCotState extends State<DialogRastrearCot> {
     toSendData['created'] = DateTime.now().millisecondsSinceEpoch;
     
     // Las campañas se guardan en archivos en el servidor.
-    await _scmEm.setCampaingInDb(toSendData, isLocal: false);
+    bool isLocal = false;
+    if(globals.env == 'dev') {
+      isLocal = true;
+    }
+    await _scmEm.setCampaingInDb(toSendData, isLocal: isLocal);
 
     if(!_scmEm.result['abort']) {
 

@@ -70,6 +70,7 @@ class ContactoEntity {
     tkServ = user['tkServ'];
   }
 
+  ///
   Map<String, dynamic> userToJson() {
     return {
       'id': id,
@@ -81,9 +82,10 @@ class ContactoEntity {
     };
   }
 
+  ///
   Map<String, dynamic> userConectado({
-    required String app, required String ip, required String idCon
-  }) {
+    required String app, required String ip, required String idCon})
+  {
     return {
       'ip': ip,
       'app':app,
@@ -137,6 +139,27 @@ class ContactoEntity {
     final empObj = EmpresaEntity();
     empObj.fromServer(data);
     emp = empObj;
+  }
+
+  ///
+  Map<String, dynamic> toJsonWidtEmpresa() {
+
+    return {
+      'c_id': id,
+      'e_id': empresaId,
+      'c_curc': curc,
+      'c_roles': roles,
+      'c_nombre': nombre,
+      'c_isCot': isCot,
+      'c_cargo': cargo,
+      'c_celular': celular,
+      'e_nombre': emp!.nombre,
+      'e_domicilio': emp!.domicilio,
+      'e_cp': emp!.cp,
+      'e_isLocal': emp!.isLocal,
+      'e_telFijo': emp!.telFijo,
+      'e_latLng': emp!.latLng,
+    };
   }
 
 }

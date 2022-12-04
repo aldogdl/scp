@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/pages/widgets/my_tool_tip.dart';
-import 'package:scp/src/pages/widgets/widgets_utils.dart';
 
 import '../texto.dart';
+import '../my_tool_tip.dart';
+import '../widgets_utils.dart';
+import '../../../config/sng_manager.dart';
 import '../../../providers/cotiza_provider.dart';
 import '../../../vars/globals.dart';
 
@@ -69,7 +69,7 @@ class _LstPiezasOrdenState extends State<LstPiezasOrden> {
       deta = '${deta.substring(0, 65)}...';
     }
 
-    // Abrebiar lados
+    // Abreviar lados
     String lado = pza.lado.trim();
     if(_globals.lugAbr.containsKey(lado)) {
       lado = _globals.lugAbr[lado];
@@ -240,6 +240,7 @@ class _LstPiezasOrdenState extends State<LstPiezasOrden> {
     );
   }
 
+  ///
   void _deletePza(int id) async {
 
     bool? acc = await WidgetsAndUtils.showAlert(

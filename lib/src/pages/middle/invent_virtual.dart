@@ -36,12 +36,6 @@ class _InventVirtualState extends State<InventVirtual> {
   }
 
   @override
-  void deactivate() {
-    Future.microtask(() async => await _invEm.setCronos(_invirt.cronos));
-    super.deactivate();
-  }
-
-  @override
   void dispose() async {
     _ctrPzas.dispose();
     _ctrScroll.dispose();
@@ -59,7 +53,7 @@ class _InventVirtualState extends State<InventVirtual> {
             child: FutureBuilder(
               future: _getOrds,
               builder: (_, AsyncSnapshot fileNames) {
-
+                
                 if(fileNames.connectionState == ConnectionState.done) {
                   if(fileNames.hasData) {
                     return _cmdIn(lst: fileNames.data);
@@ -85,7 +79,7 @@ class _InventVirtualState extends State<InventVirtual> {
       child: Selector<InvirtProvider, Map<String, dynamic>>(
         selector: (_, prov) => prov.cmd,
         builder: (_, cmd, child) {
-
+          
           if(cmd.isNotEmpty && cmd.containsKey('id')) {
             if(cmd['id'] > 999) {  _procesarSubCommand(cmd);  return child!; }
           }
@@ -97,12 +91,12 @@ class _InventVirtualState extends State<InventVirtual> {
               if(lstsFiles.connectionState == ConnectionState.done) {
 
                 if(cmd.isEmpty && !lstsFiles.hasData) {
-                  return (child == null) ? _lstOnlyOrds(lst: _invirt.ordInvBEFiles) : child; 
+                  return (child == null) ? _lstOrds(lst: _invirt.ordInvBEFiles) : child; 
                 }
 
                 if(lstsFiles.hasData) {
                   return (cmd['tipo'] == 'proceso' && lstsFiles.data!.length == 1)
-                  ? _lstOrdPzas(lst: lstsFiles.data) : _lstOnlyOrds(lst: lstsFiles.data);
+                  ? _lstOrdPzas(lst: lstsFiles.data) : _lstOrds(lst: lstsFiles.data);
                   
                 }else{
                   return const Texto(txt: 'Sin Resultados', txtC: Colors.white);
@@ -112,7 +106,7 @@ class _InventVirtualState extends State<InventVirtual> {
             }
           );
         },
-        child: _lstOnlyOrds(lst: lst)
+        child: _lstOrds(lst: lst)
       )
     );
   }
@@ -133,7 +127,7 @@ class _InventVirtualState extends State<InventVirtual> {
 
     if(lst != null) {
       if(lst.length > 1) {
-        return _lstOnlyOrds(lst: lst);
+        return _lstOrds(lst: lst);
       }
     }
 
@@ -152,10 +146,10 @@ class _InventVirtualState extends State<InventVirtual> {
   }
 
   ///
-  Widget _lstOnlyOrds({List<String>? lst}) {
+  Widget _lstOrds({List<String>? lst}) {
 
     lst ??= List<String>.from(_invirt.ordInvBEFiles);
-
+    
     return ListView.builder(
       controller: _ctrScroll,
       padding: const EdgeInsets.only(
@@ -256,7 +250,8 @@ class _InventVirtualState extends State<InventVirtual> {
       from = 'cache';
     }
 
-    return await InventarioInjectService(em: _invEm, prov: _invirt).getAllOrds(from);
+    final res = await InventarioInjectService(em: _invEm, prov: _invirt).getAllOrds(from);
+    return res;
   }
 
   /// Procesamos comandos que no afecten el filtrado un tipo ordenes generales

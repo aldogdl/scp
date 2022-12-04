@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:scp/src/providers/centinela_provider.dart';
-import 'package:scp/src/providers/filtros_provider.dart';
 
-import 'src/pages/a_main/scp_layout.dart';
 import 'src/config/sng_manager.dart';
+import 'src/pages/a_main/scp_layout.dart';
 import 'src/pages/login/login_page.dart';
+import 'src/providers/filtros_provider.dart';
+import 'src/providers/centinela_provider.dart';
 import 'src/providers/cotiza_process_provider.dart';
 import 'src/providers/cotiza_provider.dart';
 import 'src/providers/centinela_file_provider.dart';
@@ -42,7 +42,7 @@ class ProvidersConfig extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+    final navigatorKey = GlobalKey<NavigatorState>();
 
     return MultiProvider(
       providers: [

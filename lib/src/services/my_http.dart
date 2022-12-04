@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' show MediaType;
+import 'package:scp/src/services/get_paths.dart';
 
 import '../config/sng_manager.dart';
 import '../vars/globals.dart';
@@ -234,8 +236,12 @@ class MyHttp {
         break;
       default:
     }
+
+    final filename = 'symfony-${DateTime.now().millisecondsSinceEpoch}.html';
     debugPrint('[ERROR]::${response.statusCode}');
-    debugPrint(response.body);
+    debugPrint('Revisa la carpeta de logs [$filename]');
+    final root = GetPaths.getPathRoot();
+    File('$root${GetPaths.getSep()}logs${GetPaths.getSep()}$filename').writeAsStringSync(response.body);
     debugPrint(response.reasonPhrase);
   }
 }

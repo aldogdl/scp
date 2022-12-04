@@ -143,10 +143,15 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         const SizedBox(height: 10),
-        Texto(
-          txt: context.watch<SocketConn>().msgErr,
-          txtC: (context.watch<SocketConn>().msgErr.startsWith('[X]'))
-            ? Colors.orange : Colors.blue
+        Selector<SocketConn, String>(
+          selector: (_, prov) => prov.msgErr,
+          builder: (_, val, __){
+            return Texto(
+              txt: val,
+              txtC: (val.startsWith('[X]'))
+                ? Colors.orange : Colors.blue
+            );
+          },
         ),
         const SizedBox(height: 10),
         Row(

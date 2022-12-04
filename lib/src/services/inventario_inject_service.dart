@@ -32,9 +32,8 @@ class InventarioInjectService {
       prov.queSelected = ['cc'];
       return await getAllOrds('files');
     }
-
-    List<Map<String, dynamic>> pzasAndResps = await _procesarComando(cmd);
     
+    List<Map<String, dynamic>> pzasAndResps = await _procesarComando(cmd);
     // Mute lo uso, para saber cuando no es necesario propagar el comando a
     // la lista de resultados de ordenes sin procesar (La Bandeja de entrada)
     if(pzasAndResps.isNotEmpty && pzasAndResps.first.containsKey('mute')) {
@@ -48,6 +47,7 @@ class InventarioInjectService {
     // Tomamos solo los nombres de los archivos del resultado
     List<String> files = [];
     if(pzasAndResps.isNotEmpty) {
+      pzasAndResps = sortByOrdenId(pzasAndResps);
       for (var i = 0; i < pzasAndResps.length; i++) {
         files.add(pzasAndResps[i][OrdCamp.filename.name]);
       }
@@ -60,6 +60,7 @@ class InventarioInjectService {
 
     // Agregamos las piezas resultantes a la lista correspondiente.
     if(cmd.containsKey('tipo')) {
+
       if(cmd['tipo'] == 'proceso') {
         
         prov.queSelected = List<String>.from(_queSelectedTmp);
@@ -90,31 +91,41 @@ class InventarioInjectService {
   ///
   Future<List<String>> getAllOrds(String from) async {
 
-    final filesNames = await em.getAllOrdenesByAvo(
+    var filesNames = await em.getAllOrdenesByAvo(
       _globals.user.id, est: '3', onlyFile: false, from: from
     );
+    filesNames = sortByOrdenId(filesNames);
 
+    prov.ordInvBEFiles= [];
     if(filesNames.isNotEmpty) {
 
       List<String> ordenes = [];
-
       filesNames.map((e) {
         ordenes.add(e[OrdCamp.filename.name]);
       }).toList();
       
       prov.ordInvBEFiles= List<String>.from(ordenes);
-      prov.cantOrdBanEnt = '${prov.ordInvBEFiles.length}/${filesNames.length}';
       ordenes = [];
-
-    }else{
-
-      prov.ordInvBEFiles= [];
-      prov.cantOrdBanEnt = '${prov.ordInvBEFiles.length}/${filesNames.length}';
     }
     
+    prov.cantOrdBanEnt = '${prov.ordInvBEFiles.length}/${filesNames.length}';
+    filesNames = [];
     return prov.ordInvBEFiles;
   }
 
+  /// Ordenamos la lista enviada por parametro por el id de la orden de forma
+  /// segun indicada en prov.sortBy
+  List<Map<String, dynamic>> sortByOrdenId(List<Map<String, dynamic>> items) {
+
+    if(prov.sortBy == 'asc') {
+      items.sort((a, b) => a['orden']['o_id'].compareTo(b['orden']['o_id']));
+    }else{
+      items.sort((a, b) => b['orden']['o_id'].compareTo(a['orden']['o_id']));
+    }
+
+    return items;
+  }
+  
   /// Semi revisada
   /// Revisamos el comando para ver que campos requiere para su procesamiento,
   /// buscamos la orden sus piezas y respuestas
@@ -122,9 +133,11 @@ class InventarioInjectService {
   Future<List<Map<String, dynamic>>> _procesarComando(Map<String, dynamic> cmd) async {
 
     if(cmd.isEmpty){ return []; }
+
     if(em.oCache.isEmpty) {
       await em.setOrdenesEnCache(byAvo: _globals.user.id, est: '3');
     }
+
     if(em.oCache.isEmpty || !cmd.containsKey('tipo')) {
       return [];
     }
@@ -157,7 +170,19 @@ class InventarioInjectService {
 
       // Buscar por: orden > nombre de empresa, contacto, modelo
       if(cmd['campo'] == OrdCamp.orden.name) {
-        return _procesarCmdOrdenBy(cmd);  
+        if(cmd['eval'] == 'asc' || cmd['eval'] == 'desc') {
+          // El ordenamiento de hace en el metodo de: make en esta clase.
+          // Aqui solo guardamos en memoria para que siempre se ordene igual
+          prov.sortBy = (cmd['eval'] == 'asc') ? 'asc' : 'desc';
+          return em.oCache;
+        }else{
+          return _procesarCmdOrdenBy(cmd);  
+        }
+      }
+
+      // Buscar por: piezas > nombre de pieza
+      if(cmd['campo'] == OrdCamp.piezas.name) {
+        return _procesarCmdPiezaBy(cmd);  
       }
 
       // Buscar por: piezas > nombre de pieza
@@ -166,6 +191,7 @@ class InventarioInjectService {
       }
       
       // Buscar por: resp > curc
+
     }
 
     return [];

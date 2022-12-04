@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/pages/widgets/texto.dart';
-import 'package:scp/src/repository/inventario_repository.dart';
 
+import 'texto.dart';
 import 'orden_tile.dart';
 import '../../config/sng_manager.dart';
 import '../../entity/orden_entity.dart';
@@ -12,6 +11,7 @@ import '../../providers/items_selects_glob.dart';
 import '../../providers/socket_conn.dart';
 import '../../repository/socket_centinela.dart';
 import '../../repository/ordenes_repository.dart';
+import '../../repository/inventario_repository.dart';
 import '../../services/get_path_images.dart';
 import '../../services/status/est_stt.dart';
 import '../../services/status/stts_cache.dart';
@@ -34,9 +34,10 @@ class LstOrdenes extends StatefulWidget {
 class _LstOrdenesState extends State<LstOrdenes> {
 
   final globals = getSngOf<Globals>();
+  final sttsCache = getSngOf<SttsCache>();
+
   final _ordenEm = OrdenesRepository();
   final _invEm = InventarioRepository();
-  final sttsCache = getSngOf<SttsCache>();
   final _scrollCtr = ScrollController();
   final _sockCenti = SocketCentinela();
   late final PageProvider pageProv;
@@ -152,8 +153,8 @@ class _LstOrdenesState extends State<LstOrdenes> {
     if(!_isInit) {
       _isInit = true;
       provi = context.read<ItemSelectGlobProvider>();
-      _sockCenti.init(context);
       pageProv = context.read<PageProvider>();
+      _sockCenti.init(context);
     }
 
     await sttsCache.hidratar();
@@ -212,7 +213,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
           _invEm.buildMapFileOrden(orden: ent.toJson(), emisor: ent.uId, pzas: pzas)
         );
       }
-
+      _ordenEm.clear();
       provi.ordenes = recSer;
     }
   }
@@ -224,6 +225,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
     provi.ordenes = await _invEm.getAllOrdenesByAvo(
       globals.user.id, est: est, from: 'files'
     );
+    
     if(est != null) {
       if(_checkIntegri) { _checkIntegridad(est); }
     }

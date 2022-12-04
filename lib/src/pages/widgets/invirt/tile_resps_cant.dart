@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/entity/metrix_entity.dart';
 
 import '../texto.dart';
 import '../../../providers/invirt_provider.dart';
@@ -32,7 +33,7 @@ class _TileRespsCantState extends State<TileRespsCant> {
   static const Color _inTime = Color.fromARGB(255, 65, 65, 65);
   static const Color _alert  = Color.fromARGB(255, 12, 80, 228);
 
-  Map<String, dynamic> _metrix = {};
+  MetrixEntity _metrix = MetrixEntity();
   late Future<void> _getResps;
 
   @override
@@ -50,7 +51,7 @@ class _TileRespsCantState extends State<TileRespsCant> {
 
         if(nval.isEmpty) { return child!; }
         if(!nval.contains(widget.idOrd)) { return child!; }
-        _metrix = {};
+        _metrix = MetrixEntity();
         return FutureBuilder(
           future: _getCantResp(force: true),
           builder: (_, AsyncSnapshot snap) => _snapShot(snap),
@@ -68,20 +69,16 @@ class _TileRespsCantState extends State<TileRespsCant> {
 
     Widget child = const SizedBox();
 
-    if(widget.from == 'cron') {
-      child = Texto(txt: '${_metrix[Mtrik.rsp.name]}');
-    }
-    
     if(widget.from == 'tile') {
       child = Texto(
-        txt: '${widget.respCant}/${_metrix[Mtrik.rsp.name]}', sz: 11, txtC: Colors.white.withOpacity(0.7)
+        txt: '${widget.respCant}/0', sz: 11, txtC: Colors.white.withOpacity(0.7)
       );
     }
     
     return Row(
       children: [
         Icon(
-          Icons.sell, size: 13, color: _metrix[Mtrik.rsp.name] == 0 ? _inTime : _alert,
+          Icons.sell, size: 13, color: _metrix.rsp == 0 ? _inTime : _alert,
         ),
         _sbw(5),
         child
@@ -109,7 +106,7 @@ class _TileRespsCantState extends State<TileRespsCant> {
   Future<void> _getCantResp({bool force = false}) async {
 
     final invVirt = context.read<InvirtProvider>();
-    if(_metrix.isEmpty || force) {
+    if(_metrix.toTot.isEmpty || force) {
       _metrix = await _invEm.getMetriksFromFile(widget.filename);
     }
     invVirt.triggerResp.clear();

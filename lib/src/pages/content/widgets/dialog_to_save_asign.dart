@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/texto.dart';
+import '../../../config/sng_manager.dart';
 import '../../../entity/orden_entity.dart';
 import '../../../providers/centinela_file_provider.dart';
 import '../../../providers/items_selects_glob.dart';
-import '../../widgets/texto.dart';
+import '../../../vars/globals.dart';
 
 class DialogToSaveAsign extends StatelessWidget {
 
-  final ValueChanged<void> onFinish;
+  final ValueChanged<Map<String, List<OrdenEntity>>> onFinish;
   final ValueChanged<void> onError;
   final CentinelaFileProvider centiProv;
   final ItemSelectGlobProvider itemProv;
@@ -53,7 +55,7 @@ class DialogToSaveAsign extends StatelessWidget {
             if(result.startsWith('ok')) {
               result = 'Listo!, Finalizando Proceso.';
               Future.delayed(const Duration(milliseconds: 250), (){
-                onFinish(_);
+                onFinish(ordenesAvo);
               });
             }
 
@@ -103,14 +105,14 @@ class DialogToSaveAsign extends StatelessWidget {
   Widget _btnAlert({
     required bool fnc,
     required String acc,
-    required Color bg
-  }) {
+    required Color bg }) 
+  {
 
     return ElevatedButton(
       style: ButtonStyle(
         backgroundColor: MaterialStateProperty.all(bg)
       ),
-      onPressed: () => onFinish(null),
+      onPressed: () => onFinish(ordenesAvo),
       child: Texto(txt: acc, isBold: true, isCenter: true, txtC: Colors.white)
     );
   }
@@ -118,6 +120,8 @@ class DialogToSaveAsign extends StatelessWidget {
   ///
   Stream<String> _saving() async* {
     
+    final globals = getSngOf<Globals>();
+
     yield 'Preparando datos...';
     
     await centiProv.commit(cpushOrden, dataSaving);
@@ -128,8 +132,10 @@ class DialogToSaveAsign extends StatelessWidget {
     yield 'Guardando datos en Servidor LOCAL';
     await centiProv.push(cpushOrden, isLocal: true);
     
-    yield 'Guardando datos en Servidor REMOTO';
-    await centiProv.push(cpushOrden, isLocal: false);
+    if(globals.env != 'dev') {
+      yield 'Guardando datos en Servidor REMOTO';
+      await centiProv.push(cpushOrden, isLocal: false);
+    }
     
     if(!centiProv.result['abort']) {
 

@@ -82,6 +82,7 @@ class AlmacenVirtual extends StatelessWidget {
       builder: (_, ref, child) {
 
         if(invProv.cotsAlmacen.isEmpty){ return child!; }
+        
         return (invProv.typeViewLst == 'table')
           ? _lstViewTable(invProv)
           : _lstViewGrid(invProv);

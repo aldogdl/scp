@@ -14,11 +14,14 @@ class GetContentFile {
   static String ipConectionLocal() {
 
     String pathTo = GetPaths.getPathRoot();
+    final File codeF = File('$pathTo${GetPaths.getSep()}swh.txt');
+    final codeSwh = codeF.readAsStringSync();
+
     final File cargosF = File('$pathTo${GetPaths.getSep()}harbi_connx.json');
     if(cargosF.existsSync()) {
       final res = Map<String, dynamic>.from(json.decode(cargosF.readAsStringSync()));
-      if(res.isNotEmpty && res.containsKey('123H')) {
-        return res['123H'];
+      if(res.isNotEmpty && res.containsKey(codeSwh)) {
+        return res[codeSwh];
       }
     }
     return '';

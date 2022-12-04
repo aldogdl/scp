@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/pages/widgets/texto.dart';
+import 'package:scp/src/pages/widgets/widgets_utils.dart';
 
 import '../../../providers/invirt_provider.dart';
 import '../../../providers/window_cnf_provider.dart';
@@ -24,9 +26,9 @@ class _QuerysProcessState extends State<QuerysProcess> {
 
   bool _isInit = false;
   // Usado para bloquear descargas repetitivas en el QueryProcess
-  bool _isDownResp = false;
+  // bool _isDownResp = false;
   // Usadas para descargar respuestas desde QueryProcess
-  List<List<String>> _idsPiezas = [];
+  final List<List<String>> _idsPiezas = [];
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +55,9 @@ class _QuerysProcessState extends State<QuerysProcess> {
       builder: (_, query, __) {
 
         _analizamosQueryDeEntrada(query);
+        Future.delayed(const Duration(milliseconds: 100), (){
+          _sock.query = '';
+        });
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -91,23 +96,11 @@ class _QuerysProcessState extends State<QuerysProcess> {
               Selector<SocketConn, String>(
                 selector: (_, prov) => prov.isQueryAn,
                 builder: (_, val, child) {
-
+                  
                   if(val.isEmpty){ return child!; }
 
                   if(val == 'Analizando...') {
-                    if(!_isDownResp) {
-                      _isDownResp = true;
-                      
-                      Future.delayed(const Duration(milliseconds: 1000), () async {
-
-                        final ids = await _sock.centi.getIdsMyPiezas();
-                        _idsPiezas = _getBloquesIdsPiezas(ids);
-                        _sock.isQueryAn = 'Espera un momento.';
-                        await Future.delayed(const Duration(milliseconds: 500));
-                        _recuperarDatosFromServer();
-                      });
-
-                    }
+                    _checkNotificaciones(100);
                   }
 
                   return Row(
@@ -142,6 +135,56 @@ class _QuerysProcessState extends State<QuerysProcess> {
     );
   }
 
+  ///
+  void _checkNotificaciones(int time){
+
+    Future.delayed(Duration(milliseconds: time), () async {
+      await _sock.chechNotiffCurrents();
+      _checkNewAsigns(500);
+    });
+  }
+
+  ///
+  void _checkNewAsigns(int time) async {
+
+    /// Checamos ordenes asigandas que no esten en archivo.
+    Future.delayed(Duration(milliseconds: time), () async {
+
+      final ids = await _sock.centi.checkNewAsigns(
+        from: 'file', onlyCheck: true
+      );
+      if(ids.containsKey('ordAsign')) {
+        if(ids['ordAsign'].isNotEmpty) {
+          await _downNewAsigns(ids['ordAsign']);
+        }
+      }
+      _checkNewResp(1000);
+    });
+  }
+
+  ///
+  void _checkNewResp(int time) async {
+
+    /// Checamos ordenes asigandas que no esten en archivo.
+    Future.delayed(Duration(milliseconds: time), () async {
+
+      // if(!_isDownResp) {
+      //   _isDownResp = true;
+        
+      //   Future.delayed(const Duration(milliseconds: 1000), () async {
+
+      //     final ids = await _sock.centi.getIdsMyPiezas();
+      //     _idsPiezas = _getBloquesIdsPiezas(ids);
+      //     _sock.isQueryAn = 'Espera un momento.';
+      //     await Future.delayed(const Duration(milliseconds: 500));
+      //     _recuperarDatosFromServer();
+      //   });
+
+      // }
+      _sock.isQueryAn = '';
+    });
+  }
+
   /// Revisamos el el query en cuestion no exista en la lista en cache y lo
   /// agregamos para ser procesada.
   void _analizamosQueryDeEntrada(String query) {
@@ -150,13 +193,10 @@ class _QuerysProcessState extends State<QuerysProcess> {
 
       if(query != 'cc') {
         if(!existeQueryInCache(_invVir.querys, query)) {
+          // print('no exite add $query');
           Future.microtask(() => _invVir.addQuerys(query));
         }
       }
-      
-      Future.delayed(const Duration(milliseconds: 250), (){
-        _sock.query = '';
-      });
     }
   }
 
@@ -195,9 +235,9 @@ class _QuerysProcessState extends State<QuerysProcess> {
         if(map.containsKey('rsp')) {
           await _procesarQueryDeRespuesta(map);
         }else{
-          if(_invVir.idOrdenAfectada != 0) {
-            Future.microtask(() => _invVir.addTrigger(_invVir.idOrdenAfectada));
-          }
+          // if(_invVir.idOrdenAfectada != 0) {
+          //   Future.microtask(() => _invVir.addTrigger(_invVir.idOrdenAfectada));
+          // }
           _invVir.querys = lstQuerys;
         }
       }
@@ -216,7 +256,7 @@ class _QuerysProcessState extends State<QuerysProcess> {
       if(res.isNotEmpty) {
         _sock.isQueryAn = 'Almacenando ${res.length} respuestas del bloque ${_idsPiezas.length}.';
         await Future.delayed(const Duration(milliseconds: 500));
-        await _invEm.setRespuestasByPieza(res);
+        // await _invEm.setRespuestasByPieza(res);
       }
       _idsPiezas.removeAt(0);
       _recuperarDatosFromServer();
@@ -226,7 +266,7 @@ class _QuerysProcessState extends State<QuerysProcess> {
     _sock.isQueryAn = 'Listo...';
     await Future.delayed(const Duration(milliseconds: 1000), (){
       _sock.isQueryAn = '';
-      _isDownResp = false;
+      // _isDownResp = false;
     });
 
   }
@@ -263,34 +303,34 @@ class _QuerysProcessState extends State<QuerysProcess> {
   // Descargar las nueva respuesta por id de respuesta
   Future<void> _procesarQueryDeRespuesta(Map<String, dynamic> query) async
   {
-    String msgFin = 'Listo...';
-    _sock.isQueryAn = 'Recuperando respuesta ID: ${query['rsp']}.';
-    _invEm.result.clear();
+    // String msgFin = 'Listo...';
+    // _sock.isQueryAn = 'Recuperando respuesta ID: ${query['rsp']}.';
+    // _invEm.result.clear();
 
-    await _invEm.getRespuestasByIds([query['rsp']]);
-    if(!_invEm.result['abort']) {
+    // await _invEm.getRespuestasByIds([query['rsp']]);
+    // if(!_invEm.result['abort']) {
 
-      List<Map<String, dynamic>> res = [];
-      try {
-        res = List<Map<String, dynamic>>.from(_invEm.result['body']);
-        if(res.isNotEmpty) {
-          _sock.isQueryAn = 'Almacenando respuesta ID: ${query['rsp']}.';
-          await _invEm.setRespuestaToFile(res);
-          int? ord = int.tryParse('${query['orden']}');
-          if(ord != null) {
-            _invVir.addTriggerResp(ord);
-          }
-        }
-      } catch (e) {
-        msgFin = 'Error al Descargar Respuesta';
-      }
-    }
+    //   List<Map<String, dynamic>> res = [];
+    //   try {
+    //     res = List<Map<String, dynamic>>.from(_invEm.result['body']);
+    //     if(res.isNotEmpty) {
+    //       _sock.isQueryAn = 'Almacenando respuesta ID: ${query['rsp']}.';
+    //       await _invEm.setRespuestaToFile(res);
+    //       int? ord = int.tryParse('${query['orden']}');
+    //       if(ord != null) {
+    //         _invVir.addTriggerResp(ord);
+    //       }
+    //     }
+    //   } catch (e) {
+    //     msgFin = 'Error al Descargar Respuesta';
+    //   }
+    // }
     
-    _sock.isQueryAn = msgFin;
-    await Future.delayed(const Duration(milliseconds: 1000), (){
-      _sock.isQueryAn = '';
-      _isDownResp = false;
-    });
+    // _sock.isQueryAn = msgFin;
+    // await Future.delayed(const Duration(milliseconds: 1000), (){
+    //   _sock.isQueryAn = '';
+    //   _isDownResp = false;
+    // });
 
   }
 
@@ -311,6 +351,69 @@ class _QuerysProcessState extends State<QuerysProcess> {
 
     return resultado;
   }
+
+  ///
+  Future<void> _downNewAsigns(List<String> ids) async {
+    
+    await WidgetsAndUtils.showAlertBody(
+      context,
+      dismissible: false,
+      titulo: 'ORDENES ASIGNADAS',
+      body: StreamBuilder(
+        stream: _getOrdenesAsigns(ids),
+        initialData: 'Buscando Ordenes.',
+        builder: (_, AsyncSnapshot snap) {
+
+          if(snap.data.toString().contains('Listo...')) {
+            Future.delayed(const Duration(milliseconds: 500), (){
+              Navigator.of(context).pop();
+            });
+          }
+
+          return Container(
+            width: MediaQuery.of(context).size.width * 0.5,
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              children: [
+                const Texto(
+                  txt: 'Se encontraron ordenes asignadas en tu repositorio '
+                  'que aún no están en tus expedientes, espera un momento '
+                  'para actualizar tus ordenes.',
+                  txtC: Colors.white, isCenter: true,
+                ),
+                const LinearProgressIndicator(),
+                const SizedBox(height: 8),
+                Texto(
+                  txt: snap.data, txtC: Colors.green, sz: 18, isCenter: true,
+                )
+              ],
+            ),
+          );
+        }
+      )
+    );
+  }
+
+  ///
+  Stream<String> _getOrdenesAsigns(List<String> ids) async* {
+
+    List<String> downsOk = [];
+    for (String id in ids) {
+      yield 'Descargando Orden ID: $id  ${downsOk.length+1} de ${ids.length}';
+      yield await _getOrdenesByID(id);
+      downsOk.add(id);
+      if(downsOk.length == ids.length) {
+        yield 'Listo...';
+      }
+    }
+  }
+
+  ///
+  Future<String> _getOrdenesByID(String id) async {
+
+    return await _sock.centi.setOrdenAsignada(id);
+  }
+
 
 }
 

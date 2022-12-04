@@ -56,23 +56,25 @@ class Texto extends StatelessWidget {
 
     DateTime hoy   = DateTime.now();
     DateTime fecha = DateTime.parse(txt);
-    final diff = hoy.difference(fecha);
-    
-    String elD = '';
-    switch (diff.inDays) {
-      case 0:
-        elD = 'Hoy';
-        break;
-      case 1:
-        elD = 'Ayer';
-        break;
-      default:
-        elD = '${"${fecha.day}".padLeft(2, '0')}/${"${fecha.month}".padLeft(2, '0')}';
-    }
 
+    String elD = '';
+    final diffDay = hoy.difference(fecha);
+    
+    if(diffDay.inDays == 0 && fecha.day == hoy.day) {
+      elD = 'Hoy';
+    }
+    if(elD.isEmpty) {
+      if(diffDay.inDays <= 1) {
+        elD = 'Ayer';
+      }
+    }
+    if(elD.isEmpty) {
+      elD = '${"${fecha.day}".padLeft(2, '0')}/${"${fecha.month}".padLeft(2, '0')}';
+    }
+    
     final hora = '${"${fecha.hour}".padLeft(2, '0')}:${"${fecha.minute}".padLeft(2, '0')}';
 
-    return _elTxt('$elD $hora');
+    return _elTxt('$elD [$hora]');
   }
 
   ///

@@ -2,14 +2,14 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart' show BuildContext;
 import 'package:provider/provider.dart';
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/vars/globals.dart';
 
-import '../repository/inventario_repository.dart';
+import '../config/sng_manager.dart';
 import '../entity/contacto_entity.dart';
+import '../repository/inventario_repository.dart';
 import '../providers/centinela_file_provider.dart';
 import '../services/get_paths.dart';
 import '../services/my_http.dart';
+import '../vars/globals.dart';
 
 class SocketCentinela {
 
@@ -35,6 +35,7 @@ class SocketCentinela {
 
     String pathTo = await GetPaths.getFileByPath('centinela');
     File centi = File(pathTo);
+
     if(centi.existsSync()) {
       return Map<String, dynamic>.from( json.decode(centi.readAsStringSync()) );
     }
@@ -61,7 +62,7 @@ class SocketCentinela {
   }
 
   /// Recuperamos el centinela mas actualizado desde harbi.
-  Future<Map<String, dynamic>> getFromApiHarbi() async {
+  Future<Map<String, dynamic>> getFromApiHarbi({bool onlyVersion = false}) async {
 
     Uri uri = await GetPaths.getUriApiHarbi('get_centinela', '');
     await MyHttp.getHarbi(uri);
@@ -74,11 +75,16 @@ class SocketCentinela {
       if(_centiProv != null) {
         _centiProv!.centinela = content;
       }
+      if(onlyVersion) {
+        return {'ver': content['version']};
+      }
       return content;
     }else{
-      final res = MyHttp.result['body'];
-      if(res.contains('El Host')) {
-        return MyHttp.result;
+      if(!onlyVersion) {
+        final res = MyHttp.result['body'];
+        if(res.contains('El Host')) {
+          return MyHttp.result;
+        }
       }
     }
     return {};
@@ -104,9 +110,51 @@ class SocketCentinela {
     }
   }
 
+  /// Revisamos si hay asignaciones para el usuario que esta usando esta SCP.
+  /// centi son los datos del nuevo centinela.
+  Future<Map<String, dynamic>> checkNewAsigns
+  ({String from = 'cache', bool onlyCheck = false}) async
+  {
+    final centi = await getContentFile();
+    
+    if(centi.isEmpty){ return {}; }
+
+    final user = _globals.user;
+    Map<String, dynamic> manifest = {};
+
+    // Analizamos las asignaciones.
+    if(user.roles.contains('ROLE_AVO')) {
+      if(centi.containsKey('avo')) {
+        if(centi['avo'].containsKey('${user.id}')) {
+
+          List<String> asignsNuevas = List<String>.from(centi['avo']['${user.id}']);
+          // Recuperamos las ordenes asignadas actuales para comparar
+          List<String> asignsOlds = [];
+          final aOld = await _invEm.getAllOrdenesByAvo(
+            user.id, onlyIdOrden: true, from: from
+          );
+
+          if(aOld.isNotEmpty) {
+            aOld.map((e) {
+              asignsOlds.add(e['id']);
+            }).toList();
+          }
+
+          manifest = await _checkOnlyAvo(
+            asignsOlds, asignsNuevas, onlyCheck: onlyCheck
+          );
+        }
+      }
+    }
+
+    return manifest;
+  }
+
+  /// Pendiente de analizar para borrar este metodo
+  /// 
   /// Revisamos si hay cambios relacionados al usuario que esta usando esta SCP
   /// centi son los datos del nuevo centinela el user es el que usa esta app.
-  Future<Map<String, dynamic>> buildManifest(ContactoEntity user) async {
+  Future<Map<String, dynamic>> checkCambiosInCentinelaFile(ContactoEntity user) async {
 
     final oldCenti = await getContentFile();
     final centi = await getFromApiHarbi();
@@ -142,9 +190,9 @@ class SocketCentinela {
             }
           }
 
-          manifest = await _checkOnlyAvo(
-            user.id, manifest, asignsOlds, asignsNuevas
-          );
+          // manifest = await _checkOnlyAvo(
+          //   user.id, manifest, asignsOlds, asignsNuevas
+          // );
         }
       }
     }
@@ -186,15 +234,15 @@ class SocketCentinela {
 
   /// parte del analisis de la creacion del manifiesto [AVO]
   Future<Map<String, dynamic>> _checkOnlyAvo(
-    int idUser, Map<String, dynamic> manifest,
-    List<String> asignsOlds, List<String> asignsNuevas) async 
+    List<String> asignsOlds, List<String> asignsNuevas, {bool onlyCheck = false}) async 
   {
 
     List<String> ordAsign = [];
     List<String> ordDelete = [];
     
     bool save = false;
-    
+    int idUser = _globals.user.id;
+
     // Revisamos si hay ordenes que no tenga con anterioridad
     if(asignsNuevas.isNotEmpty) {
 
@@ -223,20 +271,87 @@ class SocketCentinela {
       }
     }
 
-    if(save) {
+    if(save && !onlyCheck) {
 
       if(ordDelete.isNotEmpty) {
+        // TODO Hacer un respaldo hacia harbi, ya que en el archivo de la orden
+        // se guardan metricas que seran necesarias para el AVO aquien se le
+        // reasigno esta orden.
         await _invEm.delOrdenAsignadas(ordDelete, idUser);
-        manifest['cambios'].add('Se han Reasignado orden(es) [NT]');
+        // manifest['cambios'].add('Se han Reasignado orden(es) [NT]');
       }
 
       if(ordAsign.isNotEmpty) {
         await _invEm.setOrdenAsignadas(ordAsign, idUser);
-        manifest['cambios'].add('Cuentas con ordenes Asignadas [IN]');
+        // manifest['cambios'].add('Cuentas con ordenes Asignadas [IN]');
+      }
+    }
+    return {'ordAsign':ordAsign, 'ordDelete':ordDelete};
+  }
+
+  ///
+  Future<String> setOrdenAsignada(String ordAsignId) async {
+    return _invEm.setOrdenAsignada(ordAsignId, _globals.user.id);
+  }
+
+  /// Actualizamos las metricas de una orden
+  Future<void> updateMetrix(Map<String, dynamic> data) async {
+
+    final query = 'get_metrix_by_orden=${data['id']}:${data['idCamp']}';
+    final uri = await GetPaths.getUriApiHarbi('centinela_get', query);
+
+    await MyHttp.getHarbi(uri);
+    if(!MyHttp.result['abort']) {
+      final res = MyHttp.result['body'];
+      if(res.isNotEmpty) {
+        final metrix = Map<String, dynamic>.from(json.decode(res));
+        await _invEm.updateMetrix(data, metrix);
+      }
+    }
+    
+    return;
+  }
+
+  /// Actualizamos las metricas de una orden
+  Future<List<int>> updateIris(Map<String, dynamic> data) async {
+
+    List<Map<String, dynamic>> irisData = [];
+    List<int> irisIds = [];
+    if(data.containsKey('iris')) {
+      irisData = List<Map<String, dynamic>>.from(data['iris']);
+    }else{
+      if(data.containsKey('id')) {
+        if(data['id'].toString().endsWith('rsp')) {
+          // Se trata de una notificacion de respuesta
+          irisData.add(data);
+        }
       }
     }
 
-    return manifest;
+    if(irisData.isEmpty){ return []; }
+
+    for (var i = 0; i < irisData.length; i++) {
+      
+      final query = 'get_iris_by_orden=${irisData[i]['idOrd']}';
+      final uri = await GetPaths.getUriApiHarbi('centinela_get', query);
+      await MyHttp.getHarbi(uri);
+      
+      if(!MyHttp.result['abort']) {
+        final res = MyHttp.result['body'];
+        if(res.isNotEmpty) {
+          final iris = Map<String, dynamic>.from(json.decode(res));
+          int? idO = int.tryParse('${irisData[i]['idOrd']}');
+          if(idO != null) {
+            if(!irisIds.contains(idO)) {
+              irisIds.add(idO);
+            }
+          }
+          await _invEm.updateIris(irisData[i], iris);
+        }
+      }
+    }
+
+    return irisIds;
   }
 
   /// Enviamos un push a harbi

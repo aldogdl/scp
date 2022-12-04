@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 
+import '../config/sng_manager.dart';
 import '../services/my_http.dart';
 import '../services/get_paths.dart';
+import '../vars/globals.dart';
 
 enum CPush {
   asignacion,
@@ -10,6 +12,8 @@ enum CPush {
 
 class CentinelaFileProvider extends ChangeNotifier {
 
+  final _globals = getSngOf<Globals>();
+  
   Map<String, dynamic> result = {'abort': false, 'msg': 'ok', 'body':[]};
 
   ///
@@ -192,8 +196,17 @@ class CentinelaFileProvider extends ChangeNotifier {
   Future<void> _saveToServerAsignaciones(bool isLocal) async {
 
     var asig = getAsignaciones();
+    if(_globals.env == 'dev') {
+      isLocal = true;
+    }
     String pathTo = await GetPaths.getUri('ordenes_asignadas', isLocal: isLocal);
-    await MyHttp.post(pathTo, {'info':asig, 'isLoc': isLocal, 'version':_centinela['version']});
+    // Marcamos cuando estamos desarrollando isLocal en false con el
+    // propocito de que se cree el archivo de asignacion en el servidor local.
+    if(_globals.env == 'dev') {
+      isLocal = false;
+    }
+    
+    await MyHttp.post(pathTo, {'info':asig, 'isLoc': isLocal, 'version': _centinela['version']});
     
     result = MyHttp.result;
     MyHttp.clean();

@@ -97,9 +97,9 @@ class TileTituloOrden extends StatelessWidget {
         Row(
           children: [
             MyToolTip(
-              msg: solNom,
+              msg: 'DE: ${solEmp.toUpperCase()}',
               child: Texto(
-                txt: solEmp.toUpperCase(), sz: 12,
+                txt:'POR: $solNom', sz: 12,
                 txtC: Colors.white.withOpacity(0.5)
               )
             ),

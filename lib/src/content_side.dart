@@ -60,11 +60,15 @@ class ContentSide extends StatelessWidget {
                   selector: (_, prov) => prov.page,
                   builder: (_, p, __) => _determinarWidget(p),
                 ),
-                if(!context.watch<PageProvider>().closeConsole)
-                  const Positioned(
-                    bottom: 0, left: 0,
-                    child: ConsolaSide(),
-                  )
+                Selector<PageProvider, int>(
+                  selector: (_, prov) => prov.sttConsole,
+                  builder: (_, stt, __) {
+                    return Positioned(
+                      bottom: 0, left: 0,
+                      child: ConsolaSide(stt: stt),
+                    );
+                  }
+                ),                  
               ],
             ),
           ),

@@ -1,8 +1,11 @@
+import '../entity/contacto_entity.dart';
 import '../services/get_paths.dart';
 import '../services/my_http.dart';
+import '../vars/globals.dart';
 
 class ContactsRepository {
 
+  final _globals = Globals();
   Map<String, dynamic> result = {'abort':false, 'msg': 'ok', 'body':{}};
 
   ///
@@ -39,8 +42,38 @@ class ContactsRepository {
   }
 
   ///
-  Future<void> getAllContacts({String tipo = 'noAdmin', bool isLocal = true}) async {
-    
+  Future<void> getAllAvos({bool force = false}) async {
+
+    if(!force) {
+      final avos = GetPaths.getContentFileAvos();
+      if(avos.isNotEmpty) {
+        result = {'abort':false, 'msg': 'ok', 'body': avos};
+        return;
+      }
+    }
+
+    await getAllContacts(tipo: 'anete', isLocal: false);
+
+    if(!result['abort']) {
+      List<Map<String, dynamic>> cts = [];
+      for (var i = 0; i < result['body'].length; i++) {
+        if(result['body'][i]['c_roles'].contains('ROLE_AVO')) {
+          final ct = ContactoEntity();
+          ct.fromServerWidtEmpresa(result['body'][i]);
+          cts.add(ct.toJsonWidtEmpresa());
+        }
+      }
+      if(cts.isNotEmpty) {
+        GetPaths.setContentFileAvos(cts);
+      }
+    }
+  }
+
+  ///
+  Future<void> getAllContacts(
+    {String tipo = 'noAdmin', bool isLocal = false}) async
+  {
+    if(_globals.env == 'dev') { isLocal = true; }
     String uri = await GetPaths.getUri('get_all_contactos_by', isLocal: isLocal);
     await MyHttp.get('$uri$tipo');
     result = MyHttp.result;
@@ -49,6 +82,9 @@ class ContactsRepository {
   ///
   Future<void> deleteContact(int idContac, {bool isLocal = true}) async {
 
+    if(_globals.env == 'dev') {
+      isLocal = true;
+    }
     String uri = await GetPaths.getUri('delete_contacto', isLocal: isLocal);
     await MyHttp.get('$uri$idContac');
     result = MyHttp.result;
@@ -57,6 +93,9 @@ class ContactsRepository {
   ///
   Future<void> safeDataContact(Map<String, dynamic> data, {isLocal = true}) async {
 
+    if(_globals.env == 'dev') {
+      isLocal = true;
+    }
     String uri = await GetPaths.getUri('guardar_datos_empcontac', isLocal: isLocal);
     await MyHttp.post(uri, data);
     result = MyHttp.result;
@@ -74,6 +113,9 @@ class ContactsRepository {
   ///
   Future<void> setFiltroCotizador(Map<String, dynamic> data, {bool isLocal = true}) async {
 
+    if(_globals.env == 'dev') {
+      isLocal = true;
+    }
     String uri = await GetPaths.getUriCtc('set_filtro', isLocal: isLocal);
     await MyHttp.post(uri, data);
     result = Map<String, dynamic>.from(MyHttp.result);
@@ -83,6 +125,9 @@ class ContactsRepository {
   ///
   Future<void> delFiltroById(int id, {bool isLocal = true}) async {
     
+    if(_globals.env == 'dev') {
+      isLocal = true;
+    }    
     String uri = await GetPaths.getUriCtc('del_filtro_by_id', isLocal: isLocal);
     await MyHttp.get('$uri$id/');
     result = Map<String, dynamic>.from(MyHttp.result);

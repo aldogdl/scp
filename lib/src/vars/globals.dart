@@ -3,12 +3,15 @@ import '../entity/contacto_entity.dart';
 
 class Globals {
 
-  String verApp = '1.4.5';
+  String verApp = '2.0.0';
+  String env = 'prod';
+
   bool isLocalConn = true;
   String wifiName = '';
   String myIp = '';
   String ipHarbi = '';
   String portHarbi = '';
+  String mySwh = '';
   // La ultima version del centinela
   String currentVersion = '0';
   Map<String, dynamic> ipDbs = {};

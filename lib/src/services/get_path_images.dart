@@ -24,7 +24,11 @@ class GetPathImages {
   static Future<String> getPathPzaTmp(String foto) async {
 
     const carpeta = 'to_orden_tmp/';
-    final dom = await GetPaths.getDominio(isLocal: false);
+    bool isLocal = false;
+    if(_globals.env == 'dev') {
+      isLocal = true;
+    }
+    final dom = await GetPaths.getDominio(isLocal: isLocal);
     return '$dom$carpeta$foto';
   }
   
@@ -32,7 +36,11 @@ class GetPathImages {
   static Future<String> getPathCots(String foto) async {
 
     const carpeta = 'to_orden_rsp/';
-    final dom = await GetPaths.getDominio(isLocal: false);
+    bool isLocal = false;
+    if(_globals.env == 'dev') {
+      isLocal = true;
+    }
+    final dom = await GetPaths.getDominio(isLocal: isLocal);
     return '$dom$carpeta$foto';
   }
   

@@ -1,6 +1,6 @@
 import 'dart:convert';
-
-import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:cron/cron.dart';
+import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:network_info_plus/network_info_plus.dart';
@@ -12,6 +12,7 @@ import '../repository/socket_centinela.dart';
 import '../services/my_http.dart';
 import '../services/get_paths.dart';
 import '../services/get_content_files.dart';
+import '../services/push_in/gest_push_in.dart';
 import '../vars/globals.dart';
 
 class SocketConn extends ChangeNotifier {
@@ -69,42 +70,11 @@ class SocketConn extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///
-  String _msgCron = 'X';
-  String get msgCron => _msgCron;
-  void setMsgCronWithoutNotified(String msg) {
-    _msgCron = msg;
-  }
-
-  set msgCron(String msg) {
-    _msgCron = msg;
-    notifyListeners();
-  }
-
-  ///
-  int cantManifest = 0;
-  int cantShows = 0;
-  List<Map<String, dynamic>> _manifests = [];
-  List<Map<String, dynamic>> get manifests => _manifests;
-  set manifests(List<Map<String, dynamic>> msg) {
-    _manifests = msg;
-    notifyListeners();
-  }
-  void addManifest(Map<String, dynamic> msg) {
-    var tmp = List<Map<String, dynamic>>.from(_manifests);
-    _manifests = [];
-    tmp.insert(0, msg);
-    manifests = List<Map<String, dynamic>>.from(tmp);
-    tmp = [];
-  }
-
   /// Usado para notificar en el status bar un cambio de version del centinela
-  int cantAlert = 0;
-  bool _alertCV = false;
-  bool get alertCV => _alertCV;
-  set alertCV(bool show) {
+  String _alertCV = '0';
+  String get alertCV => _alertCV;
+  set alertCV(String show) {
     _alertCV = show;
-    cantAlert++;
     notifyListeners();
   }
 
@@ -137,18 +107,22 @@ class SocketConn extends ChangeNotifier {
   }
 
   ///
-  void cerrarConection() {
+  void cerrarConection() async {
+    idConn = 0;
     isConnectedSocked = false;
     globals.user = ContactoEntity();
     globals.user.nombre = 'Anónimo';
-    idConn = 0;
-    close();
+    await close();
+    await _cronConn.close();
+    await Future.delayed(const Duration(milliseconds: 150));
+    isMyConn = 0;
   }
 
   ///
-  void close() {
+  Future<void> close() async {
     if (_socket != null) {
-      _socket!.sink.close(status.normalClosure);
+      await _socket!.sink.close(status.normalClosure);
+      await _socket!.innerWebSocket!.close();
     }
     isConnectedSocked = false;
     _socket == null;
@@ -234,7 +208,9 @@ class SocketConn extends ChangeNotifier {
     const intentos = 3;
     const espera = 1000;
     int intents = 1;
+    idConn = 0;
     await _conectar();
+
     do {
       await Future.delayed(const Duration(milliseconds: espera));
       if(idConn == 0) {
@@ -244,10 +220,17 @@ class SocketConn extends ChangeNotifier {
         intents++;
       }
     } while (idConn == 0);
+
     if(idConn == -1) {
       idConn = 0;
+      return false;
     }
-    return false;
+
+    Future.microtask(() {
+      isMyConn = 3;
+      sendPingAquiToy();
+    });
+    return true;
   }
 
   ///
@@ -265,12 +248,17 @@ class SocketConn extends ChangeNotifier {
     }
 
     msgErr = 'Esperando Respuesta de Conexión';
+    
     await Future.delayed(const Duration(milliseconds: 1000));
-    _socket!.stream.listen((event) {
-      pin = 'ok';
-      isConnectedSocked = true;
-      _determinarEvento(Map<String, dynamic>.from(json.decode(event)));
-    });
+    try {
+      _socket!.stream.listen((event) {
+        pin = 'ok';
+        isConnectedSocked = true;
+        _determinarEvento(Map<String, dynamic>.from(json.decode(event)));
+      }).onError((_){
+        isMyConn = 0;
+      });
+    } catch (_) { }
   }
 
   ///
@@ -282,6 +270,17 @@ class SocketConn extends ChangeNotifier {
     }
 
     if (response.containsKey('event')) {
+      
+      // todo tipo de notificaciones push desde harbi.
+      if (response['event'] == 'harbi_push') {
+        if(response['fnc'] == 'pushall') {
+          await _makeAcc(
+            response['fnc'],
+            Map<String, dynamic>.from(response['data'])
+          );
+        }
+        return;
+      }
 
       if (response['event'] == 'ping') {
         if(response['fnc'] == 'returnIdConnection') {
@@ -307,7 +306,7 @@ class SocketConn extends ChangeNotifier {
 
     cerrarConection();
   }
-
+  
   ///
   Future<void> _determinarFunction(String fnc, Map<String, dynamic> params) async {
 
@@ -320,6 +319,9 @@ class SocketConn extends ChangeNotifier {
       case 'new_contact':
         msgErr = (params.containsKey('err')) ? 'new_contact-er' : 'new_contact-ok';
         break;
+      case 'reping':
+        isMyConn = 3;
+        break;
       default:
         _msgErr = 'Sin Función';
     }
@@ -331,65 +333,41 @@ class SocketConn extends ChangeNotifier {
     switch (fnc) {
 
       case 'update':
+
         if(params.containsKey('query')) {
+
           if(params.containsKey('avo')) {
             if(params['avo'] == '${globals.user.id}') {
               query = json.encode(params);
             }
           }
-        }else{
 
-          final manifest = await _sockCenti.buildManifest(globals.user);
-          if(manifest.isNotEmpty) {
-            cantManifest++;
-            addManifest(manifest);
-            params['vers'] = manifest['ver'];
-          }
         }
         break;
-
-      case 'cron':
-        msgCron = '${params['time']} VC: ${params['vers']}';
-        break;
-        
       default:
         _msgErr = 'Sin Acción';
     }
-
-    if(params.containsKey('vers')) {
-      if(verOldCentinela.isEmpty) {
-        verOldCentinela = '${params['vers']}';
-        globals.currentVersion = verOldCentinela;
-      }else{
-        if(params['vers'] != verOldCentinela) {
-          verOldCentinela = '${params['vers']}';
-          globals.currentVersion = verOldCentinela;
-          if(manifests.isNotEmpty) {
-            alertCV = true;
-          }
-        }
-      }
-    }
-    sendPing('ping');
   }
 
-  /// Enviando ping a HARBI de Aqui estoy...
-  void sendPing(String fnc) => send(RequestEvent(event: 'connection', fnc: fnc, data: {}));
-
   /// Recuperamos la Ip de Harbi, pero siempre tiene que ser desde el servidor
-  /// remoto, ya que no sabemos desde que maquina se esta corriendo la SCP.
+  /// remoto, ya que no sabemos desde que maquina se esta corriendo este SCP.
   Future<String> getIpToHarbiFromServer() async {
 
-    String ipH = 'Comunicate con Sistemas';
-    String url = 'https://autoparnet.com/home-controller/get-data-connection/123H/';    
+    String msg = 'Comunicate con Sistemas';
+
+    String url = 'https://autoparnet.com';    
+    if(globals.env == 'dev') {
+      url = 'http://localhost/autoparnet/public_html';
+    }
+    url = '$url/home-controller/get-data-connection/2536H/';
+
     try {
       await MyHttp.get(url);
     } catch (e) {
       return 'ERROR, Revisa tu conexión a Internet';
     }
-
     final tipoR = MyHttp.result['body'].runtimeType;
-    
+
     if(tipoR == String) {
       if(MyHttp.result['body'].contains('ERROR')) {
         return MyHttp.result['body'];
@@ -397,22 +375,44 @@ class SocketConn extends ChangeNotifier {
     }
 
     if(MyHttp.result['msg'] == 'ok') {
-      
+
       if(MyHttp.result['body'].isEmpty) {
         return 'ERROR, Reinicia HARBI y revisa la conexión a Internet.';
       }
 
-      ipH = utf8.decode(base64Decode(MyHttp.result['body']));
+      if(tipoR.toString().contains('Map')) {
 
-      if(ipH.contains(':')) {
-        final partes = List<String>.from(ipH.split(':'));
-        globals.ipHarbi = partes.first;
-        globals.portHarbi = partes.last;
-        return 'Datos de conexión recuperados';
+        final c = Map<String, dynamic>.from(MyHttp.result['body']);
+        globals.mySwh = '';
+        List<Map<String, dynamic>> ops = [];
+        c.forEach((key, value) async {
+          ops.add({'clv': key, 'con': utf8.decode(base64Decode(value))});
+        });
+
+        for (var i = 0; i < ops.length; i++) {
+
+          msg = 'ERROR desconocido, ${ops[i]['con']}';
+          if(ops[i]['con'].contains(':')) {
+            final partes = List<String>.from(ops[i]['con'].split(':'));
+            globals.ipHarbi = partes.first;
+            globals.portHarbi = partes.last;
+            final response = await probandoConnWithHarbi();
+            
+            if(!response.contains('ERROR')){
+              globals.mySwh = ops[i]['clv'];
+              msg = 'Datos de conexión recuperados';
+              break;
+            }else{
+              globals.ipHarbi = '';
+              globals.portHarbi = '';
+              globals.mySwh = '';
+            }
+          }
+        }
       }
     }
 
-    return 'ERROR desconocido, $ipH';
+    return msg;
   }
 
   /// Recuperamos la Ip de Harbi, de manera local.
@@ -424,7 +424,15 @@ class SocketConn extends ChangeNotifier {
       final partes = List<String>.from(ipH.split(':'));
       globals.ipHarbi = partes.first;
       globals.portHarbi = partes.last;
-      return 'Datos de conexión recuperados';
+      final response = await probandoConnWithHarbi();
+      if(!response.contains('ERROR')){
+        globals.mySwh = ipCode;
+        return 'Datos de conexión recuperados';
+      }else{
+        globals.ipHarbi = '';
+        globals.portHarbi = '';
+        globals.mySwh = '';
+      }
     }
 
     return 'ERROR desconocido, $ipH';
@@ -472,7 +480,7 @@ class SocketConn extends ChangeNotifier {
     if(folder == 'autos') { uri = 'get_autos'; }
     if(folder == 'centinela') { uri = 'get_centinela'; }
 
-    Uri url = await GetPaths.getUriApiHarbi(uri, '');
+    final url = await GetPaths.getUriApiHarbi(uri, '');
     if(url.host.isNotEmpty) {
 
       await MyHttp.getHarbi(url);
@@ -481,6 +489,35 @@ class SocketConn extends ChangeNotifier {
         return 'ok';
       }else{
         return MyHttp.result['body'];
+      }
+    }
+
+    return 'ERROR, Comunicate con Sistemas';
+  }
+
+  ///
+  Future<String> getCotizadores() async {
+
+    MyHttp.clean();
+
+    late Uri url;
+    String query = 'p0';
+    for (var i = 0; i < 50; i++) {
+      url = await GetPaths.getUriApiHarbi('get_cotz_by_id', query);
+      if(url.host.isNotEmpty) {
+        query = '';
+        await MyHttp.getHarbi(url);
+        if(!MyHttp.result['abort']) {
+          final cotz = Map<String, dynamic>.from(MyHttp.result['body']);
+          if(cotz.isNotEmpty) {
+            GetPaths.setFileCotzFromHarbi({
+              'cotz':cotz['cotz'], 'filtros': cotz['filtros']
+            });
+            query = 'p${cotz['page']}';
+          }else{
+            break;
+          }
+        }
       }
     }
 
@@ -545,4 +582,338 @@ class SocketConn extends ChangeNotifier {
   }
 
 
+  /// ----------------------NOTIFICACIONES --------------------------------
+  
+  int cantAlert = 0;
+
+  ///
+  List<String> lostProcess = [];
+  List<String> inProcess = [];
+  Map<String, String> allNotif = {
+    'all': '0', 'bandeja': '0', 'pap': '0', 'alta': '0', 'media': '0', 'baja': '0'
+  };
+
+  /// Cada ves que cambie todo lo relacionada a las notificaciones cambiara
+  int _refreshNotiff = 0;
+  int get refreshNotiff => _refreshNotiff;
+  set refreshNotiff(int show) {
+    _refreshNotiff = show;
+    cantAlert++;
+    notifyListeners();
+  }
+  /// Cada ves que la notificacion indique trabajar con baja prioridad
+  String _backgroundProcess = '';
+  String get backgroundProcess => _backgroundProcess;
+  set backgroundProcess(String show) {
+    _backgroundProcess = show;
+    notifyListeners();
+  }
+  String _lastCentinelFile = '';
+  
+  /// Lista de ids de las ordenes que su IRIS fue actualizado
+  List<int> idsOrdsIris = [];
+  /// Usado para actualizar a todos los escuchas del IRIS
+  int _irisUpdate = -1;
+  int get irisUpdate => _irisUpdate;
+  set irisUpdate(int show) {
+    _irisUpdate = show;
+    notifyListeners();
+  }
+
+  ///
+  Future<void> _makeAcc(String fnc, Map<String, dynamic> params) async {
+
+    switch (fnc) {
+
+      case 'pushall':
+        
+        // Inicializamos la clase para el manejo de notificaciones
+        GestPushIn? pushIn = GestPushIn(socket: this, user: globals.user);
+
+        final receiverFiles = List<String>.from(params['files'].split(','));
+        if(receiverFiles.isEmpty) { return; }
+
+        // Revisamos si entre los archivos recibidos tenemos una actualizacion
+        // del centinela file, si es asi, vemos que no sea la misma que ya procesamos.
+        int indx = receiverFiles.indexWhere(
+          (element) => element.startsWith('centinela_update')
+        );
+        if(indx != -1) {
+          String updateC = '';
+          final partes = receiverFiles[indx].split('-');
+          int iSuf = pushIn.sufixFiles().indexWhere(
+            (element) => element == partes.last
+          );
+          if(iSuf != -1) {
+            partes.last = '.json';
+          }
+          updateC = partes.join('-');
+          if(_lastCentinelFile == updateC) {
+            receiverFiles.removeAt(indx);
+          }else{
+            _lastCentinelFile = updateC;
+          }
+        }
+        
+        // Antes que nada, primero revisamos si la notificacion trae algo para
+        // el usuario de esta SCP, de lo contrario desechamos la notificacion.
+        final forGet = pushIn.isForMy(receiverFiles);
+        
+        // Si hay algo para este usuario de la SCP, lo procesamos.
+        pushIn.getRecents(forGet).then((response) {
+
+          if(response.isNotEmpty) {
+            // Si los archivos buscados en harbi no se encontraron en la
+            // carpeta recientes, se colocan como archivos bacios en la
+            // carpeta de lost.
+            if(response['lost'].isNotEmpty) {
+              lostProcess.addAll(List<String>.from(response['lost']));
+            }
+            _procesarFilesPush(pushIn!);
+          }
+          pushIn = null;
+        });
+        break;
+      default:
+    }
+  }
+
+  /// Revisamos cada ves que se inicia la app from widgets\invirt\querys_process.dart
+  Future<void> chechNotiffCurrents() async {
+
+    GestPushIn? pushIn = GestPushIn(socket: this, user: globals.user);
+    // Revisar notificaciones perdidas desde harbi.
+    _recoveryNotiffLostFromHarbi().then((forGet){
+
+      if(forGet.isNotEmpty) {
+
+        pushIn!.getLost(forGet).then((response) {
+
+          if(response.isNotEmpty) {
+            // Si los archivos buscados en harbi no se encontraron en la
+            // carpeta recientes, se colocan como archivos bacios en la
+            // carpeta de lost.
+            if(response['lost'].isNotEmpty) {
+              lostProcess.addAll(List<String>.from(response['lost']));
+            }
+            _procesarFilesPush(pushIn!);
+          }
+          pushIn = null;
+        });
+      }
+    });
+  }
+
+  ///
+  void _procesarFilesPush(GestPushIn pushIn) {
+
+    pushIn.categorizar();
+    allNotif = pushIn.cuantificar(allNotif);
+    int? cant = int.tryParse(allNotif['all']!);
+    if(cant != null) {
+
+      bool hasBaja = false;
+      bool hasAlta = false;
+
+      if(allNotif['baja'] != '0') {
+        // Todas las notificaciones de baja prioridad deben procesarce
+        // en background y no son intrusivos.
+        int? cantB = int.tryParse(allNotif['baja']!);
+        if(cantB != null) {
+          cant = cant - cantB;
+        }
+        hasBaja = true;
+      }
+
+      if(allNotif['alta'] != '0') {
+        // Todas las notificaciones de alta prioridad deben ser intrusivos
+        int? cantA = int.tryParse(allNotif['baja']!);
+        if(cantA != null) {
+          hasAlta = true;
+        }
+      }
+
+      if(hasAlta) {
+        // Forzamos un cambio en los escuchas del refresnNotiff.
+        // lib\src\consola.dart:
+        //  a) La pestaña de notificaciones
+        //  b) La consola de notificaciones
+        refreshNotiff = (refreshNotiff != cant) ? cant : (refreshNotiff + 1);
+      }
+
+      // Procesamos notificaciones de baja prioridad
+      if(hasBaja) {
+        _procesarFilesPushInBG(pushIn);
+      }
+    }
+  }
+
+  ///
+  void _procesarFilesPushInBG(GestPushIn pushIn) {
+
+    backgroundProcess = '<BG>';
+
+    pushIn.processBackground().listen((event) {
+
+      if(event.startsWith('Versionando')) {
+        final partes = event.split(':');
+        updateVersionCentinelaFile(partes.last.trim());
+      }
+      
+      if(event.startsWith('Asignaci')) {
+
+        int? a = int.tryParse(allNotif['all']!);
+        int? c = int.tryParse(allNotif['alta']!);
+        if(c != null && a != null) {
+          final cant = a + 1;
+          allNotif['all'] = '$cant';
+          allNotif['alta'] = '${c + 1}';
+          refreshNotiff = (refreshNotiff != cant) ? cant : (refreshNotiff + 1);
+        }
+      }
+
+      if(event.contains('Métricas')) {
+        // No se hace nada, ya que es la actualizacion no intrusiva.
+      }
+
+      if(event.contains('IRIS')) {
+        idsOrdsIris = pushIn.idsOrdsChanged;
+        irisUpdate = irisUpdate +1;
+      }
+
+      if(event == 'Listo...') {
+        backgroundProcess = '<BG>';
+        return;
+      }
+
+      backgroundProcess = event;
+    }).onError((_){
+      debugPrint('error en el SocketConn, Stream de push de baja');
+    });
+  }
+
+  ///
+  Future<List<String>> _recoveryNotiffLostFromHarbi() async {
+
+    List<String> filesType = ['${globals.user.id}', 'centinela_update'];
+    if(globals.user.roles.contains('ROLE_ADMIN')) {
+      filesType.add('admin');
+    }
+
+    MyHttp.clean();
+    final uri = await GetPaths.getPathToApiHarbi('push');
+    if(!uri.contains('null')) {
+      try {
+        await MyHttp.getHarbi(Uri.parse('http://$uri/lost%${filesType.join(',')}-getnames'));
+      } catch (_) {}
+    }
+
+    List<String> filesLost = [];
+    if(!MyHttp.result['abort'] && MyHttp.result['msg'] == 'ok.') {
+      
+      final resp = MyHttp.result['body'];
+      if(resp.runtimeType == String) {
+        final content = Map<String, dynamic>.from(json.decode(resp));
+        if(content.containsKey('files')) {
+
+          filesLost = List<String>.from(content['files']);
+          if(filesLost.isNotEmpty) {
+            GestPushIn? pushIn = GestPushIn(socket: this, user: globals.user);
+            pushIn.setFilesLost(filesLost);
+          }
+        }
+      }
+    }
+
+    return filesLost;
+  }
+
+  ///
+  void updateVersionCentinelaFile(String ver) async {
+
+    if(verOldCentinela.isEmpty) { verOldCentinela = '0'; }
+
+    if(ver != verOldCentinela) {
+      verOldCentinela = ver;
+      globals.currentVersion = verOldCentinela;
+    }
+    alertCV = globals.currentVersion;
+  }
+
+  ///
+  Future<void> cleanAllNotiff() async {
+
+    GestPushIn? pushIn = GestPushIn(socket: this, user: globals.user);
+    allNotif = pushIn.cleanAll(allNotif);
+    int? cant = int.tryParse(allNotif['all']!);
+    if(cant != null) {
+      refreshNotiff = (refreshNotiff == cant) ? cant : (refreshNotiff + 1);
+    }
+  }
+
+  /// ---------------------- FIN NOTIFICACIONES -----------------------------
+  
+  /// -------------------- CRON DE CONECCION PING ---------------------------
+  
+  Cron _cronConn = Cron();
+  // 0 no conectado, 1 buscando coneccion, 2 en espera de respuesta, 3 conectado, 
+  // 4 reconectando, 5 conección manual.
+  int _isMyConn = 0;
+  int get isMyConn => _isMyConn;
+  set isMyConn(int myC) {
+    _isMyConn = myC;
+    notifyListeners();
+  }
+  
+  ///
+  void sendPingAquiToy() async {
+
+    try {
+      _cronConn.schedule(Schedule.parse('*/5 * * * * *'), () async {
+        _goCheckConectMyWhitHarbi();
+      });
+    } catch (e) {
+
+      if(idConn != 0) {
+        if(e.toString().contains('Close')) {
+          _cronConn = Cron();
+          await Future.delayed(const Duration(milliseconds: 500));
+          sendPingAquiToy();
+        }else{
+          isMyConn = 0;
+        }
+      }
+    }
+  }
+
+  ///
+  Future<void> _goCheckConectMyWhitHarbi() async {
+
+    isMyConn = 1;
+    if(idConn == 0){ return; }
+    
+    await Future.delayed(const Duration(milliseconds: 150));
+    send(RequestEvent(event: 'ping', fnc: 'reping', data: {
+      'avo': globals.user.id
+    }));
+    isMyConn = 2;
+    await Future.delayed(const Duration(milliseconds: 3500));
+    
+    if(_isMyConn < 3) {
+
+      await _cronConn.close();
+      isMyConn = 4;
+      if(idConn != 0) {
+        // Necesitamos reconectar
+        bool res = await makeFirstConnection();
+        if(!res) {
+          isMyConn = 5;
+        }else{
+          await chechNotiffCurrents();
+        }
+      }
+    }
+  }
+
+  /// ------------------- FIN CRON DE CONECCION PING ------------------------
 }

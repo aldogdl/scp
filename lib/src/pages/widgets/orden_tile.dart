@@ -148,11 +148,11 @@ class OrdenTile extends StatelessWidget {
           Row(
             children: [
               MyToolTip(
-                msg: '${orden.own} Cel: ${ orden.celular }',
-                child: Texto(txt: orden.empresa, sz: 11)
+                msg: 'Celular: ${ orden.celular }',
+                child: Texto(txt: orden.own, sz: 11)
               ),
               const Spacer(),
-              Texto(txt: 'Ord: ${orden.id}', sz: 11, txtC: Colors.white),
+              Texto(txt: orden.empresa, sz: 11, txtC: Colors.white),
             ],
           )
         ],
@@ -163,26 +163,41 @@ class OrdenTile extends StatelessWidget {
   ///
   Widget _logoMarca() {
 
-    return Container(
-      width: 40, height: 40,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(100),
-        color: Colors.white.withOpacity(0.1)
-      ),
-      child: (orden.marca.isEmpty)
-      ? const Icon(Icons.car_repair, color: Colors.black, size: 19)
-      : Center(
-        child: Text(
-          orden.marca.substring(0,1),
-          textScaleFactor: 1,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.comfortaa(
-            color: Colors.red,
-            fontSize: 22,
-            fontWeight: FontWeight.w900
+    return SizedBox(
+      width: 50, height: 50,
+      child: Column(
+        children: [
+          Container(
+            width: 35, height: 35,
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(100),
+              color: Colors.white.withOpacity(0.1)
+            ),
+            child: Center(
+              child: Text(
+                '${orden.id}',
+                textScaleFactor: 1,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.comfortaa(
+                  color: Colors.red,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900
+                ),
+              ),
+            )
           ),
-        ),
+          const SizedBox(height: 2),
+          Text(
+            'Orden Id:',
+            textScaleFactor: 1,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.comfortaa(
+              color: Colors.grey,
+              fontSize: 10,
+            ),
+          ),
+        ],
       )
     );
   }

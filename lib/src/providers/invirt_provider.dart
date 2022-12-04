@@ -9,8 +9,7 @@ class InvirtProvider extends ChangeNotifier {
 
     _cmd = {};
     _cotsAlmacen    = [];
-    _pzaResults     = [];    
-    _trigger        = [];
+    _pzaResults     = [];
     _triggerResp    = [];
     
     Future.microtask((){
@@ -20,12 +19,12 @@ class InvirtProvider extends ChangeNotifier {
     });
   }
 
+  // Para recordar si las ordenes van de forma asc o desc al listarce
+  String sortBy = 'asc';
+  
   // Trampas para refrescar la sección 0, ya que no refresca correcto cuando
   // se envia varias veces el mismo comando.
   String _trampRfs0 = 'o';
-
-  /// La lista de cronos
-  Map<int, dynamic> cronos = {};
 
   /// Los costos que han sido seleccionados para la zona financiera
   bool _recalcular = false;
@@ -193,23 +192,6 @@ class InvirtProvider extends ChangeNotifier {
     tmp.add(nlist);
     querys = List<String>.from(tmp);
     query = nlist;
-    tmp = [];
-  }
-
-  /// El diparador para actualizar las metricas.
-  List<int> _trigger = [];
-  List<int> get trigger => _trigger;
-  set trigger(List<int> ordenes) {
-    _trigger = ordenes;
-    notifyListeners();
-  }
-  ///
-  void addTrigger(int orden) {
-
-    var tmp = List<int>.from(_trigger);
-    _trigger.clear();
-    tmp.add(orden);
-    trigger = List<int>.from(tmp);
     tmp = [];
   }
 

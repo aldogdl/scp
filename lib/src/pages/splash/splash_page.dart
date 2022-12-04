@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../widgets/scranet/build_data_gral.dart';
+import '../../config/sng_manager.dart';
 import '../../providers/socket_conn.dart';
-import '../../services/get_paths.dart';
 import '../../providers/pages_provider.dart';
+import '../../services/get_paths.dart';
+import '../../vars/globals.dart';
 
 class SplasPage extends StatefulWidget {
 
@@ -15,6 +17,8 @@ class SplasPage extends StatefulWidget {
 }
 
 class _SplasPageState extends State<SplasPage> {
+
+  final _globals = getSngOf<Globals>();
 
   late PageProvider prov;
   late SocketConn conn;
@@ -94,13 +98,12 @@ class _SplasPageState extends State<SplasPage> {
     String response = '';
     yield 'Recuperando datos de Conexión';
 
-    response = await conn.getIpToHarbiFromLocal();
-    // response = await conn.getIpToHarbiFromServer();
-    yield response;
-    if(response.contains('ERROR')){ return; }
-
-    yield 'Checando existencia del Servidor HARBI';
-    response = await conn.probandoConnWithHarbi();
+    if(_globals.env == 'dev') {
+      response = await conn.getIpToHarbiFromLocal();
+    }else{
+      response = await conn.getIpToHarbiFromServer();
+    }
+    
     yield response;
     if(response.contains('ERROR')){ return; }
 
@@ -126,6 +129,9 @@ class _SplasPageState extends State<SplasPage> {
 
     yield 'Recuperando Datos [CENTINELA]';
     await conn.getDataFixed('centinela');
+
+    yield 'Recuperando Datos [COTIZADORES]';
+    await conn.getCotizadores();
 
     yield 'Comencemos...';
     await Future.delayed(const Duration(milliseconds: 500));

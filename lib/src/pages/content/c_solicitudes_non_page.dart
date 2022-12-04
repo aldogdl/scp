@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/providers/pages_provider.dart';
 
 import 'widgets/dialog_to_save_asign.dart';
 import '../widgets/instruc_asignar_orden.dart';
@@ -10,9 +9,10 @@ import '../widgets/texto.dart';
 import '../../config/sng_manager.dart';
 import '../../entity/contacto_entity.dart';
 import '../../entity/orden_entity.dart';
-import '../../providers/centinela_file_provider.dart';
+import '../../providers/pages_provider.dart';
 import '../../providers/items_selects_glob.dart';
 import '../../providers/window_cnf_provider.dart';
+import '../../providers/centinela_file_provider.dart';
 import '../../repository/ordenes_repository.dart';
 import '../../repository/contacts_repository.dart';
 import '../../repository/socket_centinela.dart';
@@ -35,6 +35,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   final _scrollCtrAsig = ScrollController();
   final _scrollCtrSINAsig = ScrollController();
   final _totRodsAvo = ValueNotifier<int>(0);
+  final _refreshLstAvos = ValueNotifier<bool>(false);
 
   late final WindowCnfProvider winCnf;
   late final ItemSelectGlobProvider itemProv;
@@ -63,6 +64,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     _scrollCtr.dispose();
     _scrollCtrAsig.dispose();
     _scrollCtrSINAsig.dispose();
+    _refreshLstAvos.dispose();
     itemProv.disposeMy();
     _totRodsAvo.dispose();
     super.dispose();
@@ -198,7 +200,31 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
             _idAvoSelect = 0;
           }),
         ),
-        const SizedBox(width: 10),
+        // const SizedBox(width: 3),
+        ValueListenableBuilder(
+          valueListenable: _refreshLstAvos,
+          builder: (_, val, load) {
+
+            if(val) { return load!; }
+
+            return MyToolTip(
+              msg: 'Refrescar AVOS',
+              child: IconButton(
+                onPressed: () async => await _getOnlyAvos(refreshScreen: true),
+                icon: const Icon(
+                  Icons.refresh, color: Colors.grey,
+                )
+              )
+            );
+          },
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: SizedBox(
+              width: 20, height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        )
       ],
     );
   }
@@ -266,7 +292,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
         controller: _scrollCtr,
         physics: const BouncingScrollPhysics(),
         itemCount: itemProv.avos.length,
-        padding: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.only(right: 10, bottom: 40),
         itemBuilder: (_, index) {
           
           return AbsorbPointer(
@@ -624,6 +650,41 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     );
   }
 
+  ///
+  Widget _saveAsignacion() {
+
+    return DialogToSaveAsign(
+      centiProv: _centiProv,
+      cpushOrden: _cpushOrden,
+      dataSaving: _dataSaving,
+      itemProv: itemProv,
+      ordenesAvo: _ordenesAvo,
+      onFinish: (Map<String, List<OrdenEntity>> oavo) async {
+        
+        final nav = Navigator.of(context);
+        context.read<PageProvider>().refreshLsts = true;
+        bool goServer = true;
+        if(oavo.isNotEmpty) {
+          if(!_ordenesAvo.containsKey(_idAvoSelect)) {
+            if(oavo.containsKey('$_idAvoSelect')) {
+              _ordenesAvo['$_idAvoSelect'] = oavo['$_idAvoSelect']!;
+              goServer = false;
+            }
+          }
+        }
+        if(goServer) {
+          await _getOrdenesByAvo(force: true);
+        }
+        nav.pop(true);
+      },
+      onError: (_) async {
+        setState(() {
+          _hasErrorSave = true;
+        });
+        Navigator.of(context).pop(false);
+      }
+    );
+  }
 
   // ---------------------------- CONTROLADOR ----------------------------
   
@@ -640,19 +701,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     }
     
     if(itemProv.avos.isEmpty) {
-      await _contacEm.getAllContacts(tipo: 'anete');
-      if(!_contacEm.result['abort']) {
-        
-        List<ContactoEntity> cts = [];
-        for (var i = 0; i < _contacEm.result['body'].length; i++) {
-          if(_contacEm.result['body'][i]['c_roles'].contains('ROLE_AVO')) {
-            final ct = ContactoEntity();
-            ct.fromServerWidtEmpresa(_contacEm.result['body'][i]);
-            cts.add(ct);
-          }
-        }
-        itemProv.avos = cts;
-      }
+      await _getOnlyAvos();
     }
 
     if(_centiProv.centinela.isEmpty) {
@@ -668,6 +717,39 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       itemProv.setOrdenEntitySelect(null);
       itemProv.piezaSelect = null;
     });
+  }
+
+  ///
+  Future<void> _getOnlyAvos({bool refreshScreen = false}) async {
+
+    bool force = false;
+    if(refreshScreen) {
+      _refreshLstAvos.value = true;
+      force = true;
+    }else{
+      await _contacEm.getAllAvos();
+    }
+
+    await _contacEm.getAllAvos(force: force);
+    if(!_contacEm.result['abort']) {
+      
+      List<ContactoEntity> cts = [];
+      for (var i = 0; i < _contacEm.result['body'].length; i++) {
+        if(_contacEm.result['body'][i]['c_roles'].contains('ROLE_AVO')) {
+          final ct = ContactoEntity();
+          ct.fromServerWidtEmpresa(_contacEm.result['body'][i]);
+          cts.add(ct);
+        }
+      }
+      _contacEm.clear();
+      itemProv.avos = cts;
+      if(refreshScreen) {
+        if(mounted) {
+          _refreshLstAvos.value = false;
+          setState(() {});
+        }
+      }
+    }
   }
 
   ///
@@ -815,18 +897,21 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
 
     String msg = '';
     if(_centiProv.centinela.isEmpty) {
+
       msg = 'No existen los datos referenciales acerca de un historial de seguimiento '
-      'de piezas, LOS DATOS DEL CENTINELA ESTÁN BACÍOS\n\n¿Deseas que se recuperen '
+      'de piezas, LOS DATOS DEL CENTINELA ESTÁN VACÍOS\n\n¿Deseas que se recuperen '
       'dichos datos para continuar con el proceso de Guardado?';
+
       bool? acc = await _showAlert(
         titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg,
         onlyAlert: false, withYesOrNot: true
       );
       acc = (acc == null) ? false : acc;
+
       if(acc) {
         msg = 'Espera un momento, estamos trabajando en ello.';
         _showAlert(
-          titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg,
+          titulo: 'RECUPERANDO CENTINELA FILE', msg: msg,
           onlyAlert: true, withYesOrNot: false
         );
         _sockCenti.getFromApiHarbi().then((_){
@@ -851,6 +936,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     msg = 'Estas a punto de modificar datos en el sistema general realizando '
     'cambios importantes en la Base de Datos y demás sistemas.\n¿Estás '
     'segur@ de querer continuar?.';
+
     bool? acc = await _showAlert(
       titulo: 'GUARDANDO LAS ASIGNACIONES', msg: msg, onlyAlert: false, withYesOrNot: true
     );
@@ -864,7 +950,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
         acc = await _showAlert(
           titulo: '¡Ocurrio un Error! :(',
           msg: 'Al intentar guardar las asignaciones ocurrio una excepción inesperada.'
-          '\n¿Deseas interntar nuevamente guardar las asignaciones?',
+          '\n¿Deseas intentar nuevamente guardar las asignaciones?',
           withYesOrNot: true,
           onlyAlert: false,
           msgOnlyYes: 'INTENTAR'
@@ -874,6 +960,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
           _guardarAsignacion();
         }
       }
+
       if(!_hasErrorSave && acc) {
         itemProv.idOrdenSelect = 0;
         itemProv.setOrdenEntitySelect(null);
@@ -890,27 +977,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        content: DialogToSaveAsign(
-          centiProv: _centiProv,
-          cpushOrden: _cpushOrden,
-          dataSaving: _dataSaving,
-          itemProv: itemProv,
-          ordenesAvo: _ordenesAvo,
-          onFinish: (_) async {
-            // Esta desfasado...
-            final nav = Navigator.of(context);
-            context.read<PageProvider>().refreshLsts = true;
-            await _getOrdenesByAvo(force: true);
-            setState(() {});
-            nav.pop(true);
-          },
-          onError: (_) async {
-            setState(() {
-              _hasErrorSave = true;
-            });
-            Navigator.of(context).pop(false);
-          }
-        ),
+        content: _saveAsignacion(),
       )
     );
   }

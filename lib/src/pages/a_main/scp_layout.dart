@@ -40,8 +40,10 @@ class _ScpLayoutState extends State<ScpLayout> {
       if(!_isLoad) {
         _isLoad = true;
         if(kReleaseMode){
-          await AudioPlayer.clearAssetCache();
           const assetPath = 'assets/audio/cotizaciones.mp3';
+          try {
+            await AudioPlayer.clearAssetCache();
+          } catch (_) {}
           await player.setVolume(1.0);
           player.setAudioSource(
             AudioSource.uri(Uri.parse('asset:///$assetPath')),

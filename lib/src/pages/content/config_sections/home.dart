@@ -17,7 +17,7 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final sock = context.read<SocketConn>();
-
+    
     return Container(
       padding: const EdgeInsets.all(10),
       constraints: BoxConstraints.expand(
@@ -61,7 +61,7 @@ class Home extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Expanded(
-            child: _datosGenerales(sock),
+            child: _datosGenerales(context),
           )          
         ],
       )
@@ -69,8 +69,8 @@ class Home extends StatelessWidget {
   }
 
   ///
-  Widget _datosGenerales(SocketConn sock) {
-
+  Widget _datosGenerales(BuildContext context) {
+    
     String urlR = 'Desconocido';
     String urlL = 'Desconocido';
     String portL= '0';
@@ -102,22 +102,13 @@ class Home extends StatelessWidget {
     List<Map<String, dynamic>> datosDer = [
       {'c':'Puerto a HARBI:', 'v':globals.portHarbi},
       {'c':'Puerto a Servidor:', 'v':portL},
-      {'c':'ID de Conexión a HARBI:', 'v':sock.idConn},
-      {'c':'MIS DATOS:', 'v':'...'},
-      {'c':'Identificación:', 'v':globals.user.id},
-      {'c':'Usuario:', 'v':globals.user.nombre},
-      {'c':'CURC:', 'v':globals.user.curc},
     ];
 
     return Row(
       children: [
         const Expanded(
           flex: 1,
-          child: Center(
-            child: Image(
-                image: AssetImage('assets/logo_1024.png'),
-              ),
-          ),
+          child: SizedBox()
         ),
         const SizedBox(width: 20),
         Expanded(
@@ -132,11 +123,27 @@ class Home extends StatelessWidget {
         const SizedBox(width: 20),
         Expanded(
           flex: 1,
-          child: ListView.builder(
-            itemCount: datosDer.length,
-            itemBuilder: (_, index) => _tileItem(
-              index, datosDer[index]['c'], datosDer[index]['v']
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: ListView.builder(
+                  itemCount: datosDer.length,
+                  itemBuilder: (_, index) => _tileItem(
+                    index, datosDer[index]['c'], datosDer[index]['v']
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Expanded(
+                flex: 6,
+                child: Image(
+                  image: AssetImage('assets/logo_1024.png'),
+                  alignment: Alignment.topCenter,
+                ),
+              ),
+            ],
           )
         ),
       ],

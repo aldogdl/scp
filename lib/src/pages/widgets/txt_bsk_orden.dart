@@ -104,7 +104,7 @@ class _TxtBskOrdenState extends State<TxtBskOrden> {
                   ),
                 ),
                 MyToolTip(
-                  msg: 'Refrezcar [ctrl-alt-d]',
+                  msg: 'Refrescar [ctrl-alt-d]',
                   child: IconButton(
                     onPressed: () => widget.onRefresh('Refrescando...'),
                     icon: Icon(
@@ -159,7 +159,7 @@ class _TxtBskOrdenState extends State<TxtBskOrden> {
       }else{
         
         _msg.value = 'Descargando, espera por favor';
-        await _ordenEm.getOrdenById(idOrden);
+        await _ordenEm.getOrdenById('_searchOrDown', idOrden);
 
         if(_ordenEm.result['body'].isNotEmpty) {
           _msg.value = 'Listo...';

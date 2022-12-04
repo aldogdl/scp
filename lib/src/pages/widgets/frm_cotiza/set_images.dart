@@ -262,16 +262,22 @@ class _SetImagesState extends State<SetImages> {
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: const [
-          Icon(Icons.photo_album_outlined, color: Color.fromARGB(255, 54, 54, 54), size: 50),
-          Texto(
+        children: [
+          const Icon(Icons.photo_album_outlined, color: Color.fromARGB(255, 54, 54, 54), size: 50),
+          const Texto(
             txt: 'Arrastra y Suelta multiples Fotografías en el Receptor',
             txtC: Color.fromARGB(255, 87, 87, 87),
           ),
-          Texto(
-            txt: 'ubicador en la parte derecha de este contenedor.',
-            txtC: Color.fromARGB(255, 122, 122, 122),
-            sz: 13,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Texto(
+                txt: 'ubicado en la parte derecha de este contenedor.',
+                txtC: Color.fromARGB(255, 122, 122, 122),
+                sz: 13,
+              ),
+              Icon(Icons.drag_indicator_sharp, size: 18)
+            ],
           ),
         ],
       )
@@ -329,13 +335,7 @@ class _SetImagesState extends State<SetImages> {
           ),
           const SizedBox(width: 15),
           TextButton.icon(
-            onPressed: () async {
-              bool? res = await _showAlerts('fin');
-              res = (res == null) ? false : res;
-              if(res) {
-                await _enviarToProceso();
-              }
-            },
+            onPressed: () async => await _enviarToProceso(),
             icon: const Icon(Icons.send),
             label: const Texto(txt: 'Enviar Solicitud', txtC: Colors.blue)
           )
@@ -356,10 +356,14 @@ class _SetImagesState extends State<SetImages> {
     }
 
     if(tipo == 'save') {
-
       _msgs.value = '';
       txt = 'Estamos creando el contenedor principal para la solicitud de '
       'cotización, Espera un momento por favor.';
+    }
+
+    if(tipo == 'save_warning') {
+      txt = _msgs.value;
+      _msgs.value = '';
     }
 
     return Row(
@@ -368,43 +372,49 @@ class _SetImagesState extends State<SetImages> {
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
           child: (tipo != 'save')
             ? Texto(txt: txt, sz: 16, isCenter: true)
-            : StreamBuilder<String>(
-              stream: _buildOrden(),
-              initialData: 'Estamos preparando todo, Espera un momento, por favor',
-              builder: (_, AsyncSnapshot<String> snap) {
-
-                if(snap.data!.startsWith('ERROR')) {
-                  Future.delayed(const Duration(milliseconds: 3000), (){
-                    Navigator.of(context).pop(false);
-                  });
-                }
-
-                if(snap.data!.startsWith('[OK]')) {
-                  Future.delayed(const Duration(milliseconds: 500), (){
-                    Navigator.of(context).pop(true);
-                  });
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Texto(txt: txt, sz: 16, isCenter: true),
-                    const SizedBox(height: 8),
-                    Texto(
-                      txt: snap.data ?? '...',
-                      sz: 16, isCenter: true, txtC: Colors.amber,
-                    ),
-                    const SizedBox(height: 5),
-                    SizedBox(
-                      height: 3, width: MediaQuery.of(context).size.width * 0.5,
-                      child: const LinearProgressIndicator(),
-                    )
-                  ],
-                );
-              }
-            ),
+            : _saveOrden(txt),
         )
       ],
+    );
+  }
+
+  ///
+  Widget _saveOrden(String txt) {
+
+    return StreamBuilder<String>(
+      stream: _buildOrden(),
+      initialData: 'Estamos preparando todo, Espera un momento, por favor',
+      builder: (_, AsyncSnapshot<String> snap) {
+
+        if(snap.data!.startsWith('ERROR')) {
+          Future.delayed(const Duration(milliseconds: 3000), (){
+            Navigator.of(context).pop(false);
+          });
+        }
+
+        if(snap.data!.startsWith('[OK]')) {
+          Future.delayed(const Duration(milliseconds: 500), (){
+            Navigator.of(context).pop(true);
+          });
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Texto(txt: txt, sz: 16, isCenter: true),
+            const SizedBox(height: 8),
+            Texto(
+              txt: snap.data ?? '...',
+              sz: 16, isCenter: true, txtC: Colors.amber,
+            ),
+            const SizedBox(height: 5),
+            SizedBox(
+              height: 3, width: MediaQuery.of(context).size.width * 0.5,
+              child: const LinearProgressIndicator(),
+            )
+          ],
+        );
+      }
     );
   }
 
@@ -714,7 +724,7 @@ class _SetImagesState extends State<SetImages> {
   }
 
   ///
-  Future<void> _enviarToProceso() async {
+  Future<void> _enviarToProceso({String tipo = ''}) async {
 
     // Primero recuperamos todos los datos.
     if(_ctzP.piezas.isEmpty) {
@@ -728,14 +738,26 @@ class _SetImagesState extends State<SetImages> {
         _ctzP.indexPzaCurren = i;
         _fotos.value = [];
         _idPza = '${_ctzP.piezas[i].id}';
-        return;
+        break;
+      }else{
+        _pzas.add(_ctzP.piezas[i].toJson());
       }
-      _pzas.add(_ctzP.piezas[i].toJson());
     }
 
-    bool? isOk = await _showAlerts('save');
+    String param = tipo;
+    if(_msgs.value.contains('necesita')) {
+      param = 'save_warning';
+    }else{
+      param = (param != 'save') ? 'fin' : param;
+    }
+    bool? isOk = await _showAlerts(param);
     isOk = (isOk == null) ? false : isOk;
-    if(isOk) {
+    if(isOk && param == 'save_warning') {
+      return;
+    }
+    if(isOk && param != 'save') {
+      _enviarToProceso(tipo: 'save');
+    }else{
       _fotos.value = [];
       _pzas = []; 
       _idOrden = -1;
@@ -743,6 +765,9 @@ class _SetImagesState extends State<SetImages> {
       _idPza = '0';
       _ctzP.isOrdFinish = 'fin';
     }
+
+    // if(isOk) {
+    // }
 
     // var orden = _ctzP.orden.toJsonSave();
     // orden['piezas'] = pzas;
@@ -770,7 +795,6 @@ class _SetImagesState extends State<SetImages> {
     var orden = _ctzP.orden.toJsonSave();
     orden['piezas'] = List<Map<String, dynamic>>.from(_pzas);
     _pzas = [];
-    final nameBase = DateTime.now().millisecondsSinceEpoch;
     for (var i = 0; i < orden['piezas'].length; i++) {
 
       List<String> fotos = List<String>.from(orden['piezas'][i]['fotos']);
@@ -779,6 +803,8 @@ class _SetImagesState extends State<SetImages> {
         final ft = File(fotos[f]);
         orden['piezas'][i]['orden'] = _idOrden;
         if(ft.existsSync()) {
+          
+          final nameBase = DateTime.now().millisecondsSinceEpoch;
           final filename = ft.path.split(_sep).last;
           String name = '$_idOrden-$nameBase-${f+1}.${filename.split('.').last}';
           final data = {
@@ -805,6 +831,18 @@ class _SetImagesState extends State<SetImages> {
   ///
   Future<bool?> _showAlerts(String tipo) async {
 
+    if(tipo == 'save_warning') {
+      return await WidgetsAndUtils.showAlertBody(
+        context,
+        titulo: 'HAY UN ERROR EN LA SOLICITUD',
+        onlyAlert: false,
+        msgOnlyYes: 'ENTENDIDO',
+        dismissible: true,
+        onlyYES: true,
+        body: _getBodyAlert(tipo)
+      );
+    }
+
     bool onlyAlert = false;
     bool withYesOrNot = true;
     bool diss = true;
@@ -813,10 +851,13 @@ class _SetImagesState extends State<SetImages> {
       withYesOrNot = false;
       diss = false;
     }
+    String tit = (tipo == 'del')
+      ? 'ELIMINAR TODAS LAS FOTOS'
+      : 'TERMINAR ALTA DE COTIZACIÓN';
 
     return await WidgetsAndUtils.showAlertBody(
       context,
-      titulo: (tipo == 'del') ? 'ELIMINAR TODAS LAS FOTOS' : 'TERMINAR ALTA DE COTIZACIÓN',
+      titulo: tit,
       onlyAlert: onlyAlert,
       withYesOrNot: withYesOrNot,
       dismissible: diss,
@@ -836,11 +877,15 @@ class _SetImagesState extends State<SetImages> {
     _orEm.result.clear();
     _idOrden = -1;
     await _orEm.setOrdenByCotiza(_ctzP.orden.toJsonSave(), _ctzP.tokenServer);
+
     if(!_orEm.result['abort']) {
+
       _ctzP.orden.id = _orEm.result['body']['id'];
       _ctzP.orden.createdAt = DateTime.now().toIso8601String();
       _idOrden = _ctzP.orden.id;
+
     }else{
+      
       if(_orEm.result['body'].runtimeType == String) {
         String res = _orEm.result['body'];
         if(res.contains('Invalido')) {

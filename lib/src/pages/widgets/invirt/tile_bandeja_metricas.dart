@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../texto.dart';
+import '../../../entity/metrix_entity.dart';
 import '../../../repository/inventario_repository.dart';
-import '../../../providers/invirt_provider.dart';
+import '../../../providers/socket_conn.dart';
 
 class TileBandejaMetricas extends StatefulWidget {
-  
+
+  final int idOrden;
   final String filename;
+  final ValueChanged<void>? onOpenDashboard;
   const TileBandejaMetricas({
     Key? key,
+    required this.idOrden,
     required this.filename,
+    required this.onOpenDashboard,
   }) : super(key: key);
 
   @override
@@ -20,86 +25,84 @@ class TileBandejaMetricas extends StatefulWidget {
 class _TileBandejaMetricasState extends State<TileBandejaMetricas> {
 
   final _invEm = InventarioRepository();
-  late Future<Map<String, dynamic>> _getMetrik;
+  late Future<MetrixEntity> _getMetrik;
+  MetrixEntity? metrik;
   int _idOrden = 0;
+  int lastUpdate = 0;
 
   @override
   void initState() {
-    _getMetrik = _getMetricas();
+    _idOrden = widget.idOrden;
+    _getMetrik = _getMetricas(true);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
 
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _getMetrik,
-      builder: (_, AsyncSnapshot<Map<String, dynamic>> metrix) {
+    final prov = context.read<SocketConn>();
+
+    return Selector<SocketConn, int>(
+      selector: (_, prov) => prov.irisUpdate,
+      builder: (_, val, child) {
+        if(prov.idsOrdsIris.contains(_idOrden)) {
+          prov.idsOrdsIris.remove(_idOrden);
+          return _futureWidget(true, true);
+        }
+        return child!;
+      },
+      child: _futureWidget(false, true),
+    );
+  }
+
+  ///
+  Widget _futureWidget(bool force, bool isSensor) {
+
+    return FutureBuilder<MetrixEntity>(
+      future: (force) ? _getMetricas(true) : _getMetrik,
+      builder: (_, AsyncSnapshot<MetrixEntity> mtr) {
         
-        if(metrix.connectionState == ConnectionState.done) {
-          if(metrix.hasData && metrix.data != null) {
-            if(metrix.data!.isNotEmpty) {
-              return _sensorDeCambios(metrix.data!);
-            }
+        if(mtr.connectionState == ConnectionState.done) {
+          if(mtr.hasData && mtr.data != null) {
+            metrik = mtr.data!;
+            return _body(mtr.data!);
           }
           return _sinData();
         }
-        return _load();
+        return (force) ? _body(metrik!) : _load();
       }
     );
   }
 
   ///
-  Widget _sensorDeCambios(Map<String, dynamic> metrix) {
-
-    return Selector<InvirtProvider, List<int>>(
-      selector: (_, prov) => prov.trigger,
-      builder: (_, idOrds, child) {
-
-        if(idOrds.contains(_idOrden)) {
-          return FutureBuilder<Map<String, dynamic>>(
-            future: _getMetricas(),
-            builder: (_, AsyncSnapshot<Map<String, dynamic>> metrix) {
-              if(metrix.connectionState == ConnectionState.done) {
-                if(metrix.hasData && metrix.data != null) {
-                  if(metrix.data!.isNotEmpty) {
-                    return _body(metrix.data!);
-                  }
-                }
-                return _sinData();
-              }
-              return child!;
-            },
-          );
-        }
-
-        return child!;
-      },
-      child: _body(metrix),
-    );
-  }
-
-  ///
-  Widget _body(Map<String, dynamic> metrix) {
+  Widget _body(MetrixEntity metrix) {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _setState(metrix, Mtrik.scmEst.name),
-        _setState(metrix, Mtrik.see.name, wval: true),
-        _setState(metrix, Mtrik.cnt.name, wval: true),
-        _setState(metrix, Mtrik.cotz.name, wval: true),
+        if(metrix.stt < 3)
+          _setState('stt', '${metrix.stt}')
+        else
+          InkWell(
+            onTap: () => widget.onOpenDashboard!(null),
+            child: _setState('stt', '${metrix.stt}'),
+          ),
+        _setState('cotz', '${metrix.sended.length}/${metrix.toTot.length}', wval: true),
+        _setState('tpz', '${metrix.tpz}', wval: true),
+        _setState('rsp', '${metrix.rsp}', wval: true),
+        _setState('see', '${metrix.see}', wval: true),
+        _setState('ntg', '${metrix.ntg}', wval: true),
       ],
     );
   }
 
   ///
   Widget _setState
-    (Map<String, dynamic> metrix, String campo, {bool wval = false})
+    (String campo, String value, {bool wval = false})
   {
-    Map<String, dynamic> state = _stateIcon(campo, '${metrix[campo]}');
+    Map<String, dynamic> state = _stateIcon(campo, value);
     return _ico(
-      state['ico'], (wval) ? '${metrix[campo]}' : '', state['tip'],
+      state['ico'], (wval) ? value : '', state['tip'],
       color: state['clr']
     );
   }
@@ -134,20 +137,7 @@ class _TileBandejaMetricasState extends State<TileBandejaMetricas> {
   }
 
   ///
-  Widget _sinData() {
-
-    return const Texto(txt: 'Sin datos');
-  }
-
-  ///
-  Future<Map<String, dynamic>> _getMetricas() async {
-
-    final metrik = await _invEm.getMetriksFromFile(widget.filename);
-    if(metrik.isNotEmpty) {
-      _idOrden = metrik['idOrden'];
-    }
-    return metrik;
-  }
+  Widget _sinData() => const Texto(txt: 'Sin datos');
 
   ///
   Map<String, dynamic> _stateIcon(String campo, String value) {
@@ -158,36 +148,31 @@ class _TileBandejaMetricasState extends State<TileBandejaMetricas> {
 
     switch (campo) {
 
-      case 'scmEst':
+      case 'stt':
 
         switch(value) {
           case '0':
             return _getMap('EN STAGE', Icons.email_outlined, inactive);
           case '1':
-            return _getMap('EN BANDEJA', Icons.save_alt_sharp, listo);
+            return _getMap('ENVIANDOSE', Icons.save_alt_sharp, listo);
           case '2':
-            return _getMap('EN COLA', Icons.watch_outlined, Colors.grey);
+            return _getMap('PAPELERA', Icons.watch_outlined, Colors.grey);
           case '3':
-            return _getMap('ENVIANDOSE', Icons.send, active);
-          case '4':
-            return _getMap('PAPELERA', Icons.delete_forever_outlined, const Color.fromARGB(255, 248, 114, 4));
-          case '5':
-            return _getMap('ENVIADO', Icons.folder_special, listo);
+            return _getMap('ENVIADO-DASHBOARD', Icons.android, const Color.fromARGB(255, 106, 175, 108));
         }
         break;
-      case 'see':
 
+      case 'tpz':
         if(value == '0') {
-            return _getMap('IGNORADO', Icons.remove_red_eye, inactive);
+            return _getMap('Total de Piezas', Icons.extension_off, inactive);
         }else{
-          return _getMap('VISTOS', Icons.done_all, active);
+          return _getMap('Total de Piezas', Icons.extension, const Color.fromARGB(255, 55, 110, 57));
         }
-      case 'cnt':
-
+      case 'rsp':
         if(value == '0') {
-            return _getMap('NO LA TIENEN', Icons.hourglass_top_rounded, inactive);
+          return _getMap('RESPUESTAS', Icons.comments_disabled_outlined, inactive);
         }else{
-          return _getMap('NO LA TIENEN', Icons.visibility_off, active);
+          return _getMap('RESPUESTAS', Icons.comment, listo);
         }
       case 'cotz':
 
@@ -196,11 +181,18 @@ class _TileBandejaMetricasState extends State<TileBandejaMetricas> {
         }else{
           return _getMap('COTIZADORES', Icons.person_pin, active);
         }
-      case 'pzas':
+      case 'see':
         if(value == '0') {
-            return _getMap('PIEZAS', Icons.extension_off, inactive);
+            return _getMap('IGNORADO', Icons.remove_red_eye, inactive);
         }else{
-          return _getMap('PIEZAS', Icons.extension, active);
+          return _getMap('VISTOS', Icons.done_all, active);
+        }
+      case 'ntg':
+
+        if(value == '0') {
+            return _getMap('NO LA TIENEN', Icons.hourglass_top_rounded, inactive);
+        }else{
+          return _getMap('NO LA TIENEN', Icons.visibility_off, active);
         }
       default:
     }
@@ -214,5 +206,9 @@ class _TileBandejaMetricasState extends State<TileBandejaMetricas> {
     return {'tip': tip, 'ico': ico, 'clr': color};
   }
 
+  ///
+  Future<MetrixEntity> _getMetricas(bool force) async {
+    return await _invEm.getMetriksFromFile(widget.filename, force: force);
+  }
 
 }

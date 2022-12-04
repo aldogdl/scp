@@ -112,6 +112,117 @@ class GetPaths {
   }
 
   ///
+  static List<Map<String, dynamic>> getContentFileAvos() {
+
+    final namefile = 'data_share${getSep()}avos.json';
+    final root = getPathRoot();
+    final file = File('$root${getSep()}$namefile');
+    if(!file.existsSync()) {
+      file.createSync(recursive: true);
+      return [];
+    }
+    return List<Map<String, dynamic>>.from(json.decode(file.readAsStringSync()));
+  }
+
+  ///
+  static void setContentFileAvos(List<Map<String, dynamic>> avos) {
+
+    final namefile = 'data_share${getSep()}avos.json';
+    final root = getPathRoot();
+    final file = File('$root${getSep()}$namefile');
+    file.writeAsStringSync(json.encode(avos));
+  }
+
+  ///
+  static void setFileCotzFromHarbi(Map<String, dynamic> cotz) {
+
+    final namefile = 'data_share${getSep()}cotz_scp.json';
+    final root = getPathRoot();
+    final file = File('$root${getSep()}$namefile');
+    if(file.existsSync()) {
+
+      final current = Map<String, dynamic>.from(json.decode(file.readAsStringSync()));
+
+      // Tratar con los cotizadores
+      final cotizad = List<Map<String, dynamic>>.from(current['cotz']);
+      final newsCtz = List<Map<String, dynamic>>.from(cotz['cotz']);
+      for (var i = 0; i < newsCtz.length; i++) {
+        final has = cotizad.indexWhere((c) => c['c_id'] == newsCtz[i]['c_id']);
+        if(has != -1) {
+          cotizad[has] = newsCtz[i];
+        }else{
+          cotizad.add(newsCtz[i]);
+        }
+      }
+      current['cotz'] = cotizad;
+
+      // Tratar con los filtros
+      if(current.containsKey('filtros')) {
+
+        final filters = Map<String, dynamic>.from(current['filtros']);
+        final newsFil = Map<String, dynamic>.from(cotz['filtros']);
+        newsFil.forEach((key, value) {
+          if(filters.containsKey(key)) {
+            filters[key] = value;
+          }else{
+            filters.putIfAbsent(key, () => value);
+          }
+        });
+        current['filtros'] = filters;
+      }
+
+      file.writeAsStringSync(json.encode(current));
+
+    }else{
+      file.writeAsStringSync(json.encode(cotz));
+    }
+  }
+
+  ///
+  static Map<String, dynamic> getCotzFromFileById(String idC) {
+
+    final namefile = 'data_share${getSep()}cotz_scp.json';
+    final root = getPathRoot();
+    final file = File('$root${getSep()}$namefile');
+    if(file.existsSync()) {
+
+      final current = Map<String, dynamic>.from(json.decode(file.readAsStringSync()));
+      final cotizad = List<Map<String, dynamic>>.from(current['cotz']);
+      final has = cotizad.indexWhere((c) => c['c_id'] == idC);
+      if(has != -1) { return cotizad[has]; }
+    }
+    
+    return {};
+  }
+
+  ///
+  static List<Map<String, dynamic>> getCotzFromFileByIds(List<int> idsC) {
+
+    final namefile = 'data_share${getSep()}cotz_scp.json';
+    final root = getPathRoot();
+    final file = File('$root${getSep()}$namefile');
+    List<Map<String, dynamic>> results = [];
+
+    if(file.existsSync()) {
+
+      final current = Map<String, dynamic>.from(json.decode(file.readAsStringSync()));
+      final cotizad = List<Map<String, dynamic>>.from(current['cotz']);
+      for (var i = 0; i < idsC.length; i++) {
+        final has = cotizad.indexWhere((c) => c['c_id'] == idsC[i]);
+        if(has != -1) {
+          results.add(cotizad[has]);
+        }else{
+          results.add({
+            'c_id': idsC[i], 'e_nombre':'recovery', 'c_nombre': 'recovery'
+          });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  ///
   static Future<String> getUriCtc(String uri, {bool isLocal = true}) async {
 
     Map<String, dynamic> uriPath = await _getFromFilePathsProd('all');
@@ -140,7 +251,7 @@ class GetPaths {
     return base;
   }
 
-  ///
+  /// Retornamos el URI del path a la ap de harbi solicitada
   static Future<Uri> getUriApiHarbi(String uri, String query) async {
 
     Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
@@ -148,6 +259,13 @@ class GetPaths {
       query = '/$query';
     }
     return Uri.http('${uriPath['ip_harbi']}:${uriPath['port_harbi']}', '${uriPath['uri']}$query');
+  }
+
+  /// Retornamos el String del path a la ap de harbi solicitada
+  static Future<String> getPathToApiHarbi(String uri) async {
+
+    Map<String, dynamic> uriPath = await _getFromFilePathsProd(uri);
+    return '${uriPath['ip_harbi']}:${uriPath['port_harbi']}/${uriPath['uri']}';
   }
 
   ///

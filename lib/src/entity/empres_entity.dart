@@ -45,4 +45,18 @@ class EmpresaEntity {
     telFijo = '${data['e_telFijo']}';
     latLng = data['e_latLng'];
   }
+
+  ///
+  Map<String, dynamic> toJsonfromServer() {
+
+    return {
+      'e_id': id,
+      'e_nombre': nombre,
+      'e_domicilio': domicilio,
+      'e_cp': cp,
+      'e_isLocal': isLocal,
+      'e_telFijo': telFijo,
+      'e_latLng': latLng,
+    };
+  }
 }

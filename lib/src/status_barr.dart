@@ -8,6 +8,7 @@ import 'pages/widgets/change_ip_dialog.dart';
 import 'pages/widgets/invirt/querys_process.dart';
 import 'pages/widgets/texto.dart';
 import 'pages/widgets/widgets_utils.dart';
+import 'pages/widgets/ping_status_bar.dart';
 import 'providers/pages_provider.dart';
 import 'providers/socket_conn.dart';
 import 'providers/window_cnf_provider.dart';
@@ -25,85 +26,19 @@ class StatusBarr extends StatelessWidget {
   final Globals _globals = getSngOf<Globals>();
   
   @override
-  Widget build(BuildContext context) {
-    
-    final console = context.read<PageProvider>();
-    final sock = context.read<SocketConn>();
-    final page = context.read<PageProvider>();
-
-    return Selector<SocketConn, List<Map<String, dynamic>>>(
-      selector: (_, prov) => prov.manifests,
-      builder: (_, manifest, child) {
-
-        if(sock.cantShows != sock.cantManifest) {
-
-          sock.cantShows = sock.cantManifest;
-          bool showConcole = false;
-          bool showNotif = false;
-          bool makeSound = false;
-
-          if(manifest.isNotEmpty) {
-            manifest.map((e) {
-
-              if(e.containsKey('cambios')) {
-                final cambios = List<String>.from(e['cambios']);
-                for (var i = 0; i < cambios.length; i++) {
-                  if(cambios[i].endsWith('[IN]')) {
-                    makeSound = true;
-                    showConcole = true;
-                    break;
-                  }
-                  if(cambios[i].endsWith('[NT]')) {
-                    showNotif = true;
-                    break;
-                  }
-                }
-              }
-            }).toList();
-          }
-          
-          if(showNotif) {
-            Future.delayed(const Duration(milliseconds: 250), (){
-              sock.alertCV = true;
-            });
-          }
-
-          if(showConcole && console.closeConsole) {
-            Future.delayed(const Duration(milliseconds: 250), (){
-              console.putValue(Consola.centinela);
-              console.closeConsole = false;
-            });
-          }
-
-          if(page.page == Paginas.solicitudes) {
-            Future.microtask(() => page.refreshLsts = true);
-          }
-
-          if(makeSound) { _notiffSound(); }
-        }
-
-        return child!;
-      },
-      child: _bodyBar(context)
-    );
-  }
+  Widget build(BuildContext context) => _bodyBar(context);
 
   ///
   Widget _bodyBar(BuildContext context) {
 
     final readC  = context.read<SocketConn>();
-    final watchC = context.watch<SocketConn>();
     final pageR  = context.read<PageProvider>();
-    final winR   = context.read<WindowCnfProvider>();
-    const wid5   = SizedBox(width: 5);
-    const wid10   = SizedBox(width: 10);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
-      height: MediaQuery.of(context).size.height * 0.03,
-      color: watchC.isConnectedSocked
-      ? winR.sttBarrColorOn : winR.sttBarrColorOff,
-      child: Row(
+    const wid5   = SizedBox(width: 5);
+    const wid10  = SizedBox(width: 10);
+
+    return _barrContainer(
+      Row(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -115,35 +50,36 @@ class StatusBarr extends StatelessWidget {
           _text('SCP de: ${_globals.user.nombre} [${_globals.user.curc}] V.${_globals.verApp}'),
           wid10,
           wid5,
-          _btnIconAndTxt(txt: '${watchC.manifests.length}', tip: 'Centinela',
-            icono: Icons.remove_red_eye_outlined,
-            fnc: (){
-              pageR.consola = Consola.centinela;
-              if(pageR.closeConsole) {
-                pageR.closeConsole = false;
+          Selector<SocketConn, int>(
+            selector: (_, prov) => prov.refreshNotiff,
+            builder: (_, val, __) {
+
+              if(readC.allNotif['alta'] != '0') {
+                Future.delayed(const Duration(milliseconds: 250), (){  
+                  pageR.consola = Consola.notiff;
+                  _notiffSound();
+                  _abrirConsola(pageR);
+                });
               }
+              return _btnIconAndTxt(txt: readC.allNotif['all']!, tip: 'Notificaciones', icono: Icons.notifications_none_outlined, fnc: (){
+                pageR.consola = Consola.notiff;
+                _abrirConsola(pageR);
+              });
+            },
+          ),
+          wid5,
+          _btnIconAndTxt(
+            txt: '0', tip: 'Alertas',
+            icono: Icons.warning_amber_outlined,
+            fnc: (){
+              pageR.consola = Consola.alertas;
+              _abrirConsola(pageR);
             }
           ),
           wid5,
-          _btnIconAndTxt(txt: '0', tip: 'Errores', icono: Icons.close, fnc: (){
-            pageR.consola = Consola.errores;
-            if(pageR.closeConsole) {
-              pageR.closeConsole = false;
-            }
-          }),
-          wid5,
-          _btnIconAndTxt(txt: '0', tip: 'Alertas', icono: Icons.warning_amber_outlined, fnc: (){
-            pageR.consola = Consola.alertas;
-            if(pageR.closeConsole) {
-              pageR.closeConsole = false;
-            }
-          }),
-          wid5,
           _btnIconAndTxt(txt: '0', tip: 'SCM', icono: Icons.local_post_office_outlined, fnc: (){
             pageR.consola = Consola.scm;
-            if(pageR.closeConsole) {
-              pageR.closeConsole = false;
-            }
+            _abrirConsola(pageR);
           }),
           if(readC.hasErrWithIpDbLocal.isNotEmpty)
             ...[
@@ -169,39 +105,53 @@ class StatusBarr extends StatelessWidget {
           wid10,
           const QuerysProcess(),
           const Spacer(),
-          _text('HARBI Socket. ${watchC.idConn}'),
+          Selector<SocketConn, String>(
+            selector: (_, prov) => prov.backgroundProcess,
+            builder: (_, val, child) {
+              if(val.isEmpty){ return child!; }
+              return _text('$val  ');
+            },
+            child: _text('<BG> '),
+          ),
+          Selector<SocketConn, int>(
+            selector: (_, prov) => prov.idConn,
+            builder: (_, ic, __) {
+              return _text('HARBI Socket. $ic');
+            },
+          ),
           wid10,
-          _text('REV. ${watchC.msgCron}'),
-          if(watchC.alertCV)
-            ...[
-              wid5,
-              _btnIconAndTxt(
-                txt: '${watchC.cantAlert}',
-                tip: 'Notificacion',
-                icono: Icons.notifications_rounded,
-                icoColor: const Color(0xFFffffff),
-                isBold: true,
-                icoSize: 18,
-                fnc: (){
-                  readC.alertCV = false;
-                  readC.cantAlert = 0;
-                  pageR.putValue(Consola.centinela);
-                  if(pageR.closeConsole) {
-                    pageR.closeConsole = false;
-                  }
-                }
-              )
-            ],
-          const SizedBox(width: 10),
-          _btnIcon(tip: 'Enviar Ping de Conexión', icono: Icons.social_distance,
-           size: 17, fnc: () {
-            readC.sendPing('reping');
-          }),
+          Selector<SocketConn, String>(
+            selector: (_, prov) => prov.alertCV,
+            builder: (_, val, __) {
+              return _text(' VCF: $val  ');
+            },
+          ),
+          PingStatusBar()
         ],
       ),
+      MediaQuery.of(context).size.height * 0.035
     );
   }
   
+  ///
+  Widget _barrContainer(Widget child, double alto) {
+
+    return Selector<SocketConn, bool>(
+      selector: (_, prov) => prov.isConnectedSocked,
+      builder: (cnt, isc, __) {
+
+        final winR = cnt.read<WindowCnfProvider>();
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
+          height: alto,
+          color: isc
+          ? winR.sttBarrColorOn : winR.sttBarrColorOff,
+          child: child
+        );
+      },
+    );
+  }
+
   ///
   Widget _text(String label) {
 
@@ -209,6 +159,8 @@ class StatusBarr extends StatelessWidget {
       label,
       style: GoogleFonts.inconsolata(
         fontSize: 12,
+        fontWeight: FontWeight.w300,
+        letterSpacing: 1.05,
         color: const Color(0xFFFFFFFF)
       )
     );
@@ -270,8 +222,17 @@ class StatusBarr extends StatelessWidget {
     );
   }
 
+
   // ---------------------- CONTROLADOR --------------------------------
 
+  ///
+  void _abrirConsola(PageProvider pageR) {
+    if(pageR.sttConsole == 0 || pageR.sttConsole == 1) {
+      pageR.sttConsole = 2;
+    }
+  }
+
+  ///
   void _notiffSound() async => player.play();
 
   ///

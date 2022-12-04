@@ -12,9 +12,8 @@ enum Paginas {
 }
 
 enum Consola {
-  centinela,
   alertas,
-  errores,
+  notiff,
   scm
 }
 
@@ -40,10 +39,10 @@ class PageProvider extends ChangeNotifier {
   }
 
   ///
-  bool _closeConsole = true;
-  bool get closeConsole => _closeConsole;
-  set closeConsole(bool isClose) {
-    _closeConsole = isClose;
+  int _sttConsole = 1;
+  int get sttConsole => _sttConsole;
+  set sttConsole(int isstt) {
+    _sttConsole = isstt;
     notifyListeners();
   }
 
