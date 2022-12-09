@@ -9,13 +9,38 @@ class GetContentFile {
 
   static final Globals _globals = getSngOf<Globals>();
 
+  /// 
+  static void setSwh(String codeSwh) {
+
+    String pathTo = GetPaths.getPathRoot();
+    final dir = Directory(pathTo);
+    if(!dir.existsSync()) {
+      dir.createSync();
+    }
+    final File codeF = File('$pathTo${GetPaths.getSep()}swh.txt');
+    codeF.writeAsStringSync(codeSwh);
+  }
+
+  /// 
+  static String getSwh() {
+
+    String pathTo = GetPaths.getPathRoot();
+    final File codeF = File('$pathTo${GetPaths.getSep()}swh.txt');
+    String codeSwh = 'noCode';
+    if(codeF.existsSync()) {
+      codeSwh = codeF.readAsStringSync();
+    }
+    if(codeSwh.isEmpty){ return 'noCode'; }
+    return codeSwh;
+  }
+
   /// Es usado solo en desarrollo para no estar pidiendo
   /// de manera remota la IP de harbi.
   static String ipConectionLocal() {
 
     String pathTo = GetPaths.getPathRoot();
-    final File codeF = File('$pathTo${GetPaths.getSep()}swh.txt');
-    final codeSwh = codeF.readAsStringSync();
+    final codeSwh = getSwh();
+    if(codeSwh == 'noCode'){ return codeSwh; }
 
     final File cargosF = File('$pathTo${GetPaths.getSep()}harbi_connx.json');
     if(cargosF.existsSync()) {

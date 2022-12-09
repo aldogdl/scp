@@ -270,7 +270,7 @@ class InventarioInjectService {
   /// nmCall => Es un candado para no gastar tantos recursos, es decir...
   /// Este metodo es llamado varias veces destro de un ciclo for, por lo tanto
   /// solo necesitamos que la primera llamada sea para hidratar la lista de
-  /// respuestas en el almacen virtual. 
+  /// respuestas en la seccion de Ordenes en proceso. 
   Future<Map<String, dynamic>> _getRespOfPieza(
     Map<String, dynamic> pieza, Map<String, dynamic> orden, int nmCall, int idP) async 
   {
@@ -383,7 +383,6 @@ class InventarioInjectService {
     return orden;
   }
 
-  
   /// Buscamos la orden por textos
   List<Map<String, dynamic>> _procesarCmdOrdenBy(Map<String, dynamic> cmd) {
 

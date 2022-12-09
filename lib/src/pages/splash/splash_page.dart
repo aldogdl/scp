@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scp/src/pages/widgets/texto.dart';
 
 import '../widgets/scranet/build_data_gral.dart';
 import '../../config/sng_manager.dart';
@@ -23,6 +24,7 @@ class _SplasPageState extends State<SplasPage> {
   late PageProvider prov;
   late SocketConn conn;
   bool _isInit = false;
+  String _codeSwh = '';
 
   @override
   Widget build(BuildContext context) {
@@ -45,11 +47,46 @@ class _SplasPageState extends State<SplasPage> {
                 if(snap.data == '...') {
                   return BuildDataGral(onFinish: (_) => prov.isSplash = false);
                 }
+                if(snap.data == 'noCode') {
+                  return _askCodeSwh();
+                }
               }
             }
 
             return _initSystem(snap.data);
           },
+        ),
+      ),
+    );
+  }
+
+  ///
+  Widget _askCodeSwh() {
+
+    final size = MediaQuery.of(context).size;
+    return Center(
+      child: SizedBox(
+        width: size.width * 0.2,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Texto(
+              txt: 'SWH', isBold: true,
+              sz: 50, isCenter: true,
+            ),
+            const Texto(
+              txt: 'No se encontró una clave de estación de trabajo valida',
+              sz: 18, isCenter: true,
+            ),
+            TextField(
+              autofocus: true,
+              onChanged: (value) {
+                _codeSwh = value;
+              },
+              onSubmitted: (value) => _setSwh(),
+            )
+          ],
         ),
       ),
     );
@@ -105,7 +142,9 @@ class _SplasPageState extends State<SplasPage> {
     }
     
     yield response;
+    
     if(response.contains('ERROR')){ return; }
+    if(response.contains('noCode')){ return; }
 
     yield 'Revisando tu sistema de archivos';
     GetPaths.existeFileSystemRoot();
@@ -138,4 +177,11 @@ class _SplasPageState extends State<SplasPage> {
     prov.isSplash = false;
   }
   
+  ///
+  Future<void> _setSwh() async {
+
+    _codeSwh = _codeSwh.toUpperCase().trim();
+    conn.setSwh(_codeSwh);
+    setState(() {});
+  }
 }

@@ -81,18 +81,14 @@ class OrdenesRepository {
     (int avo, {String hydra = 'scalar', bool isLocal = true}) 
   async {
 
-    if(_globals.env == 'dev') {
-      isLocal = true;
-    }
+    if(_globals.env == 'dev') { isLocal = true; }
     String uri = await GetPaths.getUri('get_ordenes_by_avo', isLocal: isLocal);
     await MyHttp.get('$uri$avo/$hydra/');
     result = MyHttp.result;
   }
 
   /// Recuperamos todas las ordenes del avo desde el servidor
-  Future<void> getAllIdsOrdenesByAvoFromServer
-    (int avo, {bool isLocal = true}) 
-  async {
+  Future<void> getAllIdsOrdenesByAvoFromServer(int avo, {bool isLocal = true}) async {
 
     if(_globals.env == 'dev') {
       isLocal = true;

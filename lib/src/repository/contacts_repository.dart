@@ -25,6 +25,26 @@ class ContactsRepository {
     // }
   }
 
+  ///
+  Future<Map<String, dynamic>> recoveryCotzSaveInLocal(List<int> irPorCotz) async {
+
+    final r = {'isOk': false, 'cotz': <Map<String, dynamic>>[]};
+    List<Map<String, dynamic>> cotz = [];
+    for (var i = 0; i < irPorCotz.length; i++) {
+      await getCotizadorByIdFromHarbi(irPorCotz[i]);
+      if(!result['abort']) {
+        cotz.add(Map<String, dynamic>.from(result['body']));
+      }
+    }
+
+    if(cotz.isNotEmpty) {
+      r['isOk'] = true;
+      GetPaths.setFileCotzFromHarbi({'cotz':cotz});
+    }
+    r['cotz'] = cotz;
+    return r;
+  }
+
   /// Recuperamos desde harbi entre los archivos al cotizador requerido
   Future<void> getCotizadorByIdFromHarbi(int idCot) async {
     

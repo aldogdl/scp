@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scp/src/config/sng_manager.dart';
-import 'package:scp/src/providers/pages_provider.dart';
-import 'package:scp/src/providers/socket_conn.dart';
-import 'package:scp/src/services/push_in/gest_push_in.dart';
-import 'package:scp/src/vars/globals.dart';
 
 import '../widgets/texto.dart';
+import '../../config/sng_manager.dart';
+import '../../providers/pages_provider.dart';
+import '../../providers/socket_conn.dart';
+import '../../services/push_in/gest_push_in.dart';
+import '../../vars/globals.dart';
 
 class NotiffConsola extends StatefulWidget {
 
@@ -465,6 +465,6 @@ class _NotiffConsolaState extends State<NotiffConsola> {
     final gest = GestPushIn(socket: sock, user: _globals.user);
     _lstFolds = gest.getNotifByFolder(folder);
     _seccCurrent = folder;
-    setState(() {});
+    if(mounted) { setState(() {}); }
   }
 }

@@ -74,7 +74,7 @@ class Texto extends StatelessWidget {
     
     final hora = '${"${fecha.hour}".padLeft(2, '0')}:${"${fecha.minute}".padLeft(2, '0')}';
 
-    return _elTxt('$elD [$hora]');
+    return _elTxt('$elD [ $hora ]');
   }
 
   ///

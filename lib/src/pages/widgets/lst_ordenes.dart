@@ -45,11 +45,11 @@ class _LstOrdenesState extends State<LstOrdenes> {
 
   bool _isInit = false;
   bool _checkIntegri = true;
+  bool _waitIsWorking = false;
   final _errCheckIntegrid = ValueNotifier<String>('Checando Integridad');
 
   @override
   void initState() {
-
     _checkIntegri = widget.asignadas;
     _recuperarTodasLasOrdenes();
     super.initState();
@@ -68,6 +68,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
 
     return Column(
       children: [
+
         if(_checkIntegri)
           ValueListenableBuilder<String>(
             valueListenable: _errCheckIntegrid,
@@ -76,7 +77,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if(!msg.contains('Integra'))
+                  if(!msg.contains('Integra') && !msg.startsWith('[x]'))
                     ...[
                       const SizedBox(
                         width: 10, height: 10,
@@ -128,6 +129,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
           return ListView.builder(
             controller: _scrollCtr,
             itemCount: ords.length,
+            primary: false,
             physics: const BouncingScrollPhysics(),
             itemBuilder: (_, index) {
               
@@ -176,17 +178,23 @@ class _LstOrdenesState extends State<LstOrdenes> {
   ///
   Future<void> _getParaAsignar() async {
 
+    if(_waitIsWorking) { return; }
     if(!mounted) { return; }
     late final SocketConn sock = context.read<SocketConn>();
     
     List<Map<String, dynamic>> recSer = [];
+    _waitIsWorking = true;
 
-    await _ordenEm.getAllOrdenesByAvoFromServer(
-      0, isLocal: globals.isLocalConn, hydra: 'array'
-    );
+    await _ordenEm.getAllOrdenesByAvoFromServer(0, hydra: 'array');
     if(_ordenEm.result['abort']) {
       if(_ordenEm.result['body'].contains('Host')) {
         sock.hasErrWithIpDbLocal = _ordenEm.result['body'];
+        _ordenEm.result['body'] = '';
+      }
+    }
+
+    if(_ordenEm.result['abort']) {
+      if(_ordenEm.result['body'].contains('version')) {
         _ordenEm.result['body'] = '';
       }
     }
@@ -213,6 +221,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
           _invEm.buildMapFileOrden(orden: ent.toJson(), emisor: ent.uId, pzas: pzas)
         );
       }
+      _waitIsWorking = false;
       _ordenEm.clear();
       provi.ordenes = recSer;
     }
@@ -234,14 +243,11 @@ class _LstOrdenesState extends State<LstOrdenes> {
   /// Descargamos las ordenes desde el servidor local y revisamos que coincidan
   /// con el centinela actual u con las existentes en los archivos.
   Future<void> _checkIntegridad(String est) async {
-
-    String inGo = globals.isLocalConn ? 'Locales' : 'Remotos';
-    await _wait(int: 500);
     
     if (!mounted) { return; }
-    _errCheckIntegrid.value = 'Tomando Registros $inGo';
+    _errCheckIntegrid.value = 'Tomando Registros desde SL';
     _ordenEm.result.clear();
-    await _ordenEm.getAllIdsOrdenesByAvoFromServer(globals.user.id, isLocal: globals.isLocalConn);
+    await _ordenEm.getAllIdsOrdenesByAvoFromServer(globals.user.id);
     
     if(_ordenEm.result['abort']) {
       if(_ordenEm.result['body'].contains('Host')) {
@@ -254,7 +260,7 @@ class _LstOrdenesState extends State<LstOrdenes> {
 
     if(_ordenEm.result['body'].isEmpty) {
       if (!mounted) { return; }
-      _errCheckIntegrid.value = 'No se recuperaron ordenes';
+      _errCheckIntegrid.value = '[x] SIN ORDENES AÚN';
       return;
     }
     

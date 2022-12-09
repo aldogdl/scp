@@ -48,6 +48,7 @@ class _TxtBskOrdenState extends State<TxtBskOrden> {
       _isInit = true;
       provi = context.read<ItemSelectGlobProvider>();
     }
+    
     return Column(
       children: [
         SizedBox(

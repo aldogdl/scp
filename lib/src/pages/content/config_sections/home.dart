@@ -90,7 +90,7 @@ class Home extends StatelessWidget {
     }
     
     List<Map<String, dynamic>> datosIzq = [
-      {'c':'DATOS DE CONEXIÓN:', 'v':'...'},
+      {'c':'DATOS DE CONEXIÓN A:', 'v':'SWH ${globals.mySwh}'},
       {'c':'Área local:', 'v':globals.wifiName},
       {'c':'La Conexión:', 'v':(globals.isLocalConn) ? 'Es LOCAL': 'Es REMOTA'},
       {'c':'Mi IP:', 'v':globals.myIp},

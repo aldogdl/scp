@@ -498,8 +498,8 @@ class InventarioRepository {
 
               bool getPorPza = true;
               final pzaMap = Map<String, dynamic>.from(myAsign['piezas'][ixpz]);
-              if(pzaMap.containsKey('rsps')) {
-                final existe = List<Map<String, dynamic>>.from(pzaMap['rsps']).where(
+              if(pzaMap.containsKey('resps')) {
+                final existe = List<Map<String, dynamic>>.from(pzaMap['resps']).where(
                   (r) => r['id'] == vals[p]['idResp']
                 );
                 if(existe.isNotEmpty) { getPorPza = false; }
@@ -534,20 +534,24 @@ class InventarioRepository {
 
             if(res.isNotEmpty) {
               forceChangeVer = true;
-              if(myAsign['piezas'][irPorResps[i]['inxPza']].containsKey('rsps')) {
-                myAsign['piezas'][irPorResps[i]['inxPza']]['rsps'].add(res);
+              if(myAsign['piezas'][irPorResps[i]['inxPza']].containsKey('resps')) {
+                myAsign['piezas'][irPorResps[i]['inxPza']]['resps'].add(res);
               }else{
-                myAsign['piezas'][irPorResps[i]['inxPza']]['rsps'] = [res];
+                myAsign['piezas'][irPorResps[i]['inxPza']]['resps'] = [res];
               }
             }
           }
         }
 
+        // Colocamos la cantidad de respuestas de cada pieza.
+        // final misPzas = List<Map<String, dynamic>>.from(myAsign['piezas']);
+        // for (var i = 0; i < misPzas.length; i++) {
+        //   myAsign['piezas'][i][];
+        // }
         if(forceChangeVer) {
           myAsign['iris']['version'] = nver;
         }
       }
-
 
       // Calculamos los que han visto por medio de los que han atendido
       List<String> losSee = [];
@@ -600,24 +604,27 @@ class InventarioRepository {
         });
 
         // Eliminar todos los cotizadores de APARTADOS si es que tienen respuestas
-        final respMp = Map<String, dynamic>.from(iris['rsp']);
-        for (var i = 0; i <  myAsign['piezas'].length; i++) {
-          
-          final idPza = '${myAsign['piezas'][i]['id']}';
-          List<Map<String, dynamic>> respI = [];
-          if(respMp.containsKey(idPza)) {
-            respI = List<Map<String, dynamic>>.from(respMp[idPza]);
-          }
-          if(metrix.aprp.containsKey(idPza)) {
-            final idCz = List<String>.from(metrix.aprp[idPza]);
-            final rota = idCz.length;
-            for (var i = 0; i < rota; i++) {
-              final exist = respI.firstWhere((r) => r['idCot'] == idCz[i], orElse: () => {});
-              if(exist.isNotEmpty) {
-                idCz.removeWhere((r) => r == exist['idCot']);
-              }
+        if(iris.containsKey('rsp')) {
+
+          final respMp = Map<String, dynamic>.from(iris['rsp']);
+          for (var i = 0; i <  myAsign['piezas'].length; i++) {
+            
+            final idPza = '${myAsign['piezas'][i]['id']}';
+            List<Map<String, dynamic>> respI = [];
+            if(respMp.containsKey(idPza)) {
+              respI = List<Map<String, dynamic>>.from(respMp[idPza]);
             }
-            metrix.aprp[idPza] = idCz;
+            if(metrix.aprp.containsKey(idPza)) {
+              final idCz = List<String>.from(metrix.aprp[idPza]);
+              final rota = idCz.length;
+              for (var i = 0; i < rota; i++) {
+                final exist = respI.firstWhere((r) => r['idCot'] == idCz[i], orElse: () => {});
+                if(exist.isNotEmpty) {
+                  idCz.removeWhere((r) => r == exist['idCot']);
+                }
+              }
+              metrix.aprp[idPza] = idCz;
+            }
           }
         }
 

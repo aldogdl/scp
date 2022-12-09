@@ -32,7 +32,8 @@ class CentinelaFileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ->Guardamos los cambios solo en memoria.
+  /// ->Guardamos los cambios solo en la variable del centinela que se encuentra
+  /// en memoria (cache).
   Future<void> commit(CPush msg, dynamic data) async {
 
     switch (msg) {
@@ -132,7 +133,8 @@ class CentinelaFileProvider extends ChangeNotifier {
     return idAvo;
   }
 
-  /// Guardamos los cambios de asignacion
+  /// Grabamos los cambios de nuevas asignaciones en la variable del centinela
+  /// que se encuentra en la cache
   Future<void> _persistAsignacion(Map<int, List<int>> asignaciones) async {
 
     if(!_centinela.containsKey('avo')){
@@ -140,6 +142,7 @@ class CentinelaFileProvider extends ChangeNotifier {
     }
 
     asignaciones.forEach((idAvo, ordenes) async {
+
       if(ordenes.isNotEmpty) {
 
         if(!_centinela['avo'].containsKey('$idAvo')) {
@@ -196,16 +199,13 @@ class CentinelaFileProvider extends ChangeNotifier {
   Future<void> _saveToServerAsignaciones(bool isLocal) async {
 
     var asig = getAsignaciones();
-    if(_globals.env == 'dev') {
-      isLocal = true;
-    }
+    if(_globals.env == 'dev') { isLocal = true; }
     String pathTo = await GetPaths.getUri('ordenes_asignadas', isLocal: isLocal);
-    // Marcamos cuando estamos desarrollando isLocal en false con el
-    // propocito de que se cree el archivo de asignacion en el servidor local.
-    if(_globals.env == 'dev') {
-      isLocal = false;
-    }
-    
+
+    // Cuando estamos desarrollando forzamos la ruta que sea tomada para local
+    // pero para crear el archivo de registro para harbi, indicamos isLocal en
+    // false para que se cree solo en el servidor local.
+    if(_globals.env == 'dev') { isLocal = false; }
     await MyHttp.post(pathTo, {'info':asig, 'isLoc': isLocal, 'version': _centinela['version']});
     
     result = MyHttp.result;

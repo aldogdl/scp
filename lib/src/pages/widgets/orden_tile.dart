@@ -102,7 +102,11 @@ class OrdenTile extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.extension, size: 13, color: Colors.grey),
-                Texto(txt: ' $cantPzas Pza(s).', sz: 14),
+                Texto(txt: ' $cantPzas Pza(s). | ', sz: 14),
+                Texto(
+                  txt: orden.createdAt, isFecha: true, sz: 11,
+                  isCenter: true, txtC: const Color.fromARGB(255, 2, 139, 82),
+                )
               ],
             ),
             const Spacer(),
@@ -134,6 +138,10 @@ class OrdenTile extends StatelessWidget {
           Texto(txt: orden.modelo, isBold: true),
           sp10,
           Texto(txt: '${orden.anio}', txtC: Colors.amber),
+          const Spacer(),
+          const Texto(txt: 'ID:', sz: 11, txtC: Colors.grey),
+          const SizedBox(width: 5),
+          Texto(txt: '${orden.id}', sz: 16, isBold: true, txtC: Colors.blueAccent),
         ],
       ),
       subtitle: Column(
@@ -176,7 +184,7 @@ class OrdenTile extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                '${orden.id}',
+                orden.marca.substring(0,1),
                 textScaleFactor: 1,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.comfortaa(
@@ -186,16 +194,6 @@ class OrdenTile extends StatelessWidget {
                 ),
               ),
             )
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Orden Id:',
-            textScaleFactor: 1,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.comfortaa(
-              color: Colors.grey,
-              fontSize: 10,
-            ),
           ),
         ],
       )

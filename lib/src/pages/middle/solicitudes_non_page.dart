@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/pages_provider.dart';
 import '../widgets/loading_middle.dart';
 import '../widgets/lst_ordenes.dart';
 import '../widgets/txt_bsk_orden.dart';
 import '../../config/sng_manager.dart';
-import '../../vars/globals.dart';
+import '../../providers/pages_provider.dart';
 import '../../services/status/stts_cache.dart';
+import '../../vars/globals.dart';
 
 class SolicitudesNonPage extends StatefulWidget {
 

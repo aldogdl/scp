@@ -67,6 +67,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
     _refreshLstAvos.dispose();
     itemProv.disposeMy();
     _totRodsAvo.dispose();
+    itemProv.ordenesAsignadas.clear();
     super.dispose();
   }
 
@@ -175,7 +176,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
         const SizedBox(width: 10),
         Chip(
           label: Texto(
-            txt: 'ORDEN ID: ${context.watch<ItemSelectGlobProvider>().idOrdenSelect}',
+            txt: 'ORD. ${context.watch<ItemSelectGlobProvider>().idOrdenSelect}',
             txtC: Colors.white,
           ),
           backgroundColor: (itemProv.idOrdenSelect == 0 || itemProv.idOrdenSelect == -1)
@@ -189,7 +190,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
         const Spacer(),
         Chip(
           label: Texto(
-            txt: 'AVO ID: $_idAvoSelect',
+            txt: 'AVO. $_idAvoSelect',
             txtC: Colors.white,
           ),
           backgroundColor: (_idAvoSelect == 0)
@@ -290,6 +291,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       child: ListView.builder(
         shrinkWrap: true,
         controller: _scrollCtr,
+        primary: false,
         physics: const BouncingScrollPhysics(),
         itemCount: itemProv.avos.length,
         padding: const EdgeInsets.only(right: 10, bottom: 40),
@@ -651,7 +653,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   }
 
   ///
-  Widget _saveAsignacion() {
+  Widget _saveAsignacionWidget() {
 
     return DialogToSaveAsign(
       centiProv: _centiProv,
@@ -709,7 +711,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       globals.currentVersion = '${centi['version']}';
       centi = {};
     }
-
+    
     Future.delayed(const Duration(milliseconds: 250), (){
       _isInit = true;
       itemProv.idOrdenSelect = 0;
@@ -805,8 +807,11 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       }
     }
 
-    _absClickAvo = false;
-    setState(() {});
+    if(mounted) {
+      setState(() {
+        _absClickAvo = false;
+      });
+    }
   }
 
   ///
@@ -933,7 +938,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       return;
     }
 
-    msg = 'Estas a punto de modificar datos en el sistema general realizando '
+    msg = 'Estás a punto de modificar datos en el sistema general realizando '
     'cambios importantes en la Base de Datos y demás sistemas.\n¿Estás '
     'segur@ de querer continuar?.';
 
@@ -964,7 +969,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       if(!_hasErrorSave && acc) {
         itemProv.idOrdenSelect = 0;
         itemProv.setOrdenEntitySelect(null);
-        setState((){});
+        if(mounted) { setState((){}); }
       }
     }
     return;
@@ -977,7 +982,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        content: _saveAsignacion(),
+        content: _saveAsignacionWidget(),
       )
     );
   }
@@ -1004,9 +1009,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
   ///
   Future<void> _getOrdenesByAvo({bool force = false}) async {
 
-    setState(() {
-      _isLoad = true;
-    });
+    if(mounted) { setState(() { _isLoad = true; }); }
 
     bool okGo = false;
     if(!_ordenesAvo.containsKey(_idAvoSelect) && !force) {
@@ -1037,9 +1040,7 @@ class _CSolicitudesNonPageState extends State<CSolicitudesNonPage> {
       }
     }
 
-    setState(() {
-      _isLoad = false;
-    });
+    if(mounted) { setState(() { _isLoad = false; }); }
   }
 
 

@@ -241,6 +241,10 @@ class MyHttp {
     debugPrint('[ERROR]::${response.statusCode}');
     debugPrint('Revisa la carpeta de logs [$filename]');
     final root = GetPaths.getPathRoot();
+    final dirLog = Directory('$root${GetPaths.getSep()}logs');
+    if(!dirLog.existsSync()) {
+      dirLog.createSync();
+    }
     File('$root${GetPaths.getSep()}logs${GetPaths.getSep()}$filename').writeAsStringSync(response.body);
     debugPrint(response.reasonPhrase);
   }

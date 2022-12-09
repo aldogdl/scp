@@ -57,7 +57,7 @@ class _TilePzaState extends State<TilePza> {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Column(
         children: [
-          _autoparte(context),
+          _autoparte(),
           Column(
             children: _resps.map((rs) => _tileResp(rs)).toList(),
           )
@@ -135,7 +135,7 @@ class _TilePzaState extends State<TilePza> {
   }
 
   ///
-  Widget _autoparte(BuildContext context) {
+  Widget _autoparte() {
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

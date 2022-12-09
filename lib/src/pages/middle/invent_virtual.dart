@@ -168,7 +168,7 @@ class _InventVirtualState extends State<InventVirtual> {
   Widget _lstPiezas() {
 
     final w = MediaQuery.of(context).size.width;
-
+    
     return Column(
       children: [
         SizedBox(
@@ -205,6 +205,7 @@ class _InventVirtualState extends State<InventVirtual> {
                     child: (lst.isNotEmpty)
                     ? ListView.builder(
                       controller: _ctrPzas,
+                      primary: false,
                       padding: const EdgeInsets.only(
                         left: 8, top: 0, right: 15, bottom: 30
                       ),

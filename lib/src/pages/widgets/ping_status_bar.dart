@@ -47,7 +47,9 @@ class PingStatusBar extends StatelessWidget {
             ico = Icons.social_distance;
         }
 
-        if(ico == Icons.social_distance) { return _connManual(context); }
+        if(ico == Icons.social_distance || ico == Icons.content_cut_outlined) {
+          return _connManual(context);
+        }
         return _icoType(ico, tip, cIcon);
       },
     );

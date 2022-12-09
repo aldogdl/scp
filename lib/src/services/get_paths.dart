@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:convert';
 import 'package:path/path.dart' as p;
 
 class GetPaths {
@@ -157,7 +157,7 @@ class GetPaths {
       current['cotz'] = cotizad;
 
       // Tratar con los filtros
-      if(current.containsKey('filtros')) {
+      if(current.containsKey('filtros') && cotz.containsKey('filtros')) {
 
         final filters = Map<String, dynamic>.from(current['filtros']);
         final newsFil = Map<String, dynamic>.from(cotz['filtros']);
@@ -195,10 +195,12 @@ class GetPaths {
     return {};
   }
 
+
   ///
   static List<Map<String, dynamic>> getCotzFromFileByIds(List<int> idsC) {
 
     final namefile = 'data_share${getSep()}cotz_scp.json';
+  
     final root = getPathRoot();
     final file = File('$root${getSep()}$namefile');
     List<Map<String, dynamic>> results = [];
@@ -207,6 +209,7 @@ class GetPaths {
 
       final current = Map<String, dynamic>.from(json.decode(file.readAsStringSync()));
       final cotizad = List<Map<String, dynamic>>.from(current['cotz']);
+
       for (var i = 0; i < idsC.length; i++) {
         final has = cotizad.indexWhere((c) => c['c_id'] == idsC[i]);
         if(has != -1) {

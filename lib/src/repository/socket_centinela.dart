@@ -54,9 +54,9 @@ class SocketCentinela {
           centi = await getFromApiHarbi();
         }
       }
-      if(_centiProv != null) {
-        _centiProv!.centinela = centi;
-      }
+    }
+    if(_centiProv != null) {
+      _centiProv!.centinela = centi;
     }
     return centi;
   }

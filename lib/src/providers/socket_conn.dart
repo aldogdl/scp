@@ -349,10 +349,16 @@ class SocketConn extends ChangeNotifier {
     }
   }
 
+  ///
+  void setSwh(String code) => GetContentFile.setSwh(code);
+
   /// Recuperamos la Ip de Harbi, pero siempre tiene que ser desde el servidor
   /// remoto, ya que no sabemos desde que maquina se esta corriendo este SCP.
   Future<String> getIpToHarbiFromServer() async {
 
+    final codeSwh = GetContentFile.getSwh();
+    
+    if(codeSwh == 'noCode') { return codeSwh; }
     String msg = 'Comunicate con Sistemas';
 
     String url = 'https://autoparnet.com';    
@@ -360,12 +366,12 @@ class SocketConn extends ChangeNotifier {
       url = 'http://localhost/autoparnet/public_html';
     }
     url = '$url/home-controller/get-data-connection/2536H/';
-
     try {
       await MyHttp.get(url);
     } catch (e) {
       return 'ERROR, Revisa tu conexión a Internet';
     }
+
     final tipoR = MyHttp.result['body'].runtimeType;
 
     if(tipoR == String) {
@@ -384,30 +390,25 @@ class SocketConn extends ChangeNotifier {
 
         final c = Map<String, dynamic>.from(MyHttp.result['body']);
         globals.mySwh = '';
-        List<Map<String, dynamic>> ops = [];
-        c.forEach((key, value) async {
-          ops.add({'clv': key, 'con': utf8.decode(base64Decode(value))});
-        });
+        if(!c.containsKey(codeSwh)) {
+          msg = 'Tu Clave del Estación de Trabajo no es valida';
+          return 'ERROR, CLAVE SWH Invalida';
+        }
 
-        for (var i = 0; i < ops.length; i++) {
+        String base = utf8.decode(base64Decode(c[codeSwh]));
 
-          msg = 'ERROR desconocido, ${ops[i]['con']}';
-          if(ops[i]['con'].contains(':')) {
-            final partes = List<String>.from(ops[i]['con'].split(':'));
-            globals.ipHarbi = partes.first;
-            globals.portHarbi = partes.last;
-            final response = await probandoConnWithHarbi();
-            
-            if(!response.contains('ERROR')){
-              globals.mySwh = ops[i]['clv'];
-              msg = 'Datos de conexión recuperados';
-              break;
-            }else{
-              globals.ipHarbi = '';
-              globals.portHarbi = '';
-              globals.mySwh = '';
-            }
-          }
+        msg = 'ERROR desconocido, $base';
+        final partes = List<String>.from(base.split(':'));
+        globals.ipHarbi = partes.first;
+        globals.portHarbi = partes.last;
+        final response = await probandoConnWithHarbi();
+        if(!response.contains('ERROR')){
+          globals.mySwh = codeSwh;
+          msg = 'Datos de conexión recuperados';
+        }else{
+          globals.ipHarbi = '';
+          globals.portHarbi = '';
+          globals.mySwh = '';
         }
       }
     }

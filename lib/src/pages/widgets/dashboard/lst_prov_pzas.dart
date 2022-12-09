@@ -5,6 +5,7 @@ import '../my_tool_tip.dart';
 import '../texto.dart';
 import '../../../entity/orden_entity.dart';
 import '../../../providers/centinela_provider.dart';
+import '../../../repository/contacts_repository.dart';
 import '../../../services/get_paths.dart';
 import '../../../services/inventario_service.dart';
 import '../../../vars/scroll_config.dart';
@@ -107,6 +108,10 @@ class _LstProvPzasState extends State<LstProvPzas> {
                 );
               }
 
+              if(ctz.isNotEmpty && ctz.first.containsKey('recovery')) {
+                return _enEspera(msg: 'Recuperando datos de Cotizadores');
+              }
+
               return (_prov.cotz.isEmpty)
                 ? const SizedBox()
                 : _body(cnst);
@@ -143,8 +148,11 @@ class _LstProvPzasState extends State<LstProvPzas> {
   }
   
   ///
-  Widget _enEspera() {
+  Widget _enEspera({String msg = ''}) {
 
+    if(msg.isEmpty) {
+      msg = 'En espera de Resultados';
+    }
     return Column(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,7 +172,7 @@ class _LstProvPzasState extends State<LstProvPzas> {
                 height: 2,
                 child: const LinearProgressIndicator(),
               ),
-              const Texto(txt: 'En espera de Resultados'),
+              Texto(txt: msg),
             ],
           ),
         ),
@@ -190,6 +198,7 @@ class _LstProvPzasState extends State<LstProvPzas> {
             child: ListView.builder(
               physics: const BouncingScrollPhysics(),
               controller: _scrollPr,
+              primary: false,
               itemCount: _prov.cotz.length,
               itemBuilder: (_, ind) => _tileProv(ind)
             ),
@@ -277,6 +286,14 @@ class _LstProvPzasState extends State<LstProvPzas> {
     final isSeeOrd = _prov.isSee(indexCotz, '${_prov.data['orden']['o_id']}', iris);
 
     bool isSee = (isSeeOrd.isNotEmpty) ? true : false;
+    String empresa = _prov.cotz[indexCotz]['e_nombre'];
+    if(empresa.contains('AUTOPARTES')) {
+      empresa = empresa.replaceAll('AUTOPARTES', '').trim();
+    }
+    String nombre = _prov.cotz[indexCotz]['c_nombre'];
+    if(nombre.contains('AUTOPARTES')) {
+      nombre = nombre.replaceAll('AUTOPARTES', '').trim();
+    }
 
     return Container(
       height: 50,
@@ -293,17 +310,18 @@ class _LstProvPzasState extends State<LstProvPzas> {
         children: [
           Row(
             children: [
-              Texto(txt: _prov.cotz[indexCotz]['e_nombre']),
+              Texto(txt: empresa),
               const Spacer(),
               Icon(
                 Icons.done_all, size: 18,
                 color: (isSee) ? Colors.blue : Colors.grey.withOpacity(0.3),
-              )
+              ),
+              const SizedBox(width: 10)
             ],
           ),
           Row(
             children: [
-              Texto(txt: _prov.cotz[indexCotz]['c_nombre'], sz: 11, txtC: Colors.white),
+              Texto(txt: nombre, sz: 11, txtC: Colors.white),
               const Spacer(),
               Texto(txt: 'ID: ${_prov.cotz[indexCotz]['c_id']}', sz: 12,
                 txtC: const Color.fromARGB(255, 87, 87, 87)
@@ -408,6 +426,7 @@ class _LstProvPzasState extends State<LstProvPzas> {
             child: ListView.builder(
               physics: const BouncingScrollPhysics(),
               controller: _scrollDt,
+              primary: false,
               itemCount: _prov.cotz.length,
               itemBuilder: (_, ind) => _tileData(ind)
             )
@@ -480,6 +499,7 @@ class _LstProvPzasState extends State<LstProvPzas> {
       controller: ctr,
       physics: const BouncingScrollPhysics(),
       scrollDirection: axis,
+      primary: false,
       child: child
     );
   }
@@ -548,9 +568,8 @@ class _LstProvPzasState extends State<LstProvPzas> {
 
     final iris = (_prov.data.containsKey(OrdCamp.iris.name))
       ? Map<String, dynamic>.from(_prov.data[OrdCamp.iris.name]) : <String, dynamic>{};
-
+    
     final idCot = _prov.cotz[indexCotz]['c_id'];
-
     var aten = <String, dynamic>{};
 
     // Buscamos primeramente si la pieza cuenta con RESPUESTA 
@@ -563,16 +582,6 @@ class _LstProvPzasState extends State<LstProvPzas> {
         // Si no es vacio es por que se encontró en NO TENGO.
         res['bg'] = Colors.white;
         res['upTxt'] = InventarioService.toFormat('${aten['costo']}');
-
-        // if(_prov.resps.isNotEmpty) {
-        //   final hasResp = _prov.resps.firstWhere(
-        //     (r) => (r['c_id'] == idCot && r['p_id'] == pza['id']), orElse: () => {}
-        //   );
-        //   if(hasResp.isNotEmpty) {
-        //     res['bg'] = Colors.white;
-            
-        //   }
-        // }
       }
     }
 
@@ -613,26 +622,54 @@ class _LstProvPzasState extends State<LstProvPzas> {
     }else{
       res['upTxt'] = '----------';
     }
-
+    
     if(aten.isNotEmpty) {
       res['aten'] = aten;
-      _showDataTime.value = true;
-      return res;
     }
-    return {};
+    _showDataTime.value = true;
+    return res;
   }
 
   ///
   Future<void> _getDataCotz() async {
 
+    if(_isLoading.value){ return; }
+
     if(_prov.data.isNotEmpty) {
+
       _prov.isUpdateCots = false;
       _isLoading.value = true;
-      
       await Future.delayed(const Duration(milliseconds: 250));
-      _prov.cotz = GetPaths.getCotzFromFileByIds(
+      
+      final cotz = GetPaths.getCotzFromFileByIds(
         List<int>.from(_prov.data[OrdCamp.metrik.name]['sended'])
       );
+      List<int> cotzRec = [];
+      if(cotz.isNotEmpty) {
+        for (var i = 0; i < cotz.length; i++) {
+          if(cotz[i]['e_nombre'] == 'recovery') {
+            cotzRec.add(cotz[i]['c_id']);
+          }
+        }
+      }
+
+      if(cotzRec.isEmpty) {
+        _prov.cotz = List<Map<String, dynamic>>.from(cotz);
+        cotz.clear();
+      }else{
+
+        Future.microtask(() => _prov.cotz = [{'recovery':''}]);
+        await Future.delayed(const Duration(milliseconds: 250));
+        final ctcEm = ContactsRepository();
+        final resultado = await ctcEm.recoveryCotzSaveInLocal(cotzRec);
+        
+        if(resultado['isOk']) {
+          cotz.addAll(resultado['cotz']);
+          _prov.cotz = List<Map<String, dynamic>>.from(cotz);
+          cotz.clear();
+        }
+      }
+
       Future.microtask(() { _isLoading.value = false; });
 
     }else{

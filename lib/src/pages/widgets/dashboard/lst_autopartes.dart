@@ -38,6 +38,7 @@ class _LstAutopartesState extends State<LstAutopartes> {
         child: ListView.builder(
           physics: const BouncingScrollPhysics(),
           controller: _scroll,
+          primary: false,
           padding: const EdgeInsets.only(right: 10),
           itemCount: widget.piezas.length,
           itemBuilder: (_, ind) => _tilePza(ind)
